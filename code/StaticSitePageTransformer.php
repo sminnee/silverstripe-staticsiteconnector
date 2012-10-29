@@ -25,7 +25,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$page = new Page;
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 
-		foreach($content as $k => $v) {
+		foreach($contentFields as $k => $v) {
 			$page->$k = $v;
 		}
 
