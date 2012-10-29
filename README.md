@@ -9,12 +9,13 @@ It works in the following way:
  * Each URL corresponds to an imported page, using the presence of "/" and "?" in the URL to build the heirarchy.
  * Page content is imported page-by-page using CURL, and content elements extracted with CSS selectors.  phpQuery is used for this purpose.
 
- Installation
- ------------
 
- This module requires the PHP Sempahore functions.  These are installed by default on Debian PHP distributions, but if you are using Macports you will need to add the `+ipc` flag when installing php5:
+Installation
+------------
 
-     sudo port install php5 +apache2 +ipc
+This module requires the PHP Sempahore functions.  These are installed by default on Debian PHP distributions, but if you are using Macports you will need to add the `+ipc` flag when installing php5:
+
+    sudo port install php5 +apache2 +ipc
 
 
 License
