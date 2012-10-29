@@ -24,15 +24,37 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$fields->removeFieldFromTab("Root", "ImportRules");
 		$fields->addFieldToTab("Root.Main", $importRules);
 
+		$crawlButton = FormAction::create('crawlsite', _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site'))
+			->setAttribute('data-icon', 'arrow-circle-double')
+			->setUseButtonTag(true);
+		$fields->addFieldsToTab('Root.Crawl', array(
+			new ReadonlyField("CrawlStatus", "Crawling Status", $this->urlList()->getSpiderStatus()),
+			new ReadonlyField("NumURLs", "Number of URLs", $this->urlList()->getNumURLs()),
+
+			new LiteralField('CrawlActions', 
+			"<p>Before importing this content, all URLs on the site must be crawled (like a search engine does). Click"
+			. " the button below to do so:</p>"
+			. "<div class='Actions'>{$crawlButton->forTemplate()}</div>")
+		));
+
 		return $fields;
 	}
 
 
 	public function urlList() {
 		if(!$this->urlList) {
-			$this->urlList = new StaticSiteUrlList($this->BaseUrl, "../assets/static-site");
+			$this->urlList = new StaticSiteUrlList($this->BaseUrl, "../assets/static-site-" . $this->ID);
 		}
 		return $this->urlList;
+	}
+
+	/**
+	 * Crawl the target site
+	 * @return [type] [description]
+	 */
+	public function crawl() {
+		if(!$this->BaseUrl) throw new LogicException("Can't crawl a site until Base URL is set.");
+		return $this->urlList()->crawl();
 	}
 
 	/**
@@ -74,6 +96,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @return ArrayList A list containing the root node
 	 */
 	public function stageChildren($showAll = false) {
+		if(!$this->urlList()->hasCrawled()) return new ArrayList;
+
 		return new ArrayList(array(
 			$this->getObject("/")
 		));

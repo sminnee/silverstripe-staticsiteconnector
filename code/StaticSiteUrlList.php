@@ -12,6 +12,8 @@ class StaticSiteUrlList {
 
 	protected $urls = array();
 
+	protected $autoCrawl = false;
+
 	/**
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
@@ -28,14 +30,55 @@ class StaticSiteUrlList {
 	}
 
 	/**
+	 * Set whether the crawl should be triggered on demand.
+	 * @param [type] $autoCrawl [description]
+	 */
+	public function setAutoCrawl($autoCrawl) {
+		$this->autoCrawl = $autoCrawl;
+	}
+
+	/**
+	 * Returns the status of the spidering: "Complete", "Partial", or "Not started"
+	 * @return [type] [description]
+	 */
+	public function getSpiderStatus() {
+		if(file_exists($this->cacheDir . 'urls')) {
+			if(file_exists($this->cacheDir . 'crawlerid')) return "Partial";
+			else return "Complete";
+
+		} else {
+			return "Not started";
+		}
+	}
+
+	/**
+	 * Return the number of URLs crawled so far
+	 */
+	public function getNumURLs() {
+		if($this->urls) {
+			return sizeof($this->urls);
+		} else if(file_exists($this->cacheDir . 'urls')) {
+			$urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
+			return sizeof($urls);
+		}
+	}
+
+	public function hasCrawled() {
+		// There are URLs and we're not in the middle of a crawl
+		return file_exists($this->cacheDir . 'urls') && !file_exists($this->cacheDir . 'crawlerid');
+	}
+
+	/**
 	 * Load the URLs, either by crawling, or by fetching from cache
 	 * @return void
 	 */
-	function loadUrls() {
-		if(file_exists($this->cacheDir . 'urls')) {
+	public function loadUrls() {
+		if($this->hasCrawled()) {
 			$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
-		} else {
+		} else if($this->autoCrawl) {
 			$this->crawl();
+		} else {
+			throw new LogicException("Crawl hasn't been executed yet, and autoCrawl is set to false");
 		}
 
 		// Fill out missing parents
@@ -44,7 +87,7 @@ class StaticSiteUrlList {
 		}
 	}
 
-	function crawl() {
+	public function crawl() {
 		increase_time_limit_to(3600);
 
 		if(!is_dir($this->cacheDir)) mkdir($this->cacheDir);
@@ -56,6 +99,12 @@ class StaticSiteUrlList {
 
 		// Allow for resuming an incomplete crawl
 		if(file_exists($this->cacheDir.'crawlerid')) {
+			// We should re-load the partial list of URLs, if relevant
+			// This should only happen when we are resuming a partial crawl
+			if(file_exists($this->cacheDir . 'urls')) {
+				$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
+			}
+			
 			$crawlerID = file_get_contents($this->cacheDir.'crawlerid');
 			$crawler->resume($crawlerID);
 		} else {
@@ -69,7 +118,14 @@ class StaticSiteUrlList {
 		unlink($this->cacheDir.'crawlerid');
 
 		ksort($this->urls);
+		$this->saveURLs();
+	}
 
+	/**
+	 * Save the current list of URLs to disk
+	 * @return [type] [description]
+	 */
+	function saveURLs() {
 		file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
 	}
 
@@ -177,6 +233,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		// Ignore errors and redirects
 		if($info->http_status_code >= 200 && $info->http_status_code < 300) {
 			$this->urlList->addAbsoluteURL($info->url);
+			$this->urlList->saveURLs();
 		}
 	}
 }

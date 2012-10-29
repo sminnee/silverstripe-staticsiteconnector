@@ -10,6 +10,8 @@ class StaticSiteContentItem extends ExternalContentItem {
 	} 	
 
 	public function stageChildren($showAll = false) {
+		if(!$this->source->urlList()->hasCrawled()) return new ArrayList;
+
 		$childrenURLs = $this->source->urlList()->getChildren($this->externalId);
 
 		$children = new ArrayList;
@@ -21,6 +23,8 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	public function numChildren() {
+		if(!$this->source->urlList()->hasCrawled()) return 0;
+
 		return sizeof($this->source->urlList()->getChildren($this->externalId));
 	}
 

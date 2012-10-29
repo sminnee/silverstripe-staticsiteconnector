@@ -1,0 +1,3 @@
+ExternalContentAdmin:
+  extensions:
+    - StaticSiteExternalContentAdminExtension
