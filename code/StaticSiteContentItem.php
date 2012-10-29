@@ -6,6 +6,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		$parentURL = $this->source->urlList()->parentURL($url);
 		$this->Name = substr($url, strlen($parentURL));
 		$this->Title = $this->Name;
+		$this->AbsoluteURL = $this->source->BaseUrl . $this->externalId;
 	} 	
 
 	public function stageChildren($showAll = false) {
