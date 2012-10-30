@@ -4,6 +4,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	public static $db = array(
 		'BaseUrl' => 'Varchar(255)',
+		'UrlProcessor' => 'Varchar(255)',
 	);
 
 	public static $has_many = array(
@@ -26,6 +27,17 @@ class StaticSiteContentSource extends ExternalContentSource {
 			. " by getting the results of a CSS selector.  If more than one rule exists for a field, then they will be"
 			. " processed in the order they appear.  The first rule that returns content will be the one used.</p>"));
 		$fields->addFieldToTab("Root.Main", $importRules);
+
+
+		$processingOptions = array("" => "No pre-processing");
+		foreach(ClassInfo::implementorsOf('StaticSiteUrlProcessor') as $processor) {
+			$processorObj = new $processor;
+			$processingOptions[$processor] = "<strong>" . Convert::raw2xml($processorObj->getName()) 
+				. "</strong><br>" . Convert::raw2xml($processorObj->getDescription());
+		}
+
+		$fields->addFieldToTab("Root.Main", new OptionsetField("UrlProcessor", "URL processing", $processingOptions));
+
 
 		switch($this->urlList()->getSpiderStatus()) {
 		case "Not started":
@@ -71,10 +83,27 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return $fields;
 	}
 
+	public function onAfterWrite() {
+		parent::onAfterWrite();
+
+		$urlList = $this->urlList();
+		if($this->isChanged('UrlProcessor') && $urlList->hasCrawled()) {
+			if($processorClass = $this->UrlProcessor) {
+				$urlList->setUrlProcessor(new $processorClass);
+			} else {
+				$urlList->setUrlProcessor(null);
+			}
+			$urlList->reprocessUrls();
+		}
+	}
+
 
 	public function urlList() {
 		if(!$this->urlList) {
 			$this->urlList = new StaticSiteUrlList($this->BaseUrl, "../assets/static-site-" . $this->ID);
+			if($processorClass = $this->UrlProcessor) {
+				$this->urlList->setUrlProcessor(new $processorClass);
+			}
 		}
 		return $this->urlList;
 	}

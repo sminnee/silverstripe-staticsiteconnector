@@ -3,10 +3,17 @@
 class StaticSiteContentItem extends ExternalContentItem {
 	public function init() {
 		$url = $this->externalId;
-		$parentURL = $this->source->urlList()->parentURL($url);
-		$this->Name = substr($url, strlen($parentURL));
+
+		$processedURL = $this->source->urlList()->processedURL($url); 
+		$parentURL = $this->source->urlList()->parentProcessedURL($processedURL);
+
+		$subURL = substr($processedURL, strlen($parentURL));
+		if($subURL != "/") $subURL = preg_replace('#(^/)|(/$)#','',$subURL);
+		
+		$this->Name = $subURL;
 		$this->Title = $this->Name;
 		$this->AbsoluteURL = $this->source->BaseUrl . $this->externalId;
+		$this->ProcessedURL = $processedURL;
 	} 	
 
 	public function stageChildren($showAll = false) {

@@ -14,6 +14,8 @@ class StaticSiteUrlList {
 
 	protected $autoCrawl = false;
 
+	protected $urlProcessor = null;
+
 	/**
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
@@ -27,6 +29,21 @@ class StaticSiteUrlList {
 
 		$this->baseURL = $baseURL;
 		$this->cacheDir = $cacheDir;
+	}
+
+	/**
+	 * Set a URL processor for this URL List.
+	 *
+	 * URL processors process the URLs before the site heirarchy and inferred meta-data are generated.
+	 * These can be used to tranform URLs from CMSes that don't provide a natural heirarchy into something
+	 * more useful.
+	 *
+	 * See {@link StaticSiteMOSSURLProcessor} for an example.
+	 * 
+	 * @param StaticSiteUrlProcessor $urlProcessor [description]
+	 */
+	function setUrlProcessor(StaticSiteUrlProcessor $urlProcessor) {
+		$this->urlProcessor = $urlProcessor;
 	}
 
 	/**
@@ -87,11 +104,24 @@ class StaticSiteUrlList {
 		} else {
 			throw new LogicException("Crawl hasn't been executed yet, and autoCrawl is set to false");
 		}
+	}
 
-		// Fill out missing parents
-		foreach($this->urls as $url => $dummy) {
+	/**
+	 * Re-execute the URL processor on all the fetched URLs
+	 * @return void
+	 */
+	public function reprocessUrls() {
+		if(!$this->urls) $this->loadUrls();
+
+		// Reprocess URLs, in case the processing has changed since the last crawl
+		foreach($this->urls as $url => $processed) {
+			$this->urls[$url] = $this->generateProcessedURL($url);
+
+			// Trigger parent URL back-filling
 			$this->parentURL($url);
 		}
+
+		$this->saveURLs();
 	}
 
 	public function crawl() {
@@ -147,13 +177,36 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
-		$this->urls[$relURL] = true;
+		return $this->addURL($relURL);
 	}
 
 	function addURL($url) {
 		if(!$this->urls) $this->loadUrls();
 
-		$this->urls[$url] = true;
+		// Generate and save the processed URLs
+		$this->urls[$url] = $this->generateProcessesdURL($relURL);
+
+		// Trigger parent URL back-filling
+		$this->parentURL($relURL);
+	}
+
+
+	/**
+	 * Add a processed URL to the list.
+	 * 
+	 * Since the unprocessed URL isn't available, we use the processed URL in its place.  This should be used with
+	 * some caution.
+	 * 
+	 * @param string $processedURL The processed URL to add.
+	 */
+	function addProcessedURL($processedURL) {
+		if(!$this->urls) $this->loadUrls();
+
+		// Generate and save the processed URLs
+		$this->urls[$processedURL] = $processedURL;
+
+		// Trigger parent URL back-filling
+		$this->parentProcessedURL($processedURL);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -179,6 +232,19 @@ class StaticSiteUrlList {
 	}
 
 	/**
+	 * Returns true if the given URL is in the list of processed URls
+	 * 
+	 * @param  string  $processedURL The processed URL
+	 * @return boolean               True if it exists, false otherwise
+	 */
+	function hasProcessedURL($processedURL) {
+		if(!$this->urls) $this->loadUrls();
+
+		return (boolean)array_search($processedURL, $this->urls);
+
+	}
+
+	/**
 	 * Return the URL that is the parent of the given one.
 	 * @param  [type] $url A relative URL
 	 * @return [type]      [description]
@@ -186,24 +252,79 @@ class StaticSiteUrlList {
 	function parentURL($url) {
 		if(!$this->urls) $this->loadUrls();
 
-		if($url == "/") return "";
+		$processedURL = $this->processedURL($url);
+
+		return $this->unprocessedURL($this->parentProcessedURL($processedURL));
+	}
+
+	/**
+	 * Return the processed URL that is the parent of the given one.
+	 *
+	 * Both input and output are processed URLs
+	 * 
+	 * @param  string $url A relative URL
+	 * @return string      [description]
+	 */
+	function parentProcessedURL($processedURL) {
+		if($processedURL == "/") return "";
 
 		// URL heirachy can be broken down by querystring or by URL
-		$breakpoint = max(strrpos($url, '?'), strrpos($url,'/'));
+		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL,'/'));
 
 		// Special case for children of the root
 		if($breakpoint == 0) return "/";
 
 		// Get parent URL
-		$parentURL = substr($url,0,$breakpoint);
+		$parentProcessedURL = substr($processedURL,0,$breakpoint);
 
 		// If an intermediary URL doesn't exist, create it
-		if(!$this->hasURL($parentURL)) {
-			$this->addURL($parentURL);
-			// Create recursively
-			$this->parentURL($parentURL);
+		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addProcessedURL($parentProcessedURL);
+
+		return $parentProcessedURL;
+	}
+
+	/**
+	 * Return the regular URL, given the processed one.
+	 *
+	 * Note that the URL processing isn't reversible, so this function works looks by iterating through all URLs.
+	 * If the URL doesn't exist in the list, this function returns null.
+	 * 
+	 * @param  string $processedURL The URL after processing has been applied.
+	 * @return string               The original URL.
+	 */
+	function unprocessedURL($processedURL) {
+		$url = array_search($processedURL, $this->urls);
+		return $url ? $url : null;
+	}
+
+	/**
+	 * Find the processed URL in the URL list
+	 * @param  [type] $url [description]
+	 * @return [type]      [description]
+	 */
+	function processedURL($url) {
+		if(!$this->urls) $this->loadUrls();
+
+		if(isset($this->urls[$url])) {
+			// Generate it if missing
+			if($this->urls[$url] === true) $this->urls[$url] = $this->generateProcessedURL($url);
+			return $this->urls[$url];
 		}
-		return $parentURL;
+	}
+
+	/**
+	 * Execute custom logic for processing URLs prior to heirachy generation.
+	 *
+	 * This can be used to implement logic such as ignoring the "/Pages/" parts of MOSS URLs, or dropping extensions.
+	 * 
+	 * @param  string $url The unprocessed URL
+	 * @return string      The processed URL
+	 */
+	function generateProcessedURL($url) {
+		if(!$url) throw new LogicException("Can't pass a blank URL to generateProcessedURL");
+		if($this->urlProcessor) $url = $this->urlProcessor->processURL($url);
+		if(!$url) throw new LogicException(get_class($this->urlProcessor) . " returned a blank URL.");
+		return $url;
 	}
 
 	/**
@@ -214,13 +335,15 @@ class StaticSiteUrlList {
 	function getChildren($url) {
 		if(!$this->urls) $this->loadUrls();
 
+		$processedURL = $this->processedURL($url);
+
 		// Subtly different regex if the URL ends in ? or /
-		if(preg_match('#[/?]$#',$url)) $regEx = '#^'.preg_quote($url,'#') . '[^/?]+$#';
-		else $regEx = '#^'.preg_quote($url,'#') . '[/?][^/?]+$#';
+		if(preg_match('#[/?]$#',$processedURL)) $regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
+		else $regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
 
 		$children = array();
-		foreach(array_keys($this->urls) as $potentialChild) {
-			if(preg_match($regEx, $potentialChild)) {
+		foreach($this->urls as $potentialChild => $potentialProcessedChild) {
+			if(preg_match($regEx, $potentialProcessedChild)) {
 				$children[] = $potentialChild;
 			}
 		}
