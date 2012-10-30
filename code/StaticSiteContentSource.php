@@ -24,7 +24,25 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$fields->removeFieldFromTab("Root", "ImportRules");
 		$fields->addFieldToTab("Root.Main", $importRules);
 
-		$crawlButton = FormAction::create('crawlsite', _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site'))
+		switch($this->urlList()->getSpiderStatus()) {
+		case "Not started":
+			$crawlButtonText = _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site');
+			break;
+
+		case "Partial":
+			$crawlButtonText = _t('StaticSiteContentSource.RESUME_CRAWLING', 'Resume crawling');
+			break;
+
+		case "Complete":
+			$crawlButtonText = _t('StaticSiteContentSource.RECRAWL_SITE', 'Re-crawl site');
+			break;
+
+		default:
+			throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
+		}
+		
+
+		$crawlButton = FormAction::create('crawlsite', $crawlButtonText)
 			->setAttribute('data-icon', 'arrow-circle-double')
 			->setUseButtonTag(true);
 		$fields->addFieldsToTab('Root.Crawl', array(
@@ -36,6 +54,16 @@ class StaticSiteContentSource extends ExternalContentSource {
 			. " the button below to do so:</p>"
 			. "<div class='Actions'>{$crawlButton->forTemplate()}</div>")
 		));
+
+		if($this->urlList()->getSpiderStatus() == "Complete") {
+			$urlsAsUL = "<ul><li>" . implode("</li><li>", $this->urlList()->getURLs()) . "</li></ul>";
+
+			$fields->addFieldToTab('Root.Crawl', 
+				new LiteralField('CrawlURLList', "<p>The following URLs have been identified:</p>" . $urlsAsUL)
+			);
+
+			
+		}
 
 		return $fields;
 	}

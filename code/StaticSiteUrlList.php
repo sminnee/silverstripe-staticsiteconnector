@@ -63,6 +63,13 @@ class StaticSiteUrlList {
 		}
 	}
 
+	public function getURLs() {
+		if($this->hasCrawled() || $this->autoCrawl) {
+			if(!$this->urls) $this->loadUrls();
+			return array_keys($this->urls);
+		}
+	}
+
 	public function hasCrawled() {
 		// There are URLs and we're not in the middle of a crawl
 		return file_exists($this->cacheDir . 'urls') && !file_exists($this->cacheDir . 'crawlerid');
