@@ -140,8 +140,6 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
-		Debug::message($relURL);
-
 		$this->urls[$relURL] = true;
 	}
 
@@ -209,9 +207,13 @@ class StaticSiteUrlList {
 	function getChildren($url) {
 		if(!$this->urls) $this->loadUrls();
 
+		// Subtly different regex if the URL ends in ? or /
+		if(preg_match('#[/?]$#',$url)) $regEx = '#^'.preg_quote($url,'#') . '[^/?]+$#';
+		else $regEx = '#^'.preg_quote($url,'#') . '[/?][^/?]+$#';
+
 		$children = array();
 		foreach(array_keys($this->urls) as $potentialChild) {
-			if($this->parentURL($potentialChild) == $url) {
+			if(preg_match($regEx, $potentialChild)) {
 				$children[] = $potentialChild;
 			}
 		}
