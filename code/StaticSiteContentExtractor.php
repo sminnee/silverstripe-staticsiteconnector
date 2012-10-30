@@ -35,12 +35,21 @@ class StaticSiteContentExtractor {
 
 		$output = array();
 
-		foreach($selectorMap as $field => $cssSelector) {
-			$output[$field] = array(
-				'selector' => $cssSelector,
-				'content' => $this->extractField($cssSelector),
-			);
+		foreach($selectorMap as $field => $cssSelectors) {
+			if(!is_array($cssSelectors)) $cssSelectors = array($cssSelectors);
+
+			foreach($cssSelectors as $cssSelector) {
+				$content = trim($this->extractField($cssSelector));
+				if($content) {
+					$output[$field] = array(
+						'selector' => $cssSelector,
+						'content' => $content,
+					);
+					break;
+				}
+			}
 		}
+
 		return $output;
 	}
 

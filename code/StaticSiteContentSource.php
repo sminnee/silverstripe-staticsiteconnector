@@ -22,6 +22,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$importRules->getConfig()->addComponent($addNewButton);
 
 		$fields->removeFieldFromTab("Root", "ImportRules");
+		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Each import rule will import content for a field"
+			. " by getting the results of a CSS selector.  If more than one rule exists for a field, then they will be"
+			. " processed in the order they appear.  The first rule that returns content will be the one used.</p>"));
 		$fields->addFieldToTab("Root.Main", $importRules);
 
 		switch($this->urlList()->getSpiderStatus()) {
@@ -88,10 +91,17 @@ class StaticSiteContentSource extends ExternalContentSource {
 	/**
 	 * Return the import rules in a format suitable for configuring StaticSiteContentExtractor.
 	 * 
-	 * @return array A map of field name => CSS selector
+	 * @return array A map of field name => array(CSS selector, CSS selector, ...)
 	 */
 	public function getImportRules() {
-		return $this->ImportRules()->map("FieldName", "CSSSelector")->toArray();
+		$output = array();
+
+		foreach($this->ImportRules() as $rule) {
+			if(!isset($output[$rule->FieldName])) $output[$rule->FieldName] = array();
+			$output[$rule->FieldName][] = $rule->CSSSelector;
+		}
+
+		return $output;
 	}
 
 	/**

@@ -7,7 +7,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		usleep(100*1000);
 
 		// Extract content from the page
-		$contentFields = getContentFieldsAndSelectors($item);
+		$contentFields = $this->getContentFieldsAndSelectors($item);
 
 		// Default value for Title
 		if(empty($contentFields['Title'])) {
