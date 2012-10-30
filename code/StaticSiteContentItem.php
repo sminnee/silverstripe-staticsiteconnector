@@ -31,4 +31,25 @@ class StaticSiteContentItem extends ExternalContentItem {
 	public function getType() {
 		return "sitetree";
 	}
-}
+
+	public function getCMSFields() {
+		$fields = parent::getCMSFields();
+
+		// Add the preview fields here, including rules used
+		$t = new StaticSitePageTransformer;
+
+		$urlField = new ReadonlyField("PreviewSourceURL", "Imported from",
+			"<a href=\"$this->AbsoluteURL\">" . Convert::raw2xml($this->AbsoluteURL) . "</a>");
+		$urlField->dontEscape = true;
+
+		$fields->addFieldToTab("Root.Preview", $urlField);
+
+		$content = $t->getContentFieldsAndSelectors($this);
+		foreach($content as $k => $v) {
+			$fields->addFieldToTab("Root.Preview", 
+				new ReadonlyField("Preview$k", "$k<br>\n<em>" . $v['selector'] . "</em>", $v['content']));
+		}
+
+		return $fields;
+	}
+}	

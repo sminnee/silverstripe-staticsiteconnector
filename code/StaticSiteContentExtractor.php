@@ -28,15 +28,18 @@ class StaticSiteContentExtractor {
 	/**
 	 * Extract content for map of field => css-selector pairs
 	 * @param  array $selectorMap A map of field name => css-selector
-	 * @return array              A map of field name => field content
+	 * @return array              A map of field name => array('selector' => selector, 'content' => field content)
 	 */
-	public function extractMap($selectorMap) {
+	public function extractMapAndSelectors($selectorMap) {
 		if(!$this->phpQuery) $this->fetchContent();
 
 		$output = array();
 
 		foreach($selectorMap as $field => $cssSelector) {
-			$output[$field] = $this->extractFIeld($cssSelector);
+			$output[$field] = array(
+				'selector' => $cssSelector,
+				'content' => $this->extractField($cssSelector),
+			);
 		}
 		return $output;
 	}
