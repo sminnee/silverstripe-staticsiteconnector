@@ -10,7 +10,7 @@ require_once(BASE_PATH."/staticsiteconnector/thirdparty/PHPCrawl/libs/PHPCrawler
 class StaticSiteUrlList {
 	protected $baseURL, $cacheDir;
 
-	protected $urls = array();
+	protected $urls = null;
 
 	protected $autoCrawl = false;
 
@@ -82,7 +82,7 @@ class StaticSiteUrlList {
 
 	public function getURLs() {
 		if($this->hasCrawled() || $this->autoCrawl) {
-			if(!$this->urls) $this->loadUrls();
+			if($this->urls === null) $this->loadUrls();
 			return array_keys($this->urls);
 		}
 	}
@@ -111,7 +111,7 @@ class StaticSiteUrlList {
 	 * @return void
 	 */
 	public function reprocessUrls() {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		// Reprocess URLs, in case the processing has changed since the last crawl
 		foreach($this->urls as $url => $processed) {
@@ -140,6 +140,8 @@ class StaticSiteUrlList {
 			// This should only happen when we are resuming a partial crawl
 			if(file_exists($this->cacheDir . 'urls')) {
 				$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
+			} else {
+				$this->urls = array();
 			}
 			
 			$crawlerID = file_get_contents($this->cacheDir.'crawlerid');
@@ -181,13 +183,13 @@ class StaticSiteUrlList {
 	}
 
 	function addURL($url) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		// Generate and save the processed URLs
-		$this->urls[$url] = $this->generateProcessesdURL($relURL);
+		$this->urls[$url] = $this->generateProcessedURL($url);
 
 		// Trigger parent URL back-filling
-		$this->parentURL($relURL);
+		$this->parentURL($url);
 	}
 
 
@@ -200,7 +202,7 @@ class StaticSiteUrlList {
 	 * @param string $processedURL The processed URL to add.
 	 */
 	function addProcessedURL($processedURL) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		// Generate and save the processed URLs
 		$this->urls[$processedURL] = $processedURL;
@@ -217,7 +219,7 @@ class StaticSiteUrlList {
 	 * @return boolean     Does the URL exist
 	 */
 	function hasURL($url) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		// Try and relativise an absolute URL
 		if($url[0] != '/') {
@@ -238,7 +240,7 @@ class StaticSiteUrlList {
 	 * @return boolean               True if it exists, false otherwise
 	 */
 	function hasProcessedURL($processedURL) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		return (boolean)array_search($processedURL, $this->urls);
 
@@ -250,7 +252,7 @@ class StaticSiteUrlList {
 	 * @return [type]      [description]
 	 */
 	function parentURL($url) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		$processedURL = $this->processedURL($url);
 
@@ -303,7 +305,7 @@ class StaticSiteUrlList {
 	 * @return [type]      [description]
 	 */
 	function processedURL($url) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		if(isset($this->urls[$url])) {
 			// Generate it if missing
@@ -333,7 +335,7 @@ class StaticSiteUrlList {
 	 * @return [type]      [description]
 	 */
 	function getChildren($url) {
-		if(!$this->urls) $this->loadUrls();
+		if($this->urls === null) $this->loadUrls();
 
 		$processedURL = $this->processedURL($url);
 
