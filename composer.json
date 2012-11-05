@@ -1,0 +1,15 @@
+{
+	"name": "silverstripe/staticsiteconnector",
+	"description": "An external-content connector that retrieves content by scraping a public website.",
+	"license": "BSD-3-Clause",
+	"type": "silverstripe-module",
+	"keywords": ["silverstripe", "external-content", "staticsiteconnector", "scraper", "html"],
+	"authors": [{
+		"name": "Sam Minnee",
+		"email": "sam@silverstripe.com"
+	}],
+	"require": {
+		"silverstripe/framework": ">=3.0.0",
+		"silverstripe/external-content": "*"
+	}
+}
