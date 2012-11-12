@@ -149,6 +149,7 @@ class StaticSiteUrlList {
 		} else {
 			$crawlerID = $crawler->getCrawlerId();
 			file_put_contents($this->cacheDir.'/crawlerid', $crawlerID);
+			$this->urls = array();
 		}
 
 		$crawler->setURL($this->baseURL);
