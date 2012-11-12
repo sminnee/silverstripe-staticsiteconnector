@@ -366,9 +366,13 @@ class StaticSiteCrawler extends PHPCrawler {
 
 	function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 		// Ignore errors and redirects
-		if($info->http_status_code >= 200 && $info->http_status_code < 300) {
-			$this->urlList->addAbsoluteURL($info->url);
-			$this->urlList->saveURLs();
-		}
+		if($info->http_status_code < 200) return;
+		if($info->http_status_code > 299) return;
+
+		// Ignore non HTML
+		if(!preg_match('#/x?html#', $info->content_type)) return;
+
+		$this->urlList->addAbsoluteURL($info->url);
+		$this->urlList->saveURLs();
 	}
 }
