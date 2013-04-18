@@ -133,6 +133,14 @@ class StaticSiteUrlList {
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
+		if (isset($_ENV['HTTP_PROXY'])) {
+			$proxyURL = parse_url($_ENV['HTTP_PROXY']);
+			$proxyHost = isset($proxyURL['host']) ? $proxyURL['host'] : null;
+			$proxyPort = isset($proxyURL['port']) ? $proxyURL['port'] : 80;
+			if ($proxyHost) {
+				$crawler->setProxy($proxyHost, $proxyPort);
+			}
+		}
 
 		// Allow for resuming an incomplete crawl
 		if(file_exists($this->cacheDir.'crawlerid')) {

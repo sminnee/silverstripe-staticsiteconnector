@@ -92,6 +92,9 @@ class StaticSiteContentExtractor {
 		curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
+		if (isset($_ENV['HTTP_PROXY'])) {
+			curl_setopt($ch, $_ENV['HTTP_PROXY']);
+		}
 
 		/*
 		// Cookie behaviour - is this necessary?
