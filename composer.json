@@ -10,6 +10,7 @@
 	}],
 	"require": {
 		"silverstripe/framework": ">=3.0.0",
-		"silverstripe/external-content": "*"
+		"silverstripe/external-content": "*",
+		"cuab/phpcrawl": "*"
 	}
 }
