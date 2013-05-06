@@ -60,3 +60,21 @@ class StaticSiteMOSSURLProcessor implements StaticSiteUrlProcessor {
 		return $url;
 	}
 }
+
+/**
+ * Porcessor for MOSS URLs
+ */
+class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
+	function getName() {
+		return "Drop file extensions";
+	}
+
+	function getDescription() {
+		return "Drop file extension on URLs but otherwise leave them the same";
+	}
+
+	function processURL($url) {
+		$url = preg_replace('#\.[^.]*$#','',$url);
+		return $url;
+	}
+}
