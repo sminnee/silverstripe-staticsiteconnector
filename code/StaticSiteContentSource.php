@@ -127,7 +127,11 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 		foreach($this->ImportRules() as $rule) {
 			if(!isset($output[$rule->FieldName])) $output[$rule->FieldName] = array();
-			$output[$rule->FieldName][] = $rule->CSSSelector;
+			$ruleArray = array(
+				'selector' => $rule->CSSSelector,
+				'plaintext' => $rule->PlainText,
+			);
+			$output[$rule->FieldName][] = $ruleArray;
 		}
 
 		return $output;
@@ -198,14 +202,17 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	public static $db = array(
 		"FieldName" => "Varchar",
 		"CSSSelector" => "Text",
+		"PlainText" => "Boolean",
 	);
 	public static $summary_fields = array(
 		"FieldName",
 		"CSSSelector",
+		"PlainText",
 	);
 	public static $field_labels = array(
 		"FieldName" => "Field Name",
 		"CSSSelector" => "CSS Selector",
+		"PlainText" => "Convert to plain text",
 	);
 
 	public static $has_one = array(

@@ -38,13 +38,17 @@ class StaticSiteContentExtractor {
 		foreach($selectorMap as $field => $cssSelectors) {
 			if(!is_array($cssSelectors)) $cssSelectors = array($cssSelectors);
 
-			foreach($cssSelectors as $cssSelector) {
-				$content = trim($this->extractField($cssSelector));
+			foreach($cssSelectors as $extractionRule) {
+				if(!is_array($extractionRule)) $extractionRule = array('selector' => $extractionRule);
+
+				$content = trim($this->extractField($extractionRule['selector']));
 				if($content) {
-					$output[$field] = array(
-						'selector' => $cssSelector,
-						'content' => $content,
-					);
+					if(!empty($extractionRule['plaintext'])) {
+						$content = Convert::html2raw($content);
+					}
+
+					$output[$field] = $extractionRule;
+					$output[$field]['content'] = $content;
 					break;
 				}
 			}
