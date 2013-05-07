@@ -16,6 +16,8 @@ class StaticSiteUrlList {
 
 	protected $urlProcessor = null;
 
+	protected $extraCrawlURLs = null;
+
 	/**
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
@@ -47,6 +49,23 @@ class StaticSiteUrlList {
 	}
 
 	/**
+	 * Define additional crawl URLs as an array
+	 * Each of these URLs will be crawled in addition the base URL.
+	 * This can be helpful if pages are getting missed by the crawl
+	 */
+	function setExtraCrawlURls($extraCrawlURLs) {
+		$this->extraCrawlURLs = $extraCrawlURLs;
+	}
+
+	/**
+	 * Return the additional crawl URLs as an array
+	 */
+	function getExtraCrawlURLs() {
+		return $this->extraCrawlURLs;
+	}
+
+	/**
+	 * 
 	 * Set whether the crawl should be triggered on demand.
 	 * @param [type] $autoCrawl [description]
 	 */
@@ -375,4 +394,16 @@ class StaticSiteCrawler extends PHPCrawler {
 		$this->urlList->addAbsoluteURL($info->url);
 		$this->urlList->saveURLs();
 	}
+
+	protected function initCrawlerProcess() {
+		parent::initCrawlerProcess();
+
+		// Add additional URLs to crawl to the crawler's LinkCache
+		// NOTE: This is using an undocumented API
+		if($extraURLs = $this->urlList->getExtraCrawlURLs()) {
+			foreach($extraURLs as $extraURL) {
+    			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($extraURL));
+    		}
+    	}
+    }
 }

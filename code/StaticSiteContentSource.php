@@ -5,6 +5,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public static $db = array(
 		'BaseUrl' => 'Varchar(255)',
 		'UrlProcessor' => 'Varchar(255)',
+		'ExtraCrawlUrls' => 'Text',
 	);
 
 	public static $has_many = array(
@@ -80,6 +81,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 			
 		}
 
+		$fields->dataFieldByName("ExtraCrawlUrls")->Title = "Extra Crawl URLs<br><em>One per line</em>";
+
 		return $fields;
 	}
 
@@ -104,7 +107,11 @@ class StaticSiteContentSource extends ExternalContentSource {
 			if($processorClass = $this->UrlProcessor) {
 				$this->urlList->setUrlProcessor(new $processorClass);
 			}
-		}
+			if($this->ExtraCrawlUrls) {
+				$extraCrawlUrls = preg_split('/\s*/', trim($this->ExtraCrawlUrls));
+				$this->urlList->setExtraCrawlUrls($extraCrawlUrls);
+			}
+ 		}
 		return $this->urlList;
 	}
 
