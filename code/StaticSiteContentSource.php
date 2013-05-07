@@ -72,7 +72,15 @@ class StaticSiteContentSource extends ExternalContentSource {
 		));
 
 		if($this->urlList()->getSpiderStatus() == "Complete") {
-			$urlsAsUL = "<ul><li>" . implode("</li><li>", $this->urlList()->getURLs()) . "</li></ul>";
+			$urlsAsUL = "<ul>";
+			foreach($this->urlList()->getProcessedURLs() as $raw => $processed) {
+				if($raw == $processed) {
+					$urlsAsUL .= "<li>$processed</li>";
+				} else {
+					$urlsAsUL .= "<li>$processed <em>(was: $raw)</em></li>";
+				}
+			}
+			$urlsAsUL .= "</ul>";
 
 			$fields->addFieldToTab('Root.Crawl', 
 				new LiteralField('CrawlURLList', "<p>The following URLs have been identified:</p>" . $urlsAsUL)

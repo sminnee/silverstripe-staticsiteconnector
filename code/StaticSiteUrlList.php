@@ -99,10 +99,24 @@ class StaticSiteUrlList {
 		}
 	}
 
-	public function getURLs() {
+	/**
+	 * Return the raw URLs as an array
+	 * @return array
+	 */
+	public function getRawURLs() {
+		if($urls = $this->getProcessedURLs()) {
+			return array_keys($urls);
+		}
+	}
+
+	/**
+	 * Return a map of URLs crawled, with raw URLs as keys and processed URLs as values
+	 * @return array
+	 */
+	public function getProcessedURLs() {
 		if($this->hasCrawled() || $this->autoCrawl) {
 			if($this->urls === null) $this->loadUrls();
-			return array_keys($this->urls);
+			return $this->urls;
 		}
 	}
 
