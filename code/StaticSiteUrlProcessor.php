@@ -43,26 +43,7 @@ interface StaticSiteUrlProcessor {
 }
 
 /**
- * Porcessor for MOSS URLs
- */
-class StaticSiteMOSSURLProcessor implements StaticSiteUrlProcessor {
-	function getName() {
-		return "MOSS-style URLs";
-	}
-
-	function getDescription() {
-		return "Remove '/Pages/' from the URL, and drop extensions";
-	}
-
-	function processURL($url) {
-		$url = str_ireplace('/Pages/','/',$url);
-		$url = preg_replace('#\.[^.]*$#','',$url);
-		return $url;
-	}
-}
-
-/**
- * Porcessor for MOSS URLs
+ * Processor for MOSS URLs
  */
 class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	function getName() {
@@ -74,7 +55,31 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	}
 
 	function processURL($url) {
-		$url = preg_replace('#\.[^.]*$#','',$url);
-		return $url;
+		if(preg_match('/^([^?]*)\?(.*)$/', $url, $matches)) {
+			$url = $matches[1];
+			$qs = $matches[2];
+			$url = preg_replace('#\.[^.]*$#','',$url);
+			return "$url?$qs";
+		} else {
+			$url = preg_replace('#\.[^.]*$#','',$url);
+			return $url;
+		}
+	}
+}
+/**
+ * Processor for MOSS URLs
+ */
+class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
+	function getName() {
+		return "MOSS-style URLs";
+	}
+
+	function getDescription() {
+		return "Remove '/Pages/' from the URL, and drop extensions";
+	}
+
+	function processURL($url) {
+		$url = str_ireplace('/Pages/','/',$url);
+		return parent::processURL($url);
 	}
 }
