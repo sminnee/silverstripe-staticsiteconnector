@@ -12,7 +12,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		
 		$this->Name = $subURL;
 		$this->Title = $this->Name;
-		$this->AbsoluteURL = $this->source->BaseUrl . $this->externalId;
+		$this->AbsoluteURL = preg_replace('#/$#','', $this->source->BaseUrl) . $this->externalId;
 		$this->ProcessedURL = $processedURL;
 	} 	
 
