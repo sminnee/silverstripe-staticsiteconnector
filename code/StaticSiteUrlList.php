@@ -421,6 +421,14 @@ class StaticSiteCrawler extends PHPCrawler {
 		$this->urlList = $urlList;
 	}
 
+	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
+		// Don't parse 400/500 responses
+		if($header->http_status_code > 399) {
+			error_log($info->url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
+			return -1;
+		}
+	}
+
 	function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 		// Ignore errors and redirects
 		if($info->http_status_code < 200) return;
