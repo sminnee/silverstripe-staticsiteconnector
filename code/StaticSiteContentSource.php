@@ -116,7 +116,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 				$this->urlList->setUrlProcessor(new $processorClass);
 			}
 			if($this->ExtraCrawlUrls) {
-				$extraCrawlUrls = preg_split('/\s*/', trim($this->ExtraCrawlUrls));
+				$extraCrawlUrls = preg_split('/\s+/', trim($this->ExtraCrawlUrls));
 				$this->urlList->setExtraCrawlUrls($extraCrawlUrls);
 			}
  		}
