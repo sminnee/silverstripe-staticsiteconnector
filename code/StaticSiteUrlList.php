@@ -10,6 +10,11 @@ require_once('../vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
 class StaticSiteUrlList {
 	protected $baseURL, $cacheDir;
 
+	/**
+	 * Two element array: contains keys 'inferred' and 'regular':
+	 *  - 'regular' is an array mapping raw URLs to processed URLs
+	 *  - 'inferred' is an array of inferred URLs
+	 */
 	protected $urls = null;
 
 	protected $autoCrawl = false;
@@ -92,11 +97,15 @@ class StaticSiteUrlList {
 	 */
 	public function getNumURLs() {
 		if($this->urls) {
-			return sizeof($this->urls);
+			$urls = $this->urls;
+		// Don't rely on loadUrls() as it chokes on partially completed imports
 		} else if(file_exists($this->cacheDir . 'urls')) {
 			$urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
-			return sizeof($urls);
+		} else {
+			return null;
 		}
+
+		return sizeof($urls['regular']) + sizeof($urls['inferred']);
 	}
 
 	/**
@@ -116,7 +125,10 @@ class StaticSiteUrlList {
 	public function getProcessedURLs() {
 		if($this->hasCrawled() || $this->autoCrawl) {
 			if($this->urls === null) $this->loadUrls();
-			return $this->urls;
+			return array_merge(
+				$this->urls['regular'],
+				$this->urls['inferred'] ? array_combine($this->urls['inferred'], $this->urls['inferred']) : array()
+			);
 		}
 	}
 
@@ -132,8 +144,14 @@ class StaticSiteUrlList {
 	public function loadUrls() {
 		if($this->hasCrawled()) {
 			$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
+			// Clear out obsolete format
+			if(!isset($this->urls['regular']) || !isset($this->urls['inferred'])) {
+				$this->urls = array('regular' => array(), 'inferred' => array());
+			}
+
 		} else if($this->autoCrawl) {
 			$this->crawl();
+
 		} else {
 			throw new LogicException("Crawl hasn't been executed yet, and autoCrawl is set to false");
 		}
@@ -146,12 +164,16 @@ class StaticSiteUrlList {
 	public function reprocessUrls() {
 		if($this->urls === null) $this->loadUrls();
 
-		// Reprocess URLs, in case the processing has changed since the last crawl
-		foreach($this->urls as $url => $processed) {
-			$this->urls[$url] = $this->generateProcessedURL($url);
+		// Clear out all inferred URLs; these will be added
+		$this->urls['inferred'] = array();
 
-			// Trigger parent URL back-filling
-			$this->parentURL($url);
+		// Reprocess URLs, in case the processing has changed since the last crawl
+		foreach($this->urls['regular'] as $url => $oldProcessed) {
+			$processedURL = $this->generateProcessedURL($url);
+			$this->urls['regular'][$url] = $processedURL;
+
+			// Trigger parent URL back-filling on new processed URL
+			$this->parentProcessedURL($processedURL);
 		}
 
 		$this->saveURLs();
@@ -174,7 +196,7 @@ class StaticSiteUrlList {
 			if(file_exists($this->cacheDir . 'urls')) {
 				$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
 			} else {
-				$this->urls = array();
+				$this->urls = array('regular' => array(), 'inferred' => array());
 			}
 			
 			$crawlerID = file_get_contents($this->cacheDir.'crawlerid');
@@ -182,7 +204,7 @@ class StaticSiteUrlList {
 		} else {
 			$crawlerID = $crawler->getCrawlerId();
 			file_put_contents($this->cacheDir.'/crawlerid', $crawlerID);
-			$this->urls = array();
+			$this->urls = array('regular' => array(), 'inferred' => array());
 		}
 
 		$crawler->setURL($this->baseURL);
@@ -190,7 +212,8 @@ class StaticSiteUrlList {
 
 		unlink($this->cacheDir.'crawlerid');
 
-		ksort($this->urls);
+		ksort($this->urls['regular']);
+		ksort($this->urls['inferred']);
 		$this->saveURLs();
 	}
 
@@ -220,29 +243,29 @@ class StaticSiteUrlList {
 		if($this->urls === null) $this->loadUrls();
 
 		// Generate and save the processed URLs
-		$this->urls[$url] = $this->generateProcessedURL($url);
+		$this->urls['regular'][$url] = $this->generateProcessedURL($url);
 
 		// Trigger parent URL back-filling
-		$this->parentURL($url);
+		$this->parentProcessedURL($this->urls['regular'][$url]);
 	}
 
 
 	/**
-	 * Add a processed URL to the list.
+	 * Add an inferred URL to the list.
 	 * 
 	 * Since the unprocessed URL isn't available, we use the processed URL in its place.  This should be used with
 	 * some caution.
 	 * 
 	 * @param string $processedURL The processed URL to add.
 	 */
-	function addProcessedURL($processedURL) {
+	function addInferredURL($inferredURL) {
 		if($this->urls === null) $this->loadUrls();
 
 		// Generate and save the processed URLs
-		$this->urls[$processedURL] = $processedURL;
+		$this->urls['inferred'][$inferredURL] = $inferredURL;
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($processedURL);
+		$this->parentProcessedURL($inferredURL);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -264,7 +287,7 @@ class StaticSiteUrlList {
 			}
 		}
 
-		return isset($this->urls[$url]);
+		return isset($this->urls['regular'][$url]) || in_array($url, $this->urls['inferred']);
 	}
 
 	/**
@@ -276,21 +299,8 @@ class StaticSiteUrlList {
 	function hasProcessedURL($processedURL) {
 		if($this->urls === null) $this->loadUrls();
 
-		return (boolean)array_search($processedURL, $this->urls);
+		return in_array($processedURL, $this->urls['regular']) || in_array($processedURL, $this->urls['inferred']);
 
-	}
-
-	/**
-	 * Return the URL that is the parent of the given one.
-	 * @param  [type] $url A relative URL
-	 * @return [type]      [description]
-	 */
-	function parentURL($url) {
-		if($this->urls === null) $this->loadUrls();
-
-		$processedURL = $this->processedURL($url);
-
-		return $this->unprocessedURL($this->parentProcessedURL($processedURL));
 	}
 
 	/**
@@ -314,7 +324,7 @@ class StaticSiteUrlList {
 		$parentProcessedURL = substr($processedURL,0,$breakpoint);
 
 		// If an intermediary URL doesn't exist, create it
-		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addProcessedURL($parentProcessedURL);
+		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addInferredURL($parentProcessedURL);
 
 		return $parentProcessedURL;
 	}
@@ -329,8 +339,14 @@ class StaticSiteUrlList {
 	 * @return string               The original URL.
 	 */
 	function unprocessedURL($processedURL) {
-		$url = array_search($processedURL, $this->urls);
-		return $url ? $url : null;
+		if($url = array_search($processedURL, $this->urls['regular'])) {
+			return $url;
+		
+		} else if(in_array($processedURL, $this->urls['inferred'])) {
+			return $processedURL;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -341,10 +357,13 @@ class StaticSiteUrlList {
 	function processedURL($url) {
 		if($this->urls === null) $this->loadUrls();
 
-		if(isset($this->urls[$url])) {
+		if(isset($this->urls['regular'][$url])) {
 			// Generate it if missing
-			if($this->urls[$url] === true) $this->urls[$url] = $this->generateProcessedURL($url);
-			return $this->urls[$url];
+			if($this->urls['regular'][$url] === true) $this->urls['regular'][$url] = $this->generateProcessedURL($url);
+			return $this->urls['regular'][$url];
+		
+		} elseif(in_array($url, $this->urls['inferred'])) {
+			return $url;
 		}
 	}
 
@@ -378,9 +397,14 @@ class StaticSiteUrlList {
 		else $regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
 
 		$children = array();
-		foreach($this->urls as $potentialChild => $potentialProcessedChild) {
+		foreach($this->urls['regular'] as $potentialChild => $potentialProcessedChild) {
 			if(preg_match($regEx, $potentialProcessedChild)) {
 				$children[] = $potentialChild;
+			}
+		}
+		foreach($this->urls['inferred'] as $potentialProcessedChild) {
+			if(preg_match($regEx, $potentialProcessedChild)) {
+				$children[] = $potentialProcessedChild;
 			}
 		}
 
