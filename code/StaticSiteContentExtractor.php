@@ -80,6 +80,41 @@ class StaticSiteContentExtractor {
 		$response = $this->curlRequest($this->url, "GET");	
 		$this->content = $response->getBody();
 		$this->phpQuery = phpQuery::newDocument($this->content);
+
+		//// Make the URLs all absolute
+
+		// Useful parts of the URL
+		if(!preg_match('#^[a-z]+:#i', $this->url, $matches)) throw new Exception('Bad URL: ' . $this->url);
+		$protocol = $matches[0];
+
+		if(!preg_match('#^[a-z]+://[^/]+#i', $this->url, $matches)) throw new Exception('Bad URL: ' . $this->url);
+		$server = $matches[0];
+
+		$base = (substr($this->url,-1) == '/') ? $this->url : dirname($this->url) . '/';
+
+		$rewriter = new StaticSiteLinkRewriter(function($url) use($protocol, $server, $base) {
+			// Absolute
+			if(preg_match('#^[a-z]+://[^/]+#i', $url) || substr($url,0,7) == 'mailto:') return $url;
+
+			// Protocol relative
+			if(preg_match('#^//[^/]#i', $url)) return $protocol . $url;
+
+			// Server relative
+			if($url[0] == "/") return $server . $url;
+
+			// Relative
+			$result = $base . $url;
+			while(strpos($result, '/../') !== false) {
+				$result = preg_replace('#[^/]+/../#i','/', $result);
+			}
+			while(strpos($result, '/./') !== false) {
+				$result = str_replace('/./','/', $result);
+			}
+			return $result;
+
+		});
+
+		$rewriter->rewriteInPQ($this->phpQuery);
 	}
 
 	/**
