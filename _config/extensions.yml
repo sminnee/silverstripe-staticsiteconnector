@@ -1,3 +1,9 @@
 ExternalContentAdmin:
   extensions:
     - StaticSiteExternalContentAdminExtension
+SiteTree:
+  extensions:
+    - StaticSiteDataExtension
+File:
+  extensions:
+    - StaticSiteDataExtension

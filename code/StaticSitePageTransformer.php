@@ -24,6 +24,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		
 		// Create a page with the appropriate fields
 		$page = new Page;
+		$page->StaticSiteContentSourceID = $item->getSource()->ID;
+		$page->StaticSiteURL = $item->AbsoluteURL;
+
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 
 		foreach($contentFields as $k => $v) {

@@ -9,7 +9,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 	);
 
 	public static $has_many = array(
-		"ImportRules" => "StaticSiteContentSource_ImportRule"
+		"ImportRules" => "StaticSiteContentSource_ImportRule",
+		"Pages" => "SiteTree",
 	);
 
 

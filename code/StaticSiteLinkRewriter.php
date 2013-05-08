@@ -1,5 +1,7 @@
 <?php
 
+require(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
+
 /**
  * Helper class for rewriting links using phpQuery.
  */
@@ -51,6 +53,17 @@ class StaticSiteLinkRewriter {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Rewrite URLs in the given content snippet.  Returns the updated content.
+	 * 
+	 * @param  phpQuery $pq The content containing the links to rewrite
+	 */
+	function rewriteInContent($content) {
+		$pq = phpQuery::newDocument($content);
+		$this->rewriteInPQ($pq);
+		return $pq->html();
 	}
 
 }
