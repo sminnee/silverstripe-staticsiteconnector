@@ -1,6 +1,6 @@
 <?php
 
-require(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
+require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
 
 /**
  * This tool uses a combination of cURL and phpQuery to extract content from a URL.

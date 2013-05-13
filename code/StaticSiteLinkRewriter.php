@@ -1,6 +1,6 @@
 <?php
 
-require(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
+require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
 
 /**
  * Helper class for rewriting links using phpQuery.
