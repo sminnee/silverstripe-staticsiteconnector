@@ -17,7 +17,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		// Default value for URL segment
 		if(empty($contentFields['URLSegment'])) {
 			$urlSegment = str_replace('/','', $item->Name);
-			$urlSegment = preg_replace('/\.[^.]*$','',$urlSegment);
+			$urlSegment = preg_replace('/\.[^.]*$/','',$urlSegment);
 			$urlSegment = str_replace('.','-', $item->Name);
 			$contentFields['URLSegment'] = array('content' => $urlSegment);
 		}
