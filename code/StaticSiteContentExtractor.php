@@ -41,7 +41,7 @@ class StaticSiteContentExtractor {
 			foreach($cssSelectors as $extractionRule) {
 				if(!is_array($extractionRule)) $extractionRule = array('selector' => $extractionRule);
 
-				$content = trim($this->extractField($extractionRule['selector']));
+				$content = trim($this->extractField($extractionRule['selector'], $extractionRule['attribute']));
 				if($content) {
 					if(!empty($extractionRule['plaintext'])) {
 						$content = Convert::html2raw($content);
@@ -62,10 +62,12 @@ class StaticSiteContentExtractor {
 	 * @param  string $cssSelector The selector for which to extract content.
 	 * @return string              The content for that selector
 	 */
-	public function extractField($cssSelector) {
+	public function extractField($cssSelector, $attribute = null) {
 		if(!$this->phpQuery) $this->fetchContent();
 
-		return $this->phpQuery[$cssSelector]->html();
+		$element = $this->phpQuery[$cssSelector];
+		if($attribute) return $element->attr($attribute);
+		else return $element->html();
 	}
 
 	public function getContent() {
