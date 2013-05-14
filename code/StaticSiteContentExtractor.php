@@ -9,13 +9,15 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  * Given a set of fieldnames and CSS selectors corresponding to them, a map of content
  * fields will be returned.
  */
-class StaticSiteContentExtractor {
+class StaticSiteContentExtractor extends Object {
 
 	protected $url;
 
 	protected $content;
 
 	protected $phpQuery;
+
+	private static $log_file = null;
 
 	/**
 	 * Create a StaticSiteContentExtractor for a single URL/.
@@ -49,6 +51,7 @@ class StaticSiteContentExtractor {
 
 					$output[$field] = $extractionRule;
 					$output[$field]['content'] = $content;
+					$this->log("Found value for $field");
 					break;
 				}
 			}
@@ -79,6 +82,8 @@ class StaticSiteContentExtractor {
 	 * @return void
 	 */
 	protected function fetchContent() {
+		$this->log('Fetching ' . $this->url);
+
 		$response = $this->curlRequest($this->url, "GET");	
 		$this->content = $response->getBody();
 		$this->phpQuery = phpQuery::newDocument($this->content);
@@ -194,5 +199,13 @@ class StaticSiteContentExtractor {
 		curl_close($ch);
 
 		return $response;
+	}
+
+	protected function log($message) {
+		if($logFile = Config::inst()->get('StaticSiteContentExtractor','log_file')) {
+			if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
+				error_log($message . "\n", 3, $logFile);
+			}
+		}
 	}
 }
