@@ -280,14 +280,28 @@ class StaticSiteUrlList {
 
 		// Try and relativise an absolute URL
 		if($url[0] != '/') {
-			if(substr($url,0,strlen($this->baseURL)) == $this->baseURL) {
-				$url = substr($url, strlen($this->baseURL));
+			$simpifiedURL = $this->simplifyURL($url);
+			$simpifiedBase = $this->simplifyURL($this->baseURL);
+
+			if($this->substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+				$url = substr($simpifiedURL, strlen($simpifiedBase));
 			} else {
 				throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 			}
 		}
 
 		return isset($this->urls['regular'][$url]) || in_array($url, $this->urls['inferred']);
+	}
+
+	/**
+	 * Simplify a URL.
+	 * Ignores https/http differences and "www." / non differences.
+	 * 
+	 * @param  string $url
+	 * @return string
+	 */
+	protected function simplifyURL($url) {
+		return preg_replace('#^https?://(www\.)?#i','http://www.', $url);
 	}
 
 	/**
