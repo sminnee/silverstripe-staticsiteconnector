@@ -99,6 +99,8 @@ class StaticSiteContentExtractor extends Object {
 
 		$base = (substr($this->url,-1) == '/') ? $this->url : dirname($this->url) . '/';
 
+		$this->log('Rewriting links in content');
+
 		$rewriter = new StaticSiteLinkRewriter(function($url) use($protocol, $server, $base) {
 			// Absolute
 			if(preg_match('#^[a-z]+://[^/]+#i', $url) || substr($url,0,7) == 'mailto:') return $url;
@@ -112,7 +114,7 @@ class StaticSiteContentExtractor extends Object {
 			// Relative
 			$result = $base . $url;
 			while(strpos($result, '/../') !== false) {
-				$result = preg_replace('#[^/]+/../#i','/', $result);
+				$result = preg_replace('#[^/]+/+../+#i','/', $result);
 			}
 			while(strpos($result, '/./') !== false) {
 				$result = str_replace('/./','/', $result);
