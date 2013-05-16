@@ -179,12 +179,12 @@ class StaticSiteUrlList {
 		$this->saveURLs();
 	}
 
-	public function crawl() {
+	public function crawl($limit=false) {
 		increase_time_limit_to(3600);
 
 		if(!is_dir($this->cacheDir)) mkdir($this->cacheDir);
 
-		$crawler = new StaticSiteCrawler($this);
+		$crawler = new StaticSiteCrawler($this, $limit);
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
@@ -433,9 +433,12 @@ class StaticSiteUrlList {
 class StaticSiteCrawler extends PHPCrawler {
 	protected $urlList;
 
-	function __construct(StaticSiteUrlList $urlList) {
+	function __construct(StaticSiteUrlList $urlList, $limit=false) {
 		parent::__construct();
 		$this->urlList = $urlList;
+		if($limit) {
+			$this->setPageLimit($limit);
+		}
 	}
 
 	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {

@@ -128,9 +128,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * Crawl the target site
 	 * @return [type] [description]
 	 */
-	public function crawl() {
+	public function crawl($limit=false) {
 		if(!$this->BaseUrl) throw new LogicException("Can't crawl a site until Base URL is set.");
-		return $this->urlList()->crawl();
+		return $this->urlList()->crawl($limit);
 	}
 
 	public function getSchemaForURL($absoluteURL) {
