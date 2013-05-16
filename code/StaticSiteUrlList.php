@@ -441,7 +441,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
 		// Don't parse 400/500 responses
 		if($header->http_status_code > 399) {
-			error_log($info->url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
+			error_log($header->source_url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
 			return -1;
 		}
 	}
