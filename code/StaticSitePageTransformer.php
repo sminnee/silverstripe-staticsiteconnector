@@ -23,6 +23,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 		
 		// Create a page with the appropriate fields
+		// TO DO: create schema-specific data type
 		$page = new Page;
 		$page->StaticSiteContentSourceID = $item->getSource()->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
@@ -46,7 +47,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function getContentFieldsAndSelectors($item) {
 		// Get the import rules from the content source
-		$importRules = $item->getSource()->getImportRules();
+		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL);
+		if(!$importSchema) {
+			return null;
+			throw new LogicException("Couldn't find an import schema for $item->AbsoluteURL");
+		}
+		$importRules = $importSchema->getImportRules();
 
  		// Extract from the remote page based on those rules
 		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL);

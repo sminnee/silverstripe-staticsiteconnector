@@ -9,7 +9,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	);
 
 	public static $has_many = array(
-		"ImportRules" => "StaticSiteContentSource_ImportRule",
+		"Schemas" => "StaticSiteContentSource_ImportSchema",
 		"Pages" => "SiteTree",
 	);
 
@@ -17,14 +17,14 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getCMSFields() {
 		$fields = parent::getCMSFields();
 
-		$importRules = $fields->dataFieldByName('ImportRules');
+		$importRules = $fields->dataFieldByName('Schemas');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
 		$addNewButton = new GridFieldAddNewButton('after');
 		$addNewButton->setButtonName("Add rule");
 		$importRules->getConfig()->addComponent($addNewButton);
 
-		$fields->removeFieldFromTab("Root", "ImportRules");
+		$fields->removeFieldFromTab("Root", "Schemas");
 		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Each import rule will import content for a field"
 			. " by getting the results of a CSS selector.  If more than one rule exists for a field, then they will be"
 			. " processed in the order they appear.  The first rule that returns content will be the one used.</p>"));
@@ -133,26 +133,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return $this->urlList()->crawl();
 	}
 
-	/**
-	 * Return the import rules in a format suitable for configuring StaticSiteContentExtractor.
-	 * 
-	 * @return array A map of field name => array(CSS selector, CSS selector, ...)
-	 */
-	public function getImportRules() {
-		$output = array();
-
-		foreach($this->ImportRules() as $rule) {
-			if(!isset($output[$rule->FieldName])) $output[$rule->FieldName] = array();
-			$ruleArray = array(
-				'selector' => $rule->CSSSelector,
-				'attribute' => $rule->Attribute,
-				'plaintext' => $rule->PlainText,
-			);
-			$output[$rule->FieldName][] = $ruleArray;
-		}
-
-		return $output;
-	}
+	public function getSchemaForURL($absoluteURL) {
+		// TODO: Return the right schema
+		return $this->Schemas()->First();
+	} 
 
 	/**
 	 * Returns a StaticSiteContentItem for the given URL.
@@ -215,6 +199,82 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 }
 
+/**
+ * A collection of ImportRules that apply to some or all of the pages being imported.
+ */
+class StaticSiteContentSource_ImportSchema extends DataObject {
+	public static $db = array(
+		"DataType" => "Varchar", // classname
+		"Order" => "Int",
+		"AppliesTo" => "Varchar(255)", // regex
+	);
+	public static $summary_fields = array(
+		"AppliesTo",
+		"DataType",
+		"Order",
+	);
+	public static $field_labels = array(
+		"AppliesTo" => "URLs applied to",
+		"DataType" => "Data type",
+		"Order" => "Priority",
+	);
+
+	public static $default_sort = "Order";
+
+	public static $has_one = array(
+		"ContentSource" => "StaticSiteContentSource",
+	);
+
+	public static $has_many = array(
+		"ImportRules" => "StaticSiteContentSource_ImportRule",
+	);
+
+	public function requireDefaultRecords() {
+		foreach(StaticSiteContentSource::get() as $source) {
+			if(!$source->Schemas()->count()) {
+				Debug::message("Making a schema for $source->ID");
+				$defaultSchema = new StaticSiteContentSource_ImportSchema;
+				$defaultSchema->Order = 1000000;
+				$defaultSchema->AppliesTo = ".*";
+				$defaultSchema->DataType = "Page";
+				$defaultSchema->ContentSourceID = $source->ID;
+				$defaultSchema->write();
+
+
+				foreach(StaticSiteContentSource_ImportRule::get()->filter(array('SchemaID' => 0)) as $rule) {
+					$rule->SchemaID = $defaultSchema->ID;
+					$rule->write();
+				}
+			}
+		}
+	}
+
+	/**
+	 * Return the import rules in a format suitable for configuring StaticSiteContentExtractor.
+	 * 
+	 * @return array A map of field name => array(CSS selector, CSS selector, ...)
+	 */
+	public function getImportRules() {
+		$output = array();
+
+		foreach($this->ImportRules() as $rule) {
+			if(!isset($output[$rule->FieldName])) $output[$rule->FieldName] = array();
+			$ruleArray = array(
+				'selector' => $rule->CSSSelector,
+				'attribute' => $rule->Attribute,
+				'plaintext' => $rule->PlainText,
+			);
+			$output[$rule->FieldName][] = $ruleArray;
+		}
+
+		return $output;
+	}
+
+}
+
+/**
+ * A single import rule that forms part of an ImportSchema
+ */
 class StaticSiteContentSource_ImportRule extends DataObject {
 	public static $db = array(
 		"FieldName" => "Varchar",
@@ -236,7 +296,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	);
 
 	public static $has_one = array(
-		"ContentSource" => "StaticSiteContentSource",
+		"Schema" => "StaticSiteContentSource_ImportSchema",
 	);
 
 	function getCMSFields() {
