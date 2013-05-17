@@ -24,6 +24,13 @@ class StaticSiteUrlList {
 	protected $extraCrawlURLs = null;
 
 	/**
+	 * A list of regular expression patterns to exclude from scraping
+	 *
+	 * @var array
+	 */
+	protected $excludePatterns = array();
+
+	/**
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
 	 * @param string $cacheDir The local path to cache data into
@@ -67,6 +74,26 @@ class StaticSiteUrlList {
 	 */
 	function getExtraCrawlURLs() {
 		return $this->extraCrawlURLs;
+	}
+
+	/**
+	 * Set an array of regular expression patterns that should be excluded from
+	 * being added to the url list
+	 *
+	 * @param array $excludePatterns
+	 */
+	public function setExcludePatterns(array $excludePatterns) {
+		$this->excludePatterns = $excludePatterns;
+	}
+
+	/**
+	 * Get an array of regular expression patterns that should not be added to
+	 * the url list
+	 *
+	 * @return array
+	 */
+	public function getExcludePatterns() {
+		return $this->excludePatterns;
 	}
 
 	/**
@@ -471,5 +498,16 @@ class StaticSiteCrawler extends PHPCrawler {
     			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($extraURL));
     		}
     	}
+
+		// Prevent URLs that matches the exclude patterns to be fetched
+		if($excludePatterns = $this->urlList->getExcludePatterns()) {
+			foreach($excludePatterns as $pattern) {
+				$validRegExp = $this->addURLFilterRule('|'.str_replace('|', '\|', $pattern).'|');
+
+				if(!$validRegExp) {
+					throw new InvalidArgumentException('Exclude url pattern "'.$pattern.'" is not a valid regular expression.');
+				}
+			}
+		}
     }
 }
