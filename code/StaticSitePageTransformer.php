@@ -21,10 +21,18 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$urlSegment = str_replace('.','-', $item->Name);
 			$contentFields['URLSegment'] = array('content' => $urlSegment);
 		}
-		
+
+		$schema = $item->getSource()->getSchemaForURL($item->AbsoluteURL);
+
+		$pageType = $schema->DataType;
+
+		if(!$pageType) {
+			throw new Exception('Pagetype for migration schema is empty!');
+		}
+
 		// Create a page with the appropriate fields
 		// TO DO: create schema-specific data type
-		$page = new Page;
+		$page = new $pageType(array());
 		$page->StaticSiteContentSourceID = $item->getSource()->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
 
