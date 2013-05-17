@@ -6,6 +6,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		'BaseUrl' => 'Varchar(255)',
 		'UrlProcessor' => 'Varchar(255)',
 		'ExtraCrawlUrls' => 'Text',
+		'UrlExcludePatterns' => 'Text',
 	);
 
 	public static $has_many = array(
@@ -90,7 +91,12 @@ class StaticSiteContentSource extends ExternalContentSource {
 			
 		}
 
-		$fields->dataFieldByName("ExtraCrawlUrls")->Title = "Extra Crawl URLs<br><em>One per line</em>";
+		$fields->dataFieldByName("ExtraCrawlUrls")
+			->setDescription("Add URLs that are not reachable through content scraping, eg: '/about/team'. One per line")
+			->setTitle('Additional URLs');
+		$fields->dataFieldByName("UrlExcludePatterns")
+			->setDescription("URLs that should be excluded (support regular expression). eg: '/about/.*'. One per URL")
+			->setTitle('Excluded URLs');
 
 		return $fields;
 	}
@@ -120,6 +126,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 				$extraCrawlUrls = preg_split('/\s+/', trim($this->ExtraCrawlUrls));
 				$this->urlList->setExtraCrawlUrls($extraCrawlUrls);
 			}
+			if($this->UrlExcludePatterns) {
+				$urlExcludePatterns = preg_split('/\s+/', trim($this->UrlExcludePatterns));
+				$this->urlList->setExcludePatterns($urlExcludePatterns);
+			}
  		}
 		return $this->urlList;
 	}
@@ -128,9 +138,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * Crawl the target site
 	 * @return [type] [description]
 	 */
-	public function crawl() {
+	public function crawl($limit=false) {
 		if(!$this->BaseUrl) throw new LogicException("Can't crawl a site until Base URL is set.");
-		return $this->urlList()->crawl();
+		return $this->urlList()->crawl($limit);
 	}
 
 	public function getSchemaForURL($absoluteURL) {

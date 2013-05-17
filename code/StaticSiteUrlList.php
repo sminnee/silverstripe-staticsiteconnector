@@ -24,6 +24,13 @@ class StaticSiteUrlList {
 	protected $extraCrawlURLs = null;
 
 	/**
+	 * A list of regular expression patterns to exclude from scraping
+	 *
+	 * @var array
+	 */
+	protected $excludePatterns = array();
+
+	/**
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
 	 * @param string $cacheDir The local path to cache data into
@@ -67,6 +74,26 @@ class StaticSiteUrlList {
 	 */
 	function getExtraCrawlURLs() {
 		return $this->extraCrawlURLs;
+	}
+
+	/**
+	 * Set an array of regular expression patterns that should be excluded from
+	 * being added to the url list
+	 *
+	 * @param array $excludePatterns
+	 */
+	public function setExcludePatterns(array $excludePatterns) {
+		$this->excludePatterns = $excludePatterns;
+	}
+
+	/**
+	 * Get an array of regular expression patterns that should not be added to
+	 * the url list
+	 *
+	 * @return array
+	 */
+	public function getExcludePatterns() {
+		return $this->excludePatterns;
 	}
 
 	/**
@@ -179,12 +206,12 @@ class StaticSiteUrlList {
 		$this->saveURLs();
 	}
 
-	public function crawl() {
+	public function crawl($limit=false) {
 		increase_time_limit_to(3600);
 
 		if(!is_dir($this->cacheDir)) mkdir($this->cacheDir);
 
-		$crawler = new StaticSiteCrawler($this);
+		$crawler = new StaticSiteCrawler($this, $limit);
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
@@ -230,7 +257,10 @@ class StaticSiteUrlList {
 	 * @param string $url The absolute URL
 	 */
 	function addAbsoluteURL($url) {
-		if(substr($url,0,strlen($this->baseURL)) == $this->baseURL) {
+		$simpifiedURL = $this->simplifyURL($url);
+		$simpifiedBase = $this->simplifyURL($this->baseURL);
+
+		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
 		} else {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
@@ -283,7 +313,7 @@ class StaticSiteUrlList {
 			$simpifiedURL = $this->simplifyURL($url);
 			$simpifiedBase = $this->simplifyURL($this->baseURL);
 
-			if($this->substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+			if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 				$url = substr($simpifiedURL, strlen($simpifiedBase));
 			} else {
 				throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
@@ -430,15 +460,18 @@ class StaticSiteUrlList {
 class StaticSiteCrawler extends PHPCrawler {
 	protected $urlList;
 
-	function __construct(StaticSiteUrlList $urlList) {
+	function __construct(StaticSiteUrlList $urlList, $limit=false) {
 		parent::__construct();
 		$this->urlList = $urlList;
+		if($limit) {
+			$this->setPageLimit($limit);
+		}
 	}
 
 	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
 		// Don't parse 400/500 responses
 		if($header->http_status_code > 399) {
-			error_log($info->url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
+			error_log($header->source_url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
 			return -1;
 		}
 	}
@@ -465,5 +498,16 @@ class StaticSiteCrawler extends PHPCrawler {
     			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($extraURL));
     		}
     	}
+
+		// Prevent URLs that matches the exclude patterns to be fetched
+		if($excludePatterns = $this->urlList->getExcludePatterns()) {
+			foreach($excludePatterns as $pattern) {
+				$validRegExp = $this->addURLFilterRule('|'.str_replace('|', '\|', $pattern).'|');
+
+				if(!$validRegExp) {
+					throw new InvalidArgumentException('Exclude url pattern "'.$pattern.'" is not a valid regular expression.');
+				}
+			}
+		}
     }
 }
