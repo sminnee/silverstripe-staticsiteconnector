@@ -230,7 +230,10 @@ class StaticSiteUrlList {
 	 * @param string $url The absolute URL
 	 */
 	function addAbsoluteURL($url) {
-		if(substr($url,0,strlen($this->baseURL)) == $this->baseURL) {
+		$simpifiedURL = $this->simplifyURL($url);
+		$simpifiedBase = $this->simplifyURL($this->baseURL);
+
+		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
 		} else {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
@@ -283,7 +286,7 @@ class StaticSiteUrlList {
 			$simpifiedURL = $this->simplifyURL($url);
 			$simpifiedBase = $this->simplifyURL($this->baseURL);
 
-			if($this->substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+			if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 				$url = substr($simpifiedURL, strlen($simpifiedBase));
 			} else {
 				throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
