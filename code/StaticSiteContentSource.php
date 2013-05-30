@@ -253,14 +253,16 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
 
 		$importRules = $fields->dataFieldByName('ImportRules');
-		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
-		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
-		$addNewButton = new GridFieldAddNewButton('after');
-		$addNewButton->setButtonName("Add Rule");
-		$importRules->getConfig()->addComponent($addNewButton);
+		if($importRules) {
+			$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
+			$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
+			$addNewButton = new GridFieldAddNewButton('after');
+			$addNewButton->setButtonName("Add Rule");
+			$importRules->getConfig()->addComponent($addNewButton);
 
-		$fields->removeFieldFromTab('Root', 'ImportRules');
-		$fields->addFieldToTab('Root.Main', $importRules);
+			$fields->removeFieldFromTab('Root', 'ImportRules');
+			$fields->addFieldToTab('Root.Main', $importRules);
+		}
 
 		return $fields;
 	}
