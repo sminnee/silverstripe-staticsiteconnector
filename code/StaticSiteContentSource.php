@@ -75,7 +75,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 		if($this->urlList()->getSpiderStatus() == "Complete") {
 			$urlsAsUL = "<ul>";
-			foreach($this->urlList()->getProcessedURLs() as $raw => $processed) {
+			foreach(array_unique($this->urlList()->getProcessedURLs()) as $raw => $processed) {
 				if($raw == $processed) {
 					$urlsAsUL .= "<li>$processed</li>";
 				} else {

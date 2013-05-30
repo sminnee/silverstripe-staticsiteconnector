@@ -132,7 +132,7 @@ class StaticSiteUrlList {
 			return null;
 		}
 
-		return sizeof($urls['regular']) + sizeof($urls['inferred']);
+		return sizeof(array_unique($urls['regular'])) + sizeof($urls['inferred']);
 	}
 
 	/**
@@ -450,16 +450,20 @@ class StaticSiteUrlList {
 		$children = array();
 		foreach($this->urls['regular'] as $potentialChild => $potentialProcessedChild) {
 			if(preg_match($regEx, $potentialProcessedChild)) {
-				$children[] = $potentialChild;
+				if(!isset($children[$potentialProcessedChild])) {
+					$children[$potentialProcessedChild] = $potentialChild;
+				}
 			}
 		}
 		foreach($this->urls['inferred'] as $potentialProcessedChild) {
 			if(preg_match($regEx, $potentialProcessedChild)) {
-				$children[] = $potentialProcessedChild;
+				if(!isset($children[$potentialProcessedChild])) {
+					$children[$potentialProcessedChild] = $potentialProcessedChild;
+				}
 			}
 		}
 
-		return $children;
+		return array_values($children);
 	}
 
 }
