@@ -47,20 +47,22 @@ interface StaticSiteUrlProcessor {
  */
 class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	function getName() {
-		return "Drop file extensions";
+		return "Simple clean-up (recommended)";
 	}
 
 	function getDescription() {
-		return "Drop file extension on URLs but otherwise leave them the same";
+		return "Drop file extensions and trailing slashes on URLs but otherwise leave them the same";
 	}
 
 	function processURL($url) {
 		if(preg_match('/^([^?]*)\?(.*)$/', $url, $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
+			if($url != '/') $url = preg_replace('#/$#','',$url);
 			$url = preg_replace('#\.[^.]*$#','',$url);
 			return "$url?$qs";
 		} else {
+			if($url != '/') $url = preg_replace('#/$#','',$url);
 			$url = preg_replace('#\.[^.]*$#','',$url);
 			return $url;
 		}
