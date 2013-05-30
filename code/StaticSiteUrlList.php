@@ -206,12 +206,18 @@ class StaticSiteUrlList {
 		$this->saveURLs();
 	}
 
-	public function crawl($limit=false) {
+	/**
+	 *
+	 * @param int $limit
+	 * @param bool $verbose
+	 * @return \StaticSiteCrawler
+	 */
+	public function crawl($limit=false, $verbose=false) {
 		increase_time_limit_to(3600);
 
 		if(!is_dir($this->cacheDir)) mkdir($this->cacheDir);
 
-		$crawler = new StaticSiteCrawler($this, $limit);
+		$crawler = new StaticSiteCrawler($this, $limit, $verbose);
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
@@ -242,6 +248,7 @@ class StaticSiteUrlList {
 		ksort($this->urls['regular']);
 		ksort($this->urls['inferred']);
 		$this->saveURLs();
+		return $crawler;
 	}
 
 	/**
@@ -460,9 +467,16 @@ class StaticSiteUrlList {
 class StaticSiteCrawler extends PHPCrawler {
 	protected $urlList;
 
-	function __construct(StaticSiteUrlList $urlList, $limit=false) {
+	/**
+	 *
+	 * @var bool
+	 */
+	protected $verbose = false;
+
+	function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
 		parent::__construct();
 		$this->urlList = $urlList;
+		$this->verbose = $verbose;
 		if($limit) {
 			$this->setPageLimit($limit);
 		}
@@ -471,7 +485,11 @@ class StaticSiteCrawler extends PHPCrawler {
 	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
 		// Don't parse 400/500 responses
 		if($header->http_status_code > 399) {
-			error_log($header->source_url . " - blocked as it's $header->http_status_code \n", 3, '/tmp/urls');
+			$message = $header->source_url . " - skipped as it's $header->http_status_code".PHP_EOL;
+			error_log($message, 3, '/tmp/urls');
+			if($this->verbose) {
+				echo "[!] ".$message;
+			}
 			return -1;
 		}
 	}
@@ -485,6 +503,9 @@ class StaticSiteCrawler extends PHPCrawler {
 		if(!preg_match('#/x?html#', $info->content_type)) return;
 
 		$this->urlList->addAbsoluteURL($info->url);
+		if($this->verbose) {
+			echo "[+] ".$info->url.PHP_EOL;
+		}
 		$this->urlList->saveURLs();
 	}
 
