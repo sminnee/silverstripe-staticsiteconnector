@@ -52,6 +52,9 @@ class StaticSiteContentItem extends ExternalContentItem {
 		$fields->addFieldToTab("Root.Preview", $urlField);
 
 		$content = $t->getContentFieldsAndSelectors($this);
+		if(count($content) === 0) {
+			return $fields;
+		}
 		foreach($content as $k => $v) {
 			$fields->addFieldToTab("Root.Preview", 
 				new ReadonlyField("Preview$k", "$k<br>\n<em>" . $v['selector'] . "</em>", $v['content']));
