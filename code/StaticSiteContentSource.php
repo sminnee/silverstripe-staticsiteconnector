@@ -299,6 +299,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 				'selector' => $rule->CSSSelector,
 				'attribute' => $rule->Attribute,
 				'plaintext' => $rule->PlainText,
+				'excludeselectors' => preg_split('/\s+/', trim($rule->ExcludeCSSSelector)),
 			);
 			$output[$rule->FieldName][] = $ruleArray;
 		}
@@ -315,6 +316,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	public static $db = array(
 		"FieldName" => "Varchar",
 		"CSSSelector" => "Text",
+		"ExcludeCSSSelector" => "Text",
 		"Attribute" => "Varchar",
 		"PlainText" => "Boolean",
 	);

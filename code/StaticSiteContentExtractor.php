@@ -41,9 +41,22 @@ class StaticSiteContentExtractor extends Object {
 			if(!is_array($cssSelectors)) $cssSelectors = array($cssSelectors);
 
 			foreach($cssSelectors as $extractionRule) {
-				if(!is_array($extractionRule)) $extractionRule = array('selector' => $extractionRule);
+				if(!is_array($extractionRule)) {
+					$extractionRule = array('selector' => $extractionRule);
+				}
 
 				$content = trim($this->extractField($extractionRule['selector'], $extractionRule['attribute']));
+
+				if($extractionRule['excludeselectors']) {
+					foreach($extractionRule['excludeselectors'] as $excludeSelector) {
+						$element = $this->phpQuery[$extractionRule['selector'].' '.$excludeSelector];
+						if($element) {
+							$remove = $element->htmlOuter();
+							$content = str_replace($remove, '', $content);
+						}
+					}
+				}
+
 				if($content) {
 					if(!empty($extractionRule['plaintext'])) {
 						$content = Convert::html2raw($content);
@@ -140,16 +153,6 @@ class StaticSiteContentExtractor extends Object {
 		curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
-
-		/*
-		// Cookie behaviour - is this necessary?
-		$ckfile = "/tmp/cookie";
-		curl_setopt ($ch, CURLOPT_COOKIEJAR, $ckfile); 
-		if(file_exists($ckfile)) {
-			curl_setopt ($ch, CURLOPT_COOKIEFILE, $ckfile); 
-		}
-		 */
-
 		curl_setopt($ch, CURLOPT_HEADER, 1);
 
 		if($headers) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
