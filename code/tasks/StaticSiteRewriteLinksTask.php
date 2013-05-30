@@ -16,13 +16,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$contentSource = StaticSiteContentSource::get()->byID($id);
 		$pages = $contentSource->Pages();
 
-		// Get fields to process
-		$fields = array();
-		foreach($contentSource->ImportRules() as $rule) {
-			if(!$rule->PlainText) $fields[] = $rule->FieldName;
-		} 
-		$fields = array_unique($fields);
-
 		echo "<p>Looking through " . $pages->Count() . " pages</p>\n";
 
 		// Set up rewriter
@@ -50,6 +43,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Perform rewriting
 		$changedFields = 0;
 		foreach($pages as $page) {
+
+			$schema = $contentSource->getSchemaForURL($page->URLSegment);
+			// Get fields to process
+			$fields = array();
+			foreach($schema->ImportRules() as $rule) {
+				if(!$rule->PlainText) $fields[] = $rule->FieldName;
+			}
+			$fields = array_unique($fields);
+			
+
 			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
 				if($newContent != $page->$field) {
@@ -57,16 +60,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 					$changedFields++;
 
 					echo "<p>Changed $field on $page->Title (#$page->ID).</p>";
-					Debug::message($page->$field);
-					Debug::message($newContent);
 					$page->$field = $newContent;
 				}
 			}
 
 			$page->write();
-
 		}
-		echo "<p>DONE. Amended $changedFields content fields.</p>\n";
+		echo "<p>DONE. Amended $changedFields content fields.</p>".PHP_EOL;
 
 	} 
 }
