@@ -22,15 +22,15 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
 		$addNewButton = new GridFieldAddNewButton('after');
-		$addNewButton->setButtonName("Add rule");
+		$addNewButton->setButtonName("Add schema");
 		$importRules->getConfig()->addComponent($addNewButton);
 
 		$fields->removeFieldFromTab("Root", "Schemas");
+		$fields->removeFieldFromTab("Root", "Pages");
 		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Each import rule will import content for a field"
 			. " by getting the results of a CSS selector.  If more than one rule exists for a field, then they will be"
 			. " processed in the order they appear.  The first rule that returns content will be the one used.</p>"));
 		$fields->addFieldToTab("Root.Main", $importRules);
-
 
 		$processingOptions = array("" => "No pre-processing");
 		foreach(ClassInfo::implementorsOf('StaticSiteUrlProcessor') as $processor) {
@@ -239,6 +239,36 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		"ImportRules" => "StaticSiteContentSource_ImportRule",
 	);
 
+	public function getTitle() {
+		return $this->DataType.' ('.$this->AppliesTo.')';
+	}
+
+	/**
+	 * 
+	 * @return FieldList
+	 */
+	public function getCMSFields() {
+		$fields = parent::getCMSFields();
+		$fields->removeFieldFromTab('Root.Main', 'DataType');
+		$fields->removeByName('ContentSourceID');
+		$dataObjects = ClassInfo::subclassesFor('DataObject');
+		array_shift($dataObjects);
+		natcasesort($dataObjects);
+		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
+
+		$importRules = $fields->dataFieldByName('ImportRules');
+		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
+		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
+		$addNewButton = new GridFieldAddNewButton('after');
+		$addNewButton->setButtonName("Add Rule");
+		$importRules->getConfig()->addComponent($addNewButton);
+
+		$fields->removeFieldFromTab('Root', 'ImportRules');
+		$fields->addFieldToTab('Root.Main', $importRules);
+
+		return $fields;
+	}
+
 	public function requireDefaultRecords() {
 		foreach(StaticSiteContentSource::get() as $source) {
 			if(!$source->Schemas()->count()) {
@@ -309,18 +339,32 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		"Schema" => "StaticSiteContentSource_ImportSchema",
 	);
 
-	function getCMSFields() {
+	public function getTitle() {
+		return ($this->FieldName)?$this->FieldName:$this->ID;
+	}
+
+	/**
+	 *
+	 * @return FieldList
+	 */
+	public function getCMSFields() {
 		$fields = parent::getCMSFields();
 
-		$fieldList = singleton('Page')->inheritedDatabaseFields();
-		$fieldList = array_combine(array_keys($fieldList),array_keys($fieldList));
-		unset($fieldList->ParentID);
-		unset($fieldList->WorkflowDefinitionID);
-		unset($fieldList->Version);
+		$dataType = $this->Schema()->DataType;
+		if($dataType) {
+			$fieldList = singleton($dataType)->inheritedDatabaseFields();
+			$fieldList = array_combine(array_keys($fieldList),array_keys($fieldList));
+			unset($fieldList->ParentID);
+			unset($fieldList->WorkflowDefinitionID);
+			unset($fieldList->Version);
 
-		$fieldNameField = new DropdownField("FieldName", "Field Name", $fieldList);
-		$fieldNameField->setEmptyString("(choose)");
-		$fields->insertBefore($fieldNameField, "CSSSelector");
+			$fieldNameField = new DropdownField("FieldName", "Field Name", $fieldList);
+			$fieldNameField->setEmptyString("(choose)");
+			$fields->insertBefore($fieldNameField, "CSSSelector");
+		} else {
+			$fields->replaceField('FieldName', $fieldName = new ReadonlyField("FieldName", "Field Name"));
+			$fieldName->setDescription('Save this rule before being able to add a field name');
+		}
 
 		return $fields;
 	}
