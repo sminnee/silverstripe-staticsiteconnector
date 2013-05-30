@@ -56,9 +56,13 @@ class StaticSiteContentItem extends ExternalContentItem {
 			return $fields;
 		}
 		foreach($content as $k => $v) {
-			$fields->addFieldToTab("Root.Preview", 
-				new ReadonlyField("Preview$k", "$k<br>\n<em>" . $v['selector'] . "</em>", $v['content']));
+			$readonlyField = new ReadonlyField("Preview$k", "$k<br>\n<em>" . $v['selector'] . "</em>", $v['content']);
+			$readonlyField->addExtraClass('readonly-click-toggle');
+			$fields->addFieldToTab("Root.Preview", $readonlyField);
 		}
+
+		Requirements::javascript('staticsiteconnector/js/StaticSiteContentItem.js');
+		Requirements::css('staticsiteconnector/css/StaticSiteContentItem.css');
 
 		return $fields;
 	}
