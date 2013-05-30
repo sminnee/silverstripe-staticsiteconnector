@@ -43,20 +43,20 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 
 		switch($this->urlList()->getSpiderStatus()) {
-		case "Not started":
-			$crawlButtonText = _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site');
-			break;
+			case "Not started":
+				$crawlButtonText = _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site');
+				break;
 
-		case "Partial":
-			$crawlButtonText = _t('StaticSiteContentSource.RESUME_CRAWLING', 'Resume crawling');
-			break;
+			case "Partial":
+				$crawlButtonText = _t('StaticSiteContentSource.RESUME_CRAWLING', 'Resume crawling');
+				break;
 
-		case "Complete":
-			$crawlButtonText = _t('StaticSiteContentSource.RECRAWL_SITE', 'Re-crawl site');
-			break;
+			case "Complete":
+				$crawlButtonText = _t('StaticSiteContentSource.RECRAWL_SITE', 'Re-crawl site');
+				break;
 
-		default:
-			throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
+			default:
+				throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
 		}
 		
 
@@ -189,16 +189,12 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getContentImporter($target=null) {
 		return new StaticSiteImporter();
 	}
-	/*
-	public function encodeId($id) {
-		return $id;
-	}
-	public function decodeId($id) {
-		return $id;
-	}
- 	*/
+
 	public function isValid() {
-		return (boolean)$this->BaseUrl;
+		if(!(boolean)$this->BaseUrl) {
+			return false;
+		}
+		return true;
 	}
 	public function canImport($member = null) {
 		return $this->isValid();
