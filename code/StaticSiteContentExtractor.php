@@ -79,11 +79,22 @@ class StaticSiteContentExtractor extends Object {
 	 * @return string              The content for that selector
 	 */
 	public function extractField($cssSelector, $attribute = null) {
-		if(!$this->phpQuery) $this->fetchContent();
+		if(!$this->phpQuery) {
+			$this->fetchContent();
+		}
 
-		$element = $this->phpQuery[$cssSelector];
-		if($attribute) return $element->attr($attribute);
-		else return $element->html();
+		$elements = $this->phpQuery[$cssSelector];
+
+		$result = '';
+		foreach($elements as $element) {
+			if($attribute && trim($element->getAttribute($attribute))) {
+				$result .= trim($element->getAttribute($attribute)).PHP_EOL;
+			} elseif(trim($element->nodeValue)) {
+				$result .= trim($element->nodeValue).PHP_EOL;
+			}
+		} 
+		return $result;
+		
 	}
 
 	public function getContent() {
@@ -207,10 +218,13 @@ class StaticSiteContentExtractor extends Object {
 	}
 
 	protected function log($message) {
-		if($logFile = Config::inst()->get('StaticSiteContentExtractor','log_file')) {
-			if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-				error_log($message . "\n", 3, $logFile);
-			}
+		$logFile = Config::inst()->get('StaticSiteContentExtractor','log_file');
+		if(!$logFile) {
+			return;
 		}
+		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
+			error_log($message . "\n", 3, $logFile);
+		}
+		
 	}
 }
