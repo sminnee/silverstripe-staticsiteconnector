@@ -11,16 +11,40 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  */
 class StaticSiteContentExtractor extends Object {
 
-	protected $url;
+	/**
+	 *
+	 * @var string
+	 */
+	protected $url = null;
 
-	protected $content;
+	/**
+	 *
+	 * @var string
+	 */
+	protected $content = null;
 
-	protected $phpQuery;
+	/**
+	 *
+	 * @var phpQueryObject
+	 */
+	protected $phpQuery = null;
 
+	/**
+	 * Set this by using the yml config system
+	 * 
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
 	private static $log_file = null;
 
 	/**
 	 * Create a StaticSiteContentExtractor for a single URL/.
+	 * 
 	 * @param string $url The absolute URL to extract content from
 	 */
 	public function __construct($url) {
@@ -29,69 +53,140 @@ class StaticSiteContentExtractor extends Object {
 
 	/**
 	 * Extract content for map of field => css-selector pairs
+	 * 
 	 * @param  array $selectorMap A map of field name => css-selector
 	 * @return array              A map of field name => array('selector' => selector, 'content' => field content)
 	 */
 	public function extractMapAndSelectors($selectorMap) {
-		if(!$this->phpQuery) $this->fetchContent();
+		
+		if(!$this->phpQuery) {
+			$this->fetchContent();
+		}
 
 		$output = array();
 
-		foreach($selectorMap as $field => $cssSelectors) {
-			if(!is_array($cssSelectors)) $cssSelectors = array($cssSelectors);
+		foreach($selectorMap as $fieldName => $extractionRules) {
+			if(!is_array($extractionRules)) {
+				$extractionRules = array($extractionRules);
+			}
 
-			foreach($cssSelectors as $extractionRule) {
+			foreach($extractionRules as $extractionRule) {
 				if(!is_array($extractionRule)) {
 					$extractionRule = array('selector' => $extractionRule);
 				}
-
-				$content = trim($this->extractField($extractionRule['selector'], $extractionRule['attribute']));
-
-				if($extractionRule['excludeselectors']) {
-					foreach($extractionRule['excludeselectors'] as $excludeSelector) {
-						$element = $this->phpQuery[$extractionRule['selector'].' '.$excludeSelector];
-						if($element) {
-							$remove = $element->htmlOuter();
-							$content = str_replace($remove, '', $content);
-						}
-					}
+				
+				$content = $this->extractField($extractionRule['selector'], $extractionRule['attribute'], $extractionRule['outerhtml']);
+				
+				if(!$content) {
+					continue;
 				}
 
-				if($content) {
-					if(!empty($extractionRule['plaintext'])) {
-						$content = Convert::html2raw($content);
-					}
-
-					$output[$field] = $extractionRule;
-					$output[$field]['content'] = $content;
-					$this->log("Found value for $field");
-					break;
+				$content = $this->excludeContent($extractionRule['excludeselectors'], $extractionRule['selector'], $content);
+				
+				if(!$content) {
+					continue;
 				}
+
+				if(!empty($extractionRule['plaintext'])) {
+					$content = Convert::html2raw($content);
+				}
+
+				// We found a match, select that one and ignore any other selectors
+				$output[$fieldName] = $extractionRule;
+				$output[$fieldName]['content'] = $content;
+				$this->log("Value set for $fieldName");
+				break;
 			}
 		}
-
 		return $output;
 	}
 
 	/**
 	 * Extract content for a single css selector
+	 * 
 	 * @param  string $cssSelector The selector for which to extract content.
-	 * @return string              The content for that selector
+	 * @param  string $attribute If set, the value will be from this HTML attribute
+	 * @param  bool $outherHTML should we return the full HTML of the whole field
+	 * @return string The content for that selector
 	 */
-	public function extractField($cssSelector, $attribute = null) {
-		if(!$this->phpQuery) $this->fetchContent();
+	public function extractField($cssSelector, $attribute = null, $outerHTML = false) {
+		if(!$this->phpQuery) {
+			$this->fetchContent();
+		}
 
-		$element = $this->phpQuery[$cssSelector];
-		if($attribute) return $element->attr($attribute);
-		else return $element->html();
+		$elements = $this->phpQuery[$cssSelector];
+
+		// just return the inner HTML for this node
+		if(!$outerHTML || !$attribute) {
+			return trim($elements->html());
+		}
+		
+		$result = '';
+		foreach($elements as $element) {
+			// Get the full html for this element
+			if($outerHTML) {
+				$result .= $this->getOuterHTML($element);
+			// Get the value of a attribute
+			} elseif($attribute && trim($element->getAttribute($attribute))) {
+				$result .= ($element->getAttribute($attribute)).PHP_EOL;
+			}
+		}
+		
+		return trim($result);
 	}
 
+	/**
+	 * Strip away content from $content that matches one or many css selectors.
+	 *
+	 * @param array $excludeSelectors
+	 * @param string $content
+	 * @return string
+	 */
+	protected function excludeContent($excludeSelectors, $parentSelector, $content) {
+		if(!$excludeSelectors) {
+			return $content;
+		}
+
+		foreach($excludeSelectors as $excludeSelector) {
+			if(!trim($excludeSelector)) {
+				continue;
+			}
+			$element = $this->phpQuery[$parentSelector.' '.$excludeSelector];
+			if($element) {
+				$remove = $element->htmlOuter();
+				$content = str_replace($remove, '', $content);
+				$this->log(' - Excluded content from "'.$parentSelector.' '.$excludeSelector.'"');
+			}
+		}
+		return ($content);
+	}
+
+	/**
+	 * Get the full HTML of the element and its childs
+	 *
+	 * @param DOMElement $element
+	 * @return string
+	 */
+	protected function getOuterHTML(DOMElement $element) {
+		$doc = new DOMDocument();
+		$doc->formatOutput = false;
+		$doc->preserveWhiteSpace = true;
+		$doc->substituteEntities = false;
+		$doc->appendChild($doc->importNode($element, true));
+		return $doc->saveHTML();
+	}
+
+	/**
+	 *
+	 * @return string
+	 */
 	public function getContent() {
 		return $this->content;
 	} 
 
 	/**
-	 * Fetcht the content and initialise $this->content and $this->phpQuery
+	 * Fetch the content and initialise $this->content and $this->phpQuery
+	 * 
 	 * @return void
 	 */
 	protected function fetchContent() {
@@ -136,11 +231,19 @@ class StaticSiteContentExtractor extends Object {
 
 		});
 
-		$rewriter->rewriteInPQ($this->phpQuery);
+		#$rewriter->rewriteInPQ($this->phpQuery);
+		#echo($this->phpQuery->html());
 	}
 
 	/**
 	 * Use cURL to request a URL, and return a SS_HTTPResponse object.
+	 *
+	 * @param string $url
+	 * @param string $method
+	 * @param string $data
+	 * @param string $headers
+	 * @param array $curlOptions
+	 * @return \SS_HTTPResponse
 	 */
 	protected function curlRequest($url, $method, $data = null, $headers = null, $curlOptions = array()) {
 		$ch        = curl_init();
@@ -190,8 +293,12 @@ class StaticSiteContentExtractor extends Object {
 		$responseHeaders = explode("\n", trim($responseHeaders));
 		array_shift($responseHeaders);
 
-		$statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE); 			
-		if($curlError !== '' || $statusCode == 0) $statusCode = 500;
+		$statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+		curl_close($ch);
+
+		if($curlError !== '' || $statusCode == 0) {
+			$statusCode = 500;
+		}
 
 		$response = new SS_HTTPResponse($responseBody, $statusCode);		
 		foreach($responseHeaders as $headerLine) {
@@ -201,16 +308,24 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
-		curl_close($ch);
-
+		
 		return $response;
 	}
 
+	/**
+	 * Log a message if the logging has been setup according to docs
+	 *
+	 * @param string $message
+	 * @return void
+	 */
 	protected function log($message) {
-		if($logFile = Config::inst()->get('StaticSiteContentExtractor','log_file')) {
-			if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-				error_log($message . "\n", 3, $logFile);
-			}
+		$logFile = Config::inst()->get('StaticSiteContentExtractor','log_file');
+		if(!$logFile) {
+			return;
+		}
+
+		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
+			error_log($message . "\n", 3, $logFile);
 		}
 	}
 }
