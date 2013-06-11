@@ -4,7 +4,7 @@
  * StaticSiteCrawlURLs
  *
  */
-class StaticSiteCrawlURLs extends BuildTask {
+class StaticSiteCrawlURLsTask extends BuildTask {
 
 	function run($request) {
 		$id = $request->getVar('ID');

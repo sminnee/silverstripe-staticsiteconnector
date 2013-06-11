@@ -302,6 +302,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 				'attribute' => $rule->Attribute,
 				'plaintext' => $rule->PlainText,
 				'excludeselectors' => preg_split('/\s+/', trim($rule->ExcludeCSSSelector)),
+				'outerhtml' => $rule->OuterHTML,
 			);
 			$output[$rule->FieldName][] = $ruleArray;
 		}
@@ -321,18 +322,23 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		"ExcludeCSSSelector" => "Text",
 		"Attribute" => "Varchar",
 		"PlainText" => "Boolean",
+		"OuterHTML" => "Boolean",
 	);
+
 	public static $summary_fields = array(
 		"FieldName",
 		"CSSSelector",
 		"Attribute",
 		"PlainText",
+		"OuterHTML",
 	);
+
 	public static $field_labels = array(
 		"FieldName" => "Field Name",
 		"CSSSelector" => "CSS Selector",
 		"Attribute" => "Element attribute",
 		"PlainText" => "Convert to plain text",
+		"OuterHTML" => "Use the outer HTML",
 	);
 
 	public static $has_one = array(
