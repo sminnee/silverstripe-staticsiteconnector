@@ -121,8 +121,8 @@ You can obviously adapt this to suit other &lt;meta&gt; elements you wish to imp
 
 * __Field Name:__ `MetaDescription`
 * __CSS Selector:__ `meta[name=description]`
-* __Exclude CSSSelector:__ `value`
-* __Element attribute:__ Optional
+* __Exclude CSSSelector:__ 
+* __Element attribute:__ `value`
 * __Convert to plain text:__ Check this box to remove any/all markup found in the crawled site (v.unlikely!)
 * __Schema:__ Select "Page" or your custom SilverStripe DataObject to import content into
 
