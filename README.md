@@ -82,7 +82,7 @@ __Note:__ This example is based on your import using a subclass of `SiteTree`
 
 ##### Title
 
-This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it into the SiteTree.Title field which forms your imported page's &lt;title&gt; element
+This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it into the `SiteTree.Title` field which forms your imported page's &lt;title&gt; element.
 
 * __Field Name:__ `Title`
 * __CSS Selector:__ `h1`
@@ -93,7 +93,7 @@ This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it
 
 ##### MenuTitle
 
-This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it into the SiteTree.MenuTitle field. This is used in the CMS' SiteTree list
+This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it into the `SiteTree.MenuTitle` field. This is used in the CMS' SiteTree list.
 
 * __Field Name:__ `MenuTitle`
 * __CSS Selector:__ `h1`
@@ -104,14 +104,28 @@ This rule takes the content of the crawled-site's &lt;h1&gt; element, imports it
 
 ##### Content
 
-This rule takes the content of the crawled-site's main body content - in this example we pretend it's all wrapped in a div#content element. This will then form the content that is used in the SiteTree.Content field
+This rule takes the content of the crawled-site's main body content (excluding any &lt;h1&gt; elements) - in this example we pretend it's all wrapped in a div#content element.
+This will then form the content that is used in the `SiteTree.Content` field.
 
 * __Field Name:__ `Content`
 * __CSS Selector:__ `div#content`
-* __Exclude CSSSelector:__ Optional
+* __Exclude CSSSelector:__ `h1`
 * __Element attribute:__ Optional
 * __Convert to plain text:__ Leave this unchecked, you'll probably want to keep all the crawled site's markup as it's being imported into an HTMLText fieldtype - eventually editable in the CMS via the WYSIWYG editor
 * __Schema:__ Select "Page" or your custom SilverStripe DataObject to import content into
+
+#### Meta - Description
+
+This rule will collect the contents of a crawled-page's &lt;meta&gt; (description) element and imports it into the `SiteTree.MetaDescription` field.
+You can obviously adapt this to suit other &lt;meta&gt; elements you wish to import.
+
+* __Field Name:__ `MetaDescription`
+* __CSS Selector:__ `meta[name=description]`
+* __Exclude CSSSelector:__ `value`
+* __Element attribute:__ Optional
+* __Convert to plain text:__ Check this box to remove any/all markup found in the crawled site (v.unlikely!)
+* __Schema:__ Select "Page" or your custom SilverStripe DataObject to import content into
+
 
 License
 -------
