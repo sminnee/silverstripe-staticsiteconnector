@@ -47,7 +47,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		// Create a page with the appropriate fields
 		$page = new $pageType(array());
-		$existingPage = SiteTree::get_by_link($item->getExternalId());
+		$existingPage = $pageType::get()->filter('StaticSiteURL',$item->getExternalId())->first();
 
 		if($existingPage && $duplicateStrategy === 'Overwrite') {
 			if(get_class($existingPage) !== $pageType) {
