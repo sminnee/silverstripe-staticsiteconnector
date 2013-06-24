@@ -333,7 +333,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
 		$mimes = new TextareaField('MimeTypes', 'Mime-types');
 		$mimes->setRows(3);
-		$mimes->setDescription('e.g text/html, image/png or image/*. Separated by a space, comma or newline.');
+		$mimes->setDescription('Be sure to pick a MIME-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg separated by a newline.');
 		$fields->addFieldToTab('Root.Main', $mimes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');
@@ -411,7 +411,6 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 */
 	public function validateMimes() {
 		$selectedMimes = MimeTypeProcessor::post_process_mimes_user_input($this->MimeTypes);
-		//$SSType = ClassInfo::baseDataClass($this->DataType); // won;t work when we want to use Image but Image's first baseDataClass is still File :-(
 		$dt = $this->DataType ? $this->DataType : $_POST['DataType']; // @todo
 		if(!$dt) {
 			return true; // probably just creating
@@ -430,6 +429,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 				$type = 'sitetree';
 				break;
 		}
+
 		$mimesForSSType = MimeTypeProcessor::get_mime_for_ss_type($type);
 		foreach($selectedMimes as $mime) {
 			if(!in_array($mime,$mimesForSSType)) {
