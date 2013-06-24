@@ -8,6 +8,9 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  * The URL is first downloaded using cURL, and then passed into phpQuery for processing.
  * Given a set of fieldnames and CSS selectors corresponding to them, a map of content
  * fields will be returned.
+ *
+ * If the URL represents a file-based Mime-Type, a File object is created and the physical file it represents can then be post-processed
+ * and saved to the SS DB and F/S.
  */
 class StaticSiteContentExtractor extends Object {
 
@@ -16,6 +19,12 @@ class StaticSiteContentExtractor extends Object {
 	 * @var string
 	 */
 	protected $url = null;
+
+	/**
+	 *
+	 * @var string
+	 */
+	protected $mime = null;
 
 	/**
 	 *
@@ -30,8 +39,14 @@ class StaticSiteContentExtractor extends Object {
 	protected $phpQuery = null;
 
 	/**
+	 *
+	 * @var string
+	 */
+	protected $tmpFileName = '';
+
+	/**
 	 * Set this by using the yml config system
-	 * 
+	 *
 	 * Example:
 	 * <code>
 	 * StaticSiteContentExtractor:
@@ -43,22 +58,31 @@ class StaticSiteContentExtractor extends Object {
 	private static $log_file = null;
 
 	/**
+	 * "Caches" the mime-processor for use throughout
+	 *
+	 * @var MimeTypeProcessor
+	 */
+	protected $mimeProcessor;
+
+	/**
 	 * Create a StaticSiteContentExtractor for a single URL/.
-	 * 
+	 *
 	 * @param string $url The absolute URL to extract content from
 	 */
-	public function __construct($url) {
+	public function __construct($url,$mime) {
 		$this->url = $url;
+		$this->mime = $mime;
+		$this->mimeProcessor = singleton('MimeTypeProcessor');
 	}
 
 	/**
 	 * Extract content for map of field => css-selector pairs
-	 * 
+	 *
 	 * @param  array $selectorMap A map of field name => css-selector
 	 * @return array              A map of field name => array('selector' => selector, 'content' => field content)
 	 */
-	public function extractMapAndSelectors($selectorMap) {
-		
+	public function extractMapAndSelectors($selectorMap, $item) {
+
 		if(!$this->phpQuery) {
 			$this->fetchContent();
 		}
@@ -74,15 +98,25 @@ class StaticSiteContentExtractor extends Object {
 				if(!is_array($extractionRule)) {
 					$extractionRule = array('selector' => $extractionRule);
 				}
-				
-				$content = $this->extractField($extractionRule['selector'], $extractionRule['attribute'], $extractionRule['outerhtml']);
-				
+
+				if($this->isMimeHTML()) {
+					$content = $this->extractField($extractionRule['selector'], $extractionRule['attribute'], $extractionRule['outerhtml']);
+				}
+				else if($this->isMimeFileOrImage()) {
+					$content = $item->externalId;
+				}
+				else {
+					$content = null;
+				}
+
 				if(!$content) {
 					continue;
 				}
 
-				$content = $this->excludeContent($extractionRule['excludeselectors'], $extractionRule['selector'], $content);
-				
+				if($this->isMimeHTML()) {
+					$content = $this->excludeContent($extractionRule['excludeselectors'], $extractionRule['selector'], $content);
+				}
+
 				if(!$content) {
 					continue;
 				}
@@ -103,7 +137,7 @@ class StaticSiteContentExtractor extends Object {
 
 	/**
 	 * Extract content for a single css selector
-	 * 
+	 *
 	 * @param  string $cssSelector The selector for which to extract content.
 	 * @param  string $attribute If set, the value will be from this HTML attribute
 	 * @param  bool $outherHTML should we return the full HTML of the whole field
@@ -115,12 +149,16 @@ class StaticSiteContentExtractor extends Object {
 		}
 
 		$elements = $this->phpQuery[$cssSelector];
+		// @todo temporary workaround for File objects
+		if(!$elements) {
+			return '';
+		}
 
 		// just return the inner HTML for this node
 		if(!$outerHTML || !$attribute) {
 			return trim($elements->html());
 		}
-		
+
 		$result = '';
 		foreach($elements as $element) {
 			// Get the full html for this element
@@ -131,7 +169,7 @@ class StaticSiteContentExtractor extends Object {
 				$result .= ($element->getAttribute($attribute)).PHP_EOL;
 			}
 		}
-		
+
 		return trim($result);
 	}
 
@@ -162,7 +200,7 @@ class StaticSiteContentExtractor extends Object {
 	}
 
 	/**
-	 * Get the full HTML of the element and its childs
+	 * Get the full HTML of the element and its children
 	 *
 	 * @param DOMElement $element
 	 * @return string
@@ -182,17 +220,22 @@ class StaticSiteContentExtractor extends Object {
 	 */
 	public function getContent() {
 		return $this->content;
-	} 
+	}
 
 	/**
-	 * Fetch the content and initialise $this->content and $this->phpQuery
-	 * 
+	 * Fetch the content and initialise $this->content and $this->phpQuery (the latter only if an appropriate mime-type matches)
+	 *
 	 * @return void
+	 * @todo deal-to defaults when $this->mime isn't matched..
 	 */
 	protected function fetchContent() {
-		$this->log('Fetching ' . $this->url);
+		$this->log("Fetching {$this->url} ({$this->mime})");
 
-		$response = $this->curlRequest($this->url, "GET");	
+		$response = $this->curlRequest($this->url, "GET");
+		if($response == 'file') {
+			// Just stop here for files & images
+			return;
+		}
 		$this->content = $response->getBody();
 		$this->phpQuery = phpQuery::newDocument($this->content);
 
@@ -236,7 +279,8 @@ class StaticSiteContentExtractor extends Object {
 	}
 
 	/**
-	 * Use cURL to request a URL, and return a SS_HTTPResponse object.
+	 * Use cURL to request a URL, and return a SS_HTTPResponse object (`SiteTree`) or write curl output directly to a tmp file
+	 * ready for uploading to SilverStripe via Upload#load() (`File` and `Image`)
 	 *
 	 * @param string $url
 	 * @param string $method
@@ -244,6 +288,7 @@ class StaticSiteContentExtractor extends Object {
 	 * @param string $headers
 	 * @param array $curlOptions
 	 * @return \SS_HTTPResponse
+	 * @todo Add checks when fetching multi Mb images to ignore anything over 2Mb??
 	 */
 	protected function curlRequest($url, $method, $data = null, $headers = null, $curlOptions = array()) {
 		$ch        = curl_init();
@@ -254,7 +299,6 @@ class StaticSiteContentExtractor extends Object {
 		curl_setopt($ch, CURLOPT_URL, $url);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
 		curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt($ch, CURLOPT_HEADER, 1);
 
@@ -265,13 +309,13 @@ class StaticSiteContentExtractor extends Object {
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		} elseif($method == 'PUT') {
-			$put = fopen("php://temp", 'r+');				
+			$put = fopen("php://temp", 'r+');
 			fwrite($put, $data);
-			fseek($put, 0); 
+			fseek($put, 0);
 
 			curl_setopt($ch, CURLOPT_PUT, 1);
 			curl_setopt($ch, CURLOPT_INFILE, $put);
-			curl_setopt($ch, CURLOPT_INFILESIZE, strlen($data)); 
+			curl_setopt($ch, CURLOPT_INFILESIZE, strlen($data));
 		}
 
 		// Follow redirects
@@ -282,6 +326,23 @@ class StaticSiteContentExtractor extends Object {
 
 		// Run request
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+		// See: http://forums.devshed.com/php-development-5/curlopt-timeout-option-for-curl-calls-isn-t-being-obeyed-605642.html
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);		// The number of seconds to wait while trying to connect.
+
+		// Deal to files, write to them directly then return
+		if($this->mimeProcessor->isOfFileOrImage($this->mime)) {
+			$tmp_name = tempnam(getTempFolder().'/'.rand(), 'tmp');
+			$fp = fopen($tmp_name, 'w+');
+			curl_setopt($ch, CURLOPT_HEADER, 0);	// We do not want _any_ header info, it corrupts the file data
+			curl_setopt($ch, CURLOPT_FILE, $fp);	// write curl response directly to file, no messing about
+			curl_setopt($ch, CURLOPT_TIMEOUT, 50);
+			curl_exec($ch);
+			curl_close($ch);
+			fclose($fp);
+			$this->setTmpFileName($tmp_name);		// Set a tmp filename ready for passing to `Upload`
+			return 'file';
+		}
+
 		$fullResponseBody = curl_exec($ch);
 		$curlError = curl_error($ch);
 
@@ -291,16 +352,18 @@ class StaticSiteContentExtractor extends Object {
 		}
 
 		$responseHeaders = explode("\n", trim($responseHeaders));
+		// Shift off the HTTP response code
 		array_shift($responseHeaders);
 
 		$statusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
 		curl_close($ch);
 
 		if($curlError !== '' || $statusCode == 0) {
 			$statusCode = 500;
 		}
 
-		$response = new SS_HTTPResponse($responseBody, $statusCode);		
+		$response = new SS_HTTPResponse($responseBody, $statusCode);
 		foreach($responseHeaders as $headerLine) {
 			if(strpos($headerLine, ":") !== false) {
 				list($headerName, $headerVal) = explode(":", $headerLine, 2);
@@ -308,7 +371,6 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
-		
 		return $response;
 	}
 
@@ -327,5 +389,29 @@ class StaticSiteContentExtractor extends Object {
 		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
 			error_log($message . "\n", 3, $logFile);
 		}
+	}
+
+	public function setTmpFileName($tmp) {
+		$this->tmpFileName = $tmp;
+	}
+
+	public function getTmpFileName() {
+		return $this->tmpFileName;
+	}
+
+	/*
+	 * SilverStripe -> Mime shortcut methods
+	 */
+	public function isMimeHTML() {
+		return $this->mimeProcessor->isOfHTML($this->mime);
+	}
+	public function isMimeFile() {
+		return $this->mimeProcessor->isOfFile($this->mime);
+	}
+	public function isMimeImage() {
+		return $this->mimeProcessor->isOfImage($this->mime);
+	}
+	public function isMimeFileOrImage() {
+		return $this->mimeProcessor->isOfFileOrImage($this->mime);
 	}
 }

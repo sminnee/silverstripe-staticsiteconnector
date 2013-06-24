@@ -11,24 +11,24 @@
  * For example, MOSS has a habit of putting unnecessary "/Pages/" elements into the URLs, and adding
  * .aspx extensions.  We don't want to include these in the content heirarchy.
  *
- * More sophisticated processing might be done to facilitate importing of less 
+ * More sophisticated processing might be done to facilitate importing of less
  */
 interface StaticSiteUrlProcessor {
 
 	/**
 	 * Return a name for the style of URLs to be processed.
-	 * 
+	 *
 	 * This name will be shown in the CMS when users are configuring the content import.
-	 * 
+	 *
 	 * @return string The name, in plaintext (no HTML)
 	 */
 	function getName();
 
 	/**
 	 * Return an explanation of what processing is done.
-	 * 
+	 *
 	 * This explanation will be shown in the CMS when users are configuring the content import.
-	 * 
+	 *
 	 * @return string The description, in plaintext (no HTML)
 	 */
 	function getDescription();
@@ -36,14 +36,14 @@ interface StaticSiteUrlProcessor {
 
 	/**
 	 * Return a description for this processor, to be shown in the CMS.
-	 * @param string $url The unprocessed URL
-	 * @return string The name
+	 * @param array $urlData The unprocessed URL and mime-type as returned from PHPCrawler
+	 * @return array An array comprising a processed URL and its Mime-Type
 	 */
-	function processURL($url);
+	function processURL($urlData);
 }
 
 /**
- * Processor for MOSS URLs
+ * Processor for MOSS Standard-URLs while dropping file extensions
  */
 class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	function getName() {
@@ -54,17 +54,28 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		return "Drop file extensions and trailing slashes on URLs but otherwise leave them the same";
 	}
 
-	function processURL($url) {
-		if(preg_match('/^([^?]*)\?(.*)$/', $url, $matches)) {
+	function processURL($urlData) {
+		$url = '';
+		if(preg_match('/^([^?]*)\?(.*)$/', $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-			if($url != '/') $url = preg_replace('#/$#','',$url);
+			if($url != '/') {
+				$url = preg_replace('#/$#','',$url);
+			}
 			$url = preg_replace('#\.[^.]*$#','',$url);
-			return "$url?$qs";
+			return array(
+				'url'=>"$url?$qs",
+				'mime'=>$urlData['mime']
+			);
 		} else {
-			if($url != '/') $url = preg_replace('#/$#','',$url);
+			if($urlData['url'] != '/') {
+				$url = preg_replace('#/$#','',$urlData['url']);
+			}
 			$url = preg_replace('#\.[^.]*$#','',$url);
-			return $url;
+			return array(
+				'url'=>$url,
+				'mime'=>$urlData['mime']
+			);
 		}
 	}
 }
@@ -80,8 +91,12 @@ class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions i
 		return "Remove '/Pages/' from the URL, and drop extensions";
 	}
 
-	function processURL($url) {
-		$url = str_ireplace('/Pages/','/',$url);
-		return parent::processURL($url);
+	function processURL($urlData) {
+		$url = str_ireplace('/Pages/','/',$urlData['url']);
+		$urlData = array(
+			'url'	=> $url,
+			'mime'	=> $urlData['mime']
+		);
+		return parent::processURL($urlData);
 	}
 }
