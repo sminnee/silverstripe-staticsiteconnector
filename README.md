@@ -125,7 +125,6 @@ You can obviously adapt this to suit other &lt;meta&gt; elements you wish to imp
 * __Convert to plain text:__ Check this box to remove any/all markup found in the crawled site (v.unlikely!)
 * __Schema:__ Select "Page" or your custom SilverStripe DataObject to import content into
 
-
 License
 -------
 
