@@ -9,9 +9,23 @@ require_once('../vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
  */
 class StaticSiteUrlList {
 
+	/**
+	 *
+	 * @var string
+	 */
 	public static $undefined_mime_type = 'unknown';
 
-	protected $baseURL, $cacheDir;
+	/**
+	 *
+	 * @var string
+	 */
+	protected $baseURL;
+
+	/**
+	 *
+	 * @var string
+	 */
+	protected $cacheDir;
 
 	/**
 	 * Two element array: contains keys 'inferred' and 'regular':
@@ -20,10 +34,22 @@ class StaticSiteUrlList {
 	 */
 	protected $urls = null;
 
+	/**
+	 *
+	 * @var boolean
+	 */
 	protected $autoCrawl = false;
 
+	/**
+	 *
+	 * @var StaticSiteUrlProcessor
+	 */
 	protected $urlProcessor = null;
 
+	/**
+	 *
+	 * @var array
+	 */
 	protected $extraCrawlURLs = null;
 
 	/**
@@ -38,7 +64,7 @@ class StaticSiteUrlList {
 	 * @param string $baseURL  The Base URL to find links on
 	 * @param string $cacheDir The local path to cache data into
 	 */
-	function __construct($baseURL, $cacheDir) {
+	public function __construct($baseURL, $cacheDir) {
 		// baseURL mus not have a trailing slash
 		if(substr($baseURL,-1) == "/") $baseURL = substr($baseURL,0,-1);
 		// cacheDir must have a trailing slash
@@ -59,7 +85,7 @@ class StaticSiteUrlList {
 	 *
 	 * @param StaticSiteUrlProcessor $urlProcessor [description]
 	 */
-	function setUrlProcessor(StaticSiteUrlProcessor $urlProcessor) {
+	public function setUrlProcessor(StaticSiteUrlProcessor $urlProcessor) {
 		$this->urlProcessor = $urlProcessor;
 	}
 
@@ -68,14 +94,14 @@ class StaticSiteUrlList {
 	 * Each of these URLs will be crawled in addition the base URL.
 	 * This can be helpful if pages are getting missed by the crawl
 	 */
-	function setExtraCrawlURls($extraCrawlURLs) {
+	public function setExtraCrawlURls($extraCrawlURLs) {
 		$this->extraCrawlURLs = $extraCrawlURLs;
 	}
 
 	/**
 	 * Return the additional crawl URLs as an array
 	 */
-	function getExtraCrawlURLs() {
+	public function getExtraCrawlURLs() {
 		return $this->extraCrawlURLs;
 	}
 
@@ -190,8 +216,12 @@ class StaticSiteUrlList {
 		}
 	}
 
+	/**
+	 * There are URLs and we're not in the middle of a crawl
+	 *
+	 * @return boolean
+	 */
 	public function hasCrawled() {
-		// There are URLs and we're not in the middle of a crawl
 		return file_exists($this->cacheDir . 'urls') && !file_exists($this->cacheDir . 'crawlerid');
 	}
 
@@ -292,7 +322,7 @@ class StaticSiteUrlList {
 	 * Save the current list of URLs to disk
 	 * @return [type] [description]
 	 */
-	function saveURLs() {
+	public function saveURLs() {
 		file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
 	}
 
@@ -301,7 +331,7 @@ class StaticSiteUrlList {
 	 * @param string $url The absolute URL
 	 * @param string $content_type The Mime-Type found at this URL e.g text/html or image/png
 	 */
-	function addAbsoluteURL($url,$content_type) {
+	public function addAbsoluteURL($url,$content_type) {
 		$simpifiedURL = $this->simplifyURL($url);
 		$simpifiedBase = $this->simplifyURL($this->baseURL);
 
@@ -314,14 +344,22 @@ class StaticSiteUrlList {
 		return $this->addURL($relURL,$content_type);
 	}
 
-	function addURL($url,$content_type) {
-		if($this->urls === null) $this->loadUrls();
+	/**
+	 *
+	 * @param string $url
+	 * @param string $contentType
+	 */
+	public function addURL($url, $contentType) {
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		// Generate and save the processed URLs
 		$urlData = array(
 			'url'	=> $url,
-			'mime'	=> $content_type
+			'mime'	=> $contentType
 		);
+		
 		$this->urls['regular'][$url] = $this->generateProcessedURL($urlData);
 
 		// Trigger parent URL back-filling
@@ -336,7 +374,7 @@ class StaticSiteUrlList {
 	 *
 	 * @param array $inferredURLData Contains the processed URL and Mime-Type to add.
 	 */
-	function addInferredURL($inferredURLData) {
+	public function addInferredURL($inferredURLData) {
 		if($this->urls === null) $this->loadUrls();
 
 		// Generate and save the processed URLs
@@ -353,7 +391,7 @@ class StaticSiteUrlList {
 	 * @param  string $url The URL, either absolute, or relative starting with "/"
 	 * @return boolean     Does the URL exist
 	 */
-	function hasURL($url) {
+	public function hasURL($url) {
 		if($this->urls === null) $this->loadUrls();
 
 		// Try and relativise an absolute URL
