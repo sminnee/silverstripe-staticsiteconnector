@@ -1,22 +1,21 @@
-SilverStripe Static Site Connector
-==================================
+# SilverStripe Static Site Connector
 
 This connector extracts content from another site by crawling its HTML, rather than connecting to an internal API.
 Although this has the disadvantage of leaving it unable to extract any information or structure not represented in the outputted HTML of the site, it requires no special access, nor does it rely on particular back-end systems.
 This makes it suited for experimental site imports, as well as connections to more obscure CMS's.
 
-It works in the following way:
+## How it works
 
  * A list of URLs are extracted from the site using [PHPCrawl](http://cuab.de/), and cached.
  * Each URL corresponds to an imported page, using the presence of "/" and "?" in the URL to build the .
  * Page content is imported page-by-page using CURL, and content elements extracted with CSS selectors. [phpQuery](http://code.google.com/p/phpquery/) is used for this purpose.
 
-Installation
-------------
+This module requires the [PHP Sempahore](http://php.net/manual/en/book.sem.php) functions.
+These are installed by default on Debian PHP distributions, but if you're using Macports you'll need to add the `+ipc` flag when installing php5:
 
 This module requires the [PHP Sempahore](http://php.net/manual/en/book.sem.php) functions. These are installed by default on Debian PHP distributions, but if you're using Macports you'll need to add the `+ipc` flag when installing php5:
 
-    sudo port install php5 +apache2 +ipc
+If compiling PHP from source you need to pass three additional flags to PHP's configure script:
 
 If compiling PHP from source you need to pass three additional flags to the configure script:
 
@@ -24,9 +23,9 @@ If compiling PHP from source you need to pass three additional flags to the conf
 
 Once that's done, you can use Composer to add the module to your SilverStripe project:
 
-    composer require silverstripe/staticsiteconnector
+Once that's done, you can use [Composer](http://getcomposer.org) to add the module to your SilverStripe project:
 
-Finally, visit `/dev/build` on your site to update the database schema.
+    #> composer require silverstripe/staticsiteconnector
 
 Migration
 ---------
@@ -61,7 +60,7 @@ Migration
 
  * Open sample pages in the tree on the left and you will be able to preview whether the Import Rules work. If they don't work, debug them.
 
- * When you're happy, open the Connector and go to the Import tab.
+Using simple CSS selectors you can control what part of each remote page is mapped to a particular field within the `SiteTree` class.
 
  * Select a base page to import onto. Sometimes it's helpful to create an "imported contnet" page in the Pages section of the CMS first.
 
