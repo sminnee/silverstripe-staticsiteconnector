@@ -519,7 +519,7 @@ class StaticSiteUrlList {
 			'url'	=> $url,
 			'mime'	=> $mime
 		);
-
+		
 		if(isset($this->urls['regular'][$url])) {
 			// Generate it if missing
 			if($this->urls['regular'][$url] === true) {
@@ -528,7 +528,7 @@ class StaticSiteUrlList {
 			return $this->urls['regular'][$url];
 
 		} elseif(in_array($url, array_keys($this->urls['inferred']))) {
-			return $urlData;
+			return $this->urls['inferred'][$url];
 		}
 	}
 
