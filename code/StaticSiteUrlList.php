@@ -300,6 +300,8 @@ class StaticSiteUrlList {
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
+		// Set some proxy options for phpCrawler
+		singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev(), $crawler);
 
 		// Allow for resuming an incomplete crawl
 		if(file_exists($this->cacheDir.'crawlerid')) {

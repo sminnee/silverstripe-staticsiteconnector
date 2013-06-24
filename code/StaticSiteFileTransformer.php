@@ -62,7 +62,11 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$source = $item->getSource();
 
 		// Cleanup StaticSiteURLs
-		$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
+		$cleanupStaticSiteUrls = false;
+		//TODO: finalise the requirment for this activity by completing the Link Rewrite Task
+		if ($cleanupStaticSiteUrls) {
+			$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
+		}
 
 		// Sleep for 10ms to reduce load on the remote server
 		usleep(10*1000);

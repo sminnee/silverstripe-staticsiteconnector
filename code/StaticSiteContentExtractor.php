@@ -239,7 +239,10 @@ class StaticSiteContentExtractor extends Object {
 	protected function fetchContent() {
 		$this->utils->log("Fetching {$this->url} ({$this->mime})");
 
-		$response = $this->curlRequest($this->url, "GET");
+		// Set some proxy options for phpCrawler
+		$curlOpts = singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev());
+		$response = $this->curlRequest($this->url, "GET", null, null, $curlOpts);
+
 		if($response == 'file') {
 			// Just stop here for files & images
 			return;
