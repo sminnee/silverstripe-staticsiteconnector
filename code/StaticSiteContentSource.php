@@ -25,11 +25,23 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public $staticSiteCacheDir = null;
 
+	/**
+	 *
+	 * @param array|null $record This will be null for a new database record.
+	 * @param bool $isSingleton
+	 * @param DataModel $model
+	 */
 	public function __construct($record = null, $isSingleton = false, $model = null) {
 		parent::__construct($record, $isSingleton, $model);
-		$this->staticSiteCacheDir = "static-site-{$this->ID}"; // We need this in calling logic
+		// We need this in calling logic
+		$this->staticSiteCacheDir = "static-site-{$this->ID}"; 
 	}
 
+	/**
+	 *
+	 * @return FieldList
+	 * @throws LogicException
+	 */
 	public function getCMSFields() {
 		$fields = parent::getCMSFields();
 
@@ -75,7 +87,6 @@ class StaticSiteContentSource extends ExternalContentSource {
 				throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
 		}
 
-
 		$crawlButton = FormAction::create('crawlsite', $crawlButtonText)
 			->setAttribute('data-icon', 'arrow-circle-double')
 			->setUseButtonTag(true);
@@ -108,8 +119,6 @@ class StaticSiteContentSource extends ExternalContentSource {
 			$fields->addFieldToTab('Root.Crawl',
 				new LiteralField('CrawlURLList', "<p>The following URLs have been identified:</p>" . $urlsAsUL)
 			);
-
-
 		}
 
 		$fields->dataFieldByName("ExtraCrawlUrls")
@@ -122,6 +131,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return $fields;
 	}
 
+	/**
+	 * 
+	 */
 	public function onAfterWrite() {
 		parent::onAfterWrite();
 
@@ -136,7 +148,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 		}
 	}
 
-
+	/**
+	 *
+	 * @return StaticSiteUrlList
+	 */
 	public function urlList() {
 		if(!$this->urlList) {
 			$this->urlList = new StaticSiteUrlList($this->BaseUrl, "../assets/{$this->staticSiteCacheDir}");
@@ -160,7 +175,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @return StaticSiteCrawler
 	 */
 	public function crawl($limit=false, $verbose=false) {
-		if(!$this->BaseUrl) throw new LogicException("Can't crawl a site until Base URL is set.");
+		if(!$this->BaseUrl) {
+			throw new LogicException("Can't crawl a site until Base URL is set.");
+		}
 		return $this->urlList()->crawl($limit, $verbose);
 	}
 
@@ -172,39 +189,37 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @return mixed $schema or boolean false if no schema matches are found
 	 */
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
-		$allSchemas = $this->Schemas();
-		foreach($allSchemas as $schema) {
-			$schemaMimes = MimeTypeProcessor::post_process_mimes_user_input($schema->MimeTypes);
-			$matchOnUrl = $this->getSchemaUrlPartialMatch($schema->AppliesTo,$absoluteURL);
-			$matchOnMme = (sizeof($schemaMimes)>0 && in_array(MimeTypeProcessor::cleanse($mimeType),$schemaMimes));
-			$matchIsMme = ($mimeType && strlen($mimeType)>0 && $mimeType != StaticSiteUrlList::$undefined_mime_type);
-			if($matchIsMme) {
-				if($matchOnUrl && $matchOnMme) {
-					return $schema;
-				}
+		$mimeType = MimeTypeProcessor::cleanse($mimeType);
+		foreach($this->Schemas() as $schema) {
+			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
+			$schemaMimeTypes = MimeTypeProcessor::get_mimetypes_from_text($schema->MimeTypes);
+			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
+			if($schemaCanParseURL) {
+				if($schemaMimeTypes && !in_array($mimeType, $schemaMimeTypes)) {
+					continue;
+				} 
+				return $schema;
 			}
-			else {
-				if($matchOnUrl) {
-					return $schema;
-				}
-			}
-			// At this point: No URL or Mime-match
-			// @todo log all $absoluteURL=>$mimeType that aren't matched
-			continue;
 		}
 		return false;
 	}
 
 	/*
-	 * Performs a match on the Schema->AppliedTo field with refernece to the URL of the current iteration
+	 * Performs a match on the Schema->AppliedTo field with reference to the URL
+	 * of the current iteration
 	 *
-	 * @param string $appliesTo
+	 * @param StaticSiteContentSource_ImportSchema $schema
 	 * @param string $url
 	 * @return boolean
 	 */
-	public function getSchemaUrlPartialMatch($appliesTo,$url) {
-		$appliesTo = !strlen($appliesTo)>0?$schema::$default_applies_to:$appliesTo;
-		if(preg_match("#^$appliesTo#",$url) == 1) {
+	public function schemaCanParseURL(StaticSiteContentSource_ImportSchema $schema, $url) {
+		$appliesTo = $schema->AppliesTo;
+		if(!strlen($appliesTo)) {
+			$appliesTo = $schema::$default_applies_to;
+		}
+		// backslash the delimiters for the reg exp pattern
+		$appliesTo = str_replace('|', '\|', $appliesTo);
+		if(preg_match("|^$appliesTo|", $url) == 1) {
 			return true;
 		}
 		return false;
@@ -337,6 +352,13 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$fields->addFieldToTab('Root.Main', $mimes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');
+		$fields->removeFieldFromTab('Root', 'ImportRules');
+
+		// File don't use import rules
+		if($this->DataType && in_array('File', ClassInfo::ancestry($this->DataType))) {
+			return $fields;
+		}
+		
 		if($importRules) {
 			$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 			$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
@@ -344,7 +366,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 			$addNewButton->setButtonName("Add Rule");
 			$importRules->getConfig()->addComponent($addNewButton);
 
-			$fields->removeFieldFromTab('Root', 'ImportRules');
+			
 			$fields->addFieldToTab('Root.Main', $importRules);
 		}
 
@@ -394,11 +416,15 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		return $output;
 	}
 
+	/**
+	 *
+	 * @return \ValidationResult
+	 */
 	public function validate() {
 		$result = new ValidationResult;
 		$mime = $this->validateMimes();
 		if(!is_bool($mime)) {
-			$result->error('Invalid mime-type entered: '.$mime);
+			$result->error('Invalid mime-type "'.$mime.'" for DataType "'.$this->DataType.'"');
 		}
 		return $result;
 	}
@@ -410,7 +436,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * @return mixed boolean|string Boolean true if all is OK, otherwise the invalid mimeType to be shown in the CMS UI
 	 */
 	public function validateMimes() {
-		$selectedMimes = MimeTypeProcessor::post_process_mimes_user_input($this->MimeTypes);
+		$selectedMimes = MimeTypeProcessor::get_mimetypes_from_text($this->MimeTypes);
 		$dt = $this->DataType ? $this->DataType : $_POST['DataType']; // @todo
 		if(!$dt) {
 			return true; // probably just creating

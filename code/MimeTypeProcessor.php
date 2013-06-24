@@ -128,12 +128,13 @@ class MimeTypeProcessor extends Object {
  	}
 
 	/*
-	 * Post-proces user-inputted mime-types. Allows space, comma or newline delimited mime-types input into a TextareaField
+	 * Post-proces user-inputted mime-types. Allows space, comma or newline
+	 * delimited mime-types input into a TextareaField
 	 *
 	 * @param string $mimeTypes
-	 * @return array _$mimes
+	 * @return array - returns an array of mimetypes
 	 */
-	public static function post_process_mimes_user_input($mimeTypes) {
+	public static function get_mimetypes_from_text($mimeTypes) {
 		$mimes = preg_split("#[\r\n\s,]+#",trim($mimeTypes));
 		$_mimes = array();
 		foreach($mimes as $mimeType) {
@@ -153,7 +154,6 @@ class MimeTypeProcessor extends Object {
 		if(!$mimeType) {
 			return '';
 		}
-//		return strtolower(preg_replace("#\s+#",'',trim($mimeType)));
 		return strtolower(trim($mimeType));
 	}
 
