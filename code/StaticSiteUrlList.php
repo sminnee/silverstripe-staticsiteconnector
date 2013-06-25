@@ -148,16 +148,28 @@ class StaticSiteUrlList {
 		}
 	}
 
-	/**
-	 * Return the number of URLs crawled so far
+	/*
+	 * Raw URL+Mime data "accessor" used internally by logic outside of the class.
+	 *
+	 * @return mixed string $urls or null if no cached URL/Mime data found
 	 */
-	public function getNumURLs() {
+	public function getRawCacheData() {
 		if($this->urls) {
 			$urls = $this->urls;
 		// Don't rely on loadUrls() as it chokes on partially completed imports
 		} else if(file_exists($this->cacheDir . 'urls')) {
 			$urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
 		} else {
+			return null;
+		}
+		return $urls;
+	}
+
+	/**
+	 * Return the number of URLs crawled so far
+	 */
+	public function getNumURLs() {
+		if(!$urls = $this->getRawCacheData()) {
 			return null;
 		}
 

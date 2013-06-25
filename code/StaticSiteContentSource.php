@@ -195,7 +195,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 			$schemaMimeTypes = MimeTypeProcessor::get_mimetypes_from_text($schema->MimeTypes);
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
 			if($schemaCanParseURL) {
-				if($schemaMimeTypes && !in_array($mimeType, $schemaMimeTypes)) {
+				if($mimeType && $schemaMimeTypes && (!in_array($mimeType, $schemaMimeTypes))) {
 					continue;
 				} 
 				return $schema;

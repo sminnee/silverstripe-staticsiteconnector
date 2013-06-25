@@ -34,3 +34,4 @@ Some are already registered as issues on Github, others are more in the "would l
  * This should make it far easier and faster to get up and running with the module
 * Is the `$rewriter = new StaticSiteLinkRewriter` logic needed in `StaticSiteContentExtractor`? The rewriting logic is now in a BuildTask.
 * Some bad image encoding is causing errors in the CMS from GD.php - temporarily supressing them by switching to `isTest=1` or prepending '@' to the imagecreatefrom*() functions helps
+* tmp files seem to be created for text/html pages when a server error occurs e.g. 400
