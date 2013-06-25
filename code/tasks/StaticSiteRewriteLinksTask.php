@@ -35,16 +35,20 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var Object
 	 */
 	public $contentSource = null;
-	
+
 	function run($request) {
 		$id = $request->getVar('ID');
-		if(!is_numeric($id) || !$id) {
+		if(!$id || !is_numeric($id)) {
 			$this->printMessage("Specify ?ID=(number)",'WARNING');
 			return;
 		}
 
-		// Find all pages
-		$this->contentSource = StaticSiteContentSource::get()->byID($id);
+		// Find all pages from a content source
+		if(!$this->contentSource = StaticSiteContentSource::get()->byID($id)) {
+			$this->printMessage("No StaticSiteContentSource found via ID: {$id}",'WARNING');
+			return;
+		}
+
 		$pages = $this->contentSource->Pages();
 		$files = $this->contentSource->Files();
 
@@ -116,13 +120,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			$page->write();
 		}
-		$this->printMessage("Amended {$changedFields} content fields.",'SYSTEM');
+		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
 		$this->writeFailedRewrites();
 	}
 
 	/*
 	 * Prints notices and warnings and aggregates them into two lists for later analysis, depending on $level and whether you're using the CLI or a browser
-	 * 
+	 *
 	 * @param string $msg
 	 * @param string $level
 	 * @param string $baseURL
@@ -142,7 +146,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$dbFieldsToMatchOn = array();
 			foreach($pages as $page) {
 				foreach($page->db() as $name=>$field) {
-					// @TODO Note: We're hard-coding a connection between fields named 'Contentxxxx' on the selected DataType!
+					// @todo Note: We're hard-coding a connection between fields named 'Contentxxxx' on the selected DataType!
 					if(stristr('Content', $name)) {
 						$dbFieldsToMatchOn["{$name}:PartialMatch"] = $url;
 					}
