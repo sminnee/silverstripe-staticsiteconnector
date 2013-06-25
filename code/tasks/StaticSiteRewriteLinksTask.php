@@ -4,6 +4,7 @@
  * Rewrite all links in content imported via staticsiteimporter
  *
  * @todo Add ORM StaticSiteURL field NULL update to import process
+ * @todo add a link in the CMS UI that users can select to run this task
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
@@ -13,6 +14,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var string
 	 */
 	public static $failure_log = 'failedRewrite.log';
+
+	/**
+	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert
+	 *
+	 * @see http://en.wikipedia.org/wiki/URI_scheme
+	 * @var array
+	 */
+	public static $non_http_uri_schemes = array('mailto','tel','ftp','res','skype','ssh');
 
 	/**
 	 * Stores the dodgy URLs for later analysis
@@ -66,10 +75,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 					return str_replace($baseURL,'',$file->Filename) . $fragment;
 				}
 			}
-			// $url === $baseURL, don't rewrite anything
+			// Before writing any error, ensures that the base url of $url matches the root/base URL ($baseURL)
 			else {
 				if(substr($url,0,strlen($baseURL)) == $baseURL) {
-					$task->printMessage("{$url} couldn't be rewritten",'WARNING',$url);
+					// This invocation writes a log-file so it contains all failed link-rewrites for analysis
+					$task->printMessage("{$url} couldn't be rewritten (logged)",'WARNING',$url);
 				}
 				return $url . $fragment;
 			}
@@ -126,7 +136,23 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			echo "<p>[{$level}] {$msg}</p>".PHP_EOL;
 		}
 		if($url && $level == 'WARNING') {
-			array_push($this->listFailedRewrites,"Couldn't rewrite: {$url}");
+			// Attempt some context for the log, so we can tell what page the rewrite failed in
+			$url = preg_replace("#/$#",'',str_ireplace($this->contentSource->BaseUrl, '', $this->normaliseUrl($url, $this->contentSource->BaseUrl)));
+			$pages = $this->contentSource->Pages();
+			$dbFieldsToMatchOn = array();
+			foreach($pages as $page) {
+				foreach($page->db() as $name=>$field) {
+					// @TODO Note: We're hard-coding a connection between fields named 'Contentxxxx' on the selected DataType!
+					if(stristr('Content', $name)) {
+						$dbFieldsToMatchOn["{$name}:PartialMatch"] = $url;
+					}
+				}
+			}
+			$failureContext = 'unknown';
+			if($page = SiteTree::get()->filter($dbFieldsToMatchOn)->First()) {
+				$failureContext = '"'.$page->Title.'" (#'.$page->ID.')';
+			}
+			array_push($this->listFailedRewrites,"Couldn't rewrite: {$url}. Found in: {$failureContext}");
 		}
 	}
 
@@ -144,7 +170,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 
 	/*
-	 * Normalise URLs so DB matches betweenn `SiteTee.StaticSiteURL` and $url can be made.
+	 * Normalise URLs so DB matches between `SiteTee.StaticSiteURL` and $url can be made.
 	 * $url originates from Imported content post-processed by phpQuery
 	 *
 	 * $url example: /Style%20Library/MOT/Images/MoTivate_198-pixels.png
@@ -156,13 +182,18 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo Is this logic better located in `SiteTree.StaticSiteURLList`?
 	 */
 	public function normaliseUrl($url, $baseURL) {
-		// Leave empty, root and pre-converted URLs all alone
-		if(!strlen($url)>0 || $url == '/' || preg_match("#\[sitetree#",$url)) {
+		// Leave empty, root, special and pre-converted URLs alone
+		$noLength = (!strlen($url)>0);
+		$isRoot = ($url == '/');
+		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
+		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
+		$alreadyProcessed = (preg_match("#\[sitetree#",$url));
+		if($noLength || $isRoot || $nonHTTPSchemes || $alreadyProcessed) {
 			return $url;
 		}
 		$processed = trim($url);
-		if(!preg_match("#http://#",$processed)) {
-			// Add a slash if there isn't one at the end of $baseURL or the beginning of $url
+		if(!preg_match("#^http(s)?://#",$processed)) {
+			// Add a slash if there isn't one at the end of $baseURL or at the beginning of $url
 			$addSlash = !(preg_match("#/$#",$baseURL) || preg_match("#^/#",$processed));
 			$processed = $baseURL.$processed;
 			if($addSlash) {
