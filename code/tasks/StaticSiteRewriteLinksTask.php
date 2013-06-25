@@ -31,6 +31,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public $listFailedRewrites = array();
 
 	/**
+	 * Tells the  task if a URL is normalisable or not
+	 *
+	 * @var boolean
+	 */
+	public $urlNormalisable = true;
+
+	/**
 	 *
 	 * @var Object
 	 */
@@ -52,7 +59,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$pages = $this->contentSource->Pages();
 		$files = $this->contentSource->Files();
 
-		$this->printMessage("Looking through {$pages->count()} pages.",'NOTICE');
+		$this->printMessage("Looking through {$pages->count()} imported pages.",'NOTICE');
 
 		// Set up rewriter
 		$pageLookup = $pages->map('StaticSiteURL', 'ID');
@@ -68,7 +75,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fragment = '#'.$fragment;
 			}
 
+
 			$url = $task->normaliseUrl($url, $baseURL);
+			if(!$task->urlNormalisable) {
+				$task->printMessage("{$url} isn't normalisable (logged)",'WARNING',$url);
+				return;
+			}
 			// Replace phpQuery processed Page-URLs with SiteTree shortcode
 			if($pageLookup[$url]) {
 				return '[sitetree_link,id='.$pageLookup[$url] .']' . $fragment;
@@ -168,17 +180,62 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function writeFailedRewrites() {
 		$logFile = getTempFolder().'/'.self::$failure_log;
 		$logFail = implode(PHP_EOL,$this->listFailedRewrites);
-		$totalFailures = 'Total Failures: '.sizeof($this->listFailedRewrites).PHP_EOL;
-		$logData = $totalFailures.PHP_EOL.$logFail.PHP_EOL.'----'.PHP_EOL;
-		file_put_contents($logFile, $logData, FILE_APPEND);
+		$totals = 'Failures:'.PHP_EOL.PHP_EOL;
+		foreach($this->countFailureTypes() as $label => $count) {
+			$totals .= FormField::name_to_label($label).': '.$count.PHP_EOL;
+		}
+		$logData = $totals.PHP_EOL.$logFail.PHP_EOL;
+		file_put_contents($logFile, $logData);
+	}
+
+	/*
+	 * Returns an array of totals of all the failed URLs, in different categories according to:
+	 * - No. Non $baseURL http(s) URLs
+	 * - No. Non http(s) URI schemes (e.g. mailto, tel etc)
+	 * - No. URLs not imported
+	 * - No. Junk URLs (i.e. those not matching any of the above)
+	 *
+	 * @return array
+	 */
+	public function countFailureTypes() {
+		$rawData = $this->listFailedRewrites;
+		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
+		$countNotBase = 0;
+		$countNotSchm = 0;
+		$countNoImprt = 0;
+		$countJunkUrl = 0;
+		foreach($rawData as $url) {
+			$url = trim(str_replace("Couldn't rewrite: ",'',$url));
+			if(stristr($url,'http')) {
+				++$countNotBase;
+			}
+			else if(preg_match("#($nonHTTPSchemes):#",$url)) {
+				++$countNotSchm;
+			}
+			else if(preg_match("#^/#",$url)) {
+				++$countNoImprt;
+			}
+			else {
+				++$countJunkUrl;
+			}
+		}
+		return array(
+			'Total'			=> sizeof($rawData),
+			'ThirdParty'	=> $countNotBase,
+			'BadScheme'		=> $countNotSchm,
+			'BadImport'		=> $countNoImprt,
+			'Junk'			=> $countJunkUrl
+		);
 	}
 
 	/*
 	 * Normalise URLs so DB matches between `SiteTee.StaticSiteURL` and $url can be made.
-	 * $url originates from Imported content post-processed by phpQuery
+	 * $url originates from Imported content post-processed by phpQuery.
 	 *
 	 * $url example: /Style%20Library/MOT/Images/MoTivate_198-pixels.png
 	 * File.StaticSiteURL example: http://www.transport.govt.nz/Style%20Library/MOT/Images/MoTivate_198-pixels.png
+	 *
+	 * Ignore any URLs that are not normalisable and flags them ready for reporting
 	 *
 	 * @param string $url
 	 * @param string $baseURL
@@ -187,12 +244,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function normaliseUrl($url, $baseURL) {
 		// Leave empty, root, special and pre-converted URLs alone
-		$noLength = (!strlen($url)>0);
-		$isRoot = ($url == '/');
+		$noLength = (!strlen($url)>1);
 		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
 		$alreadyProcessed = (preg_match("#\[sitetree#",$url));
-		if($noLength || $isRoot || $nonHTTPSchemes || $alreadyProcessed) {
+		if($noLength || $nonHTTPSchemes || $alreadyProcessed) {
+			$this->urlNormalisable = false;
 			return $url;
 		}
 		$processed = trim($url);
