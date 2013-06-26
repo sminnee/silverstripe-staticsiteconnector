@@ -16,8 +16,29 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	protected $utils;
 
+	/**
+	 * Set this by using the yml config system
+	 *
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
+	private static $log_file = null;
+
+	/**
+	 * @var Object
+	 *
+	 * $mimeTypeProcessor
+	 */
+	public $mimeProcessor;
+
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
+		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
 	}
 
 	/**
@@ -78,10 +99,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			// - Do we really want to rely on user-input to ascertain the correct container class?
 			// - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
 			$file = new $dataType(array());
-			$path = parse_url($item->AbsoluteURL, PHP_URL_PATH);
-			$file->Filename = dirname($path);
-			$file->Name = basename($path);
-			$parentFolder = Folder::find_or_make(dirname($path));
+			$isImage = $this->mimeProcessor->IsOfImage($item->ProcessedMIME);
+			$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
+			$parentFolder = Folder::find_or_make($path);
+			$filename = parse_url($item->AbsoluteURL);
+			$file->Filename = $path . DIRECTORY_SEPARATOR . $filename['path'];
+			$file->Name = $filename['path'];
 			$file->ParentID = $parentFolder->ID;
 		}
 
@@ -103,8 +126,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public function write(File $file, $item, $source, $tmpPath) {
 		$file->StaticSiteContentSourceID = $source->ID;
 		$file->StaticSiteURL = $item->AbsoluteURL;
-		// "Faux" This is identical to AbsoluteURL except the value is normalised, used for filtering on to prevent duplicates. See $this#runChecks()
-		$file->StaticSiteURLFaux = $item->AbsoluteURLFaux;
 
 		if(!$file->write()) {
 			$uploadedFileMsg = "!! {$item->AbsoluteURL} not imported";

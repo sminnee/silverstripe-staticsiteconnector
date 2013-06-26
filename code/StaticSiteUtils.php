@@ -12,7 +12,7 @@ class StaticSiteUtils {
 	 * @param string $mime
 	 * @return void
 	 */
-	protected function log($message, $filename=null, $mime=null) {
+	public function log($message, $filename=null, $mime=null) {
 		$logFile = Config::inst()->get('StaticSiteContentExtractor', 'log_file');
 		if(!$logFile) {
 			return;

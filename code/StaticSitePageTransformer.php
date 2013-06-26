@@ -13,6 +13,19 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	protected $utils;
 
+	/**
+	 * Set this by using the yml config system
+	 *
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
+	private static $log_file = null;
+
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
 	}
@@ -84,8 +97,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
-		// "Faux" This is identical to AbsoluteURL except the value is normalised, used for filtering on to prevent duplicates. See $this#runChecks()
-		$page->StaticSiteURFaux = $item->AbsoluteURLFaux;
 
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 

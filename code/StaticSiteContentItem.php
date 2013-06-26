@@ -25,8 +25,6 @@ class StaticSiteContentItem extends ExternalContentItem {
 		$this->Name = $subURL;
 		$this->Title = $this->Name;
 		$this->AbsoluteURL = preg_replace('#/$#','', $this->source->BaseUrl) . $this->externalId;
-		// "Faux" This is identical to AbsoluteURL except the value is normalised, used for filtering on to prevent duplicates. See $this#runChecks()
-		$this->AbsoluteURLFaux = preg_replace('#/$#','', $this->source->BaseUrl) . $this->externalId;
 		$this->ProcessedURL = $processedURL['url'];
 		$this->ProcessedMIME = $processedURL['mime'];
 	}
@@ -53,14 +51,18 @@ class StaticSiteContentItem extends ExternalContentItem {
 	/*
 	 * Returns the correct SS base-type based on the curent URLs Mime-Type and directs the module to use the correct transformation class
 	 *
-	 * @return string
+	 * @return mixed string|boolean
 	 * @todo Create a static array somewhere (_config??) comprising all legit mime-types, or fetch directly from IANA..
 	 */
 	public function getType() {
-		if(singleton('StaticSiteMimeProcessor')->isOfFileOrImage($this->ProcessedMIME)) {
+		$mimeTypeProcessor = singleton('StaticSiteMimeProcessor');
+		if($mimeTypeProcessor->isOfFileOrImage($this->ProcessedMIME)) {
 			return "file";
 		}
-		return 'sitetree';
+		if($mimeTypeProcessor->isOfHtml($this->ProcessedMIME)) {
+			return "sitetree";
+		}
+		return false;
 	}
 
 	/*
