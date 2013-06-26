@@ -6,11 +6,18 @@
  */
 class StaticSitePageTransformer implements ExternalContentTransformer {
 
+	/**
+	 *
+	 * @param type $item
+	 * @param type $parentObject
+	 * @param type $duplicateStrategy
+	 * @return boolean|\StaticSiteTransformResult
+	 * @throws Exception
+	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
-		// Workaround for external-content module:
-		// - ExternalContentAdmin#migrate()  assumes we're _either_ dealing-to a SiteTree object _or_ a File object
-		// - todo Bug report?
-		if($item->getType() != 'sitetree') {
+
+		$item->runChecks('sitetree');
+		if($item->checkStatus['ok'] !== true) {
 			return false;
 		}
 
@@ -61,6 +68,8 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
+		// "Faux" This is identical to AbsoluteURL except the value is normalised, used for filtering on to prevent duplicates. See $this#runChecks()
+		$page->StaticSiteURFaux = $item->AbsoluteURLFaux;
 
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 
@@ -92,5 +101,24 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);
 
 		return $contentExtractor->extractMapAndSelectors($importRules, $item);
+	}
+
+	/*
+	 * Resets the value of `File.StaticSiteURL` to NULL before import, to ensure it's unique to the current import.
+	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content to link-to, when multiple imports have been made.
+	 *
+	 * @param string $url
+	 * @param number $sourceID
+	 */
+	public function resetStaticSiteURL($url,$sourceID) {
+		$url = trim($url);
+		$resetFiles = File::get()->filter(array(
+			'StaticSiteURL'=>$url,
+			'StaticSiteContentSourceID' => $sourceID
+		));
+		foreach($resetFiles as $file) {
+			$file->StaticSiteURL = NULL;
+			$file->write();
+		}
 	}
 }

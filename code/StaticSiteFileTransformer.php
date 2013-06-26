@@ -18,11 +18,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 * @throws Exception
 	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
-		// Workaround for external-content module:
-		// - ExternalContentAdmin#migrate()  assumes we're _either_ dealing-to a SiteTree object _or_ a File object
-		// - todo Bug report?
-		if($item->getType() != 'file') {
-			$this->log("item not of type 'file' for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+
+		$item->runChecks('file');
+		if($item->checkStatus['ok'] !== true) {
+			$this->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -37,9 +36,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		if(empty($contentFields['Filename'])) {
 			$contentFields['Filename'] = array('content' => $item->externalId);
 		}
-		
+
 		$source = $item->getSource();
-		
+
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
 			$this->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
@@ -72,28 +71,32 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$parentFolder = Folder::find_or_make(dirname($path));
 			$file->ParentID = $parentFolder->ID;
 		}
-		
+
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
-		
+
 		return new StaticSiteTransformResult($file, $item->stageChildren());
 	}
 
 	/**
 	 *
 	 * @param File $file
-	 * @param type $item
+	 * @param StaticSiteContentItem $item
+	 * @param StaticSiteContentSource $source
+	 * @param string $tmpPath
 	 * @return boolean
 	 */
 	public function write(File $file, $item, $source, $tmpPath) {
 		$file->StaticSiteContentSourceID = $source->ID;
 		$file->StaticSiteURL = $item->AbsoluteURL;
+		// "Faux" This is identical to AbsoluteURL except the value is normalised, used for filtering on to prevent duplicates. See $this#runChecks()
+		$file->StaticSiteURLFaux = $item->AbsoluteURLFaux;
 
 		if(!$file->write()) {
 			$uploadedFileMsg = "!! {$item->AbsoluteURL} not imported";
 			$this->log($uploadedFileMsg , $file->Filename, $item->ProcessedMIME);
 			return false;
 		}
-		
+
 		rename($tmpPath, BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename);
 	}
 
@@ -133,6 +136,25 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
 			error_log($message.' '.$filename.' '.'('.$mime.')'. PHP_EOL, 3, $logFile);
+		}
+	}
+
+	/*
+	 * Resets the value of `SiteTree.StaticSiteURL` to NULL before import, to ensure it's unique to the current import.
+	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content to link-to, when multiple imports have been made.
+	 *
+	 * @param string $url
+	 * @param number $sourceID
+	 */
+	public function resetStaticSiteURL($url,$sourceID) {
+		$url = trim($url);
+		$resetPages = SiteTree::get()->filter(array(
+			'StaticSiteURL'=>$url,
+			'StaticSiteContentSourceID' => $sourceID
+		));
+		foreach($resetPages as $page) {
+			$page->StaticSiteURL = NULL;
+			$page->write();
 		}
 	}
 }

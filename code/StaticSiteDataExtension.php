@@ -6,6 +6,7 @@ class StaticSiteDataExtension extends DataExtension {
 	);
 	static $db = array(
 		"StaticSiteURL" => "Varchar(255)",
+		"StaticSiteURLFaux" => "Varchar(255)",
 	);
 
 	function updateCMSFields(FieldList $fields) {
