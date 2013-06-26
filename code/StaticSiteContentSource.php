@@ -34,7 +34,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function __construct($record = null, $isSingleton = false, $model = null) {
 		parent::__construct($record, $isSingleton, $model);
 		// We need this in calling logic
-		$this->staticSiteCacheDir = "static-site-{$this->ID}"; 
+		$this->staticSiteCacheDir = "static-site-{$this->ID}";
 	}
 
 	/**
@@ -132,7 +132,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	}
 
 	/**
-	 * 
+	 *
 	 */
 	public function onAfterWrite() {
 		parent::onAfterWrite();
@@ -189,15 +189,15 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @return mixed $schema or boolean false if no schema matches are found
 	 */
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
-		$mimeType = MimeTypeProcessor::cleanse($mimeType);
+		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
 		foreach($this->Schemas() as $schema) {
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
-			$schemaMimeTypes = MimeTypeProcessor::get_mimetypes_from_text($schema->MimeTypes);
+			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
 			if($schemaCanParseURL) {
 				if($mimeType && $schemaMimeTypes && (!in_array($mimeType, $schemaMimeTypes))) {
 					continue;
-				} 
+				}
 				return $schema;
 			}
 		}
@@ -358,7 +358,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		if($this->DataType && in_array('File', ClassInfo::ancestry($this->DataType))) {
 			return $fields;
 		}
-		
+
 		if($importRules) {
 			$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 			$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
@@ -366,7 +366,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 			$addNewButton->setButtonName("Add Rule");
 			$importRules->getConfig()->addComponent($addNewButton);
 
-			
+
 			$fields->addFieldToTab('Root.Main', $importRules);
 		}
 
@@ -436,7 +436,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * @return mixed boolean|string Boolean true if all is OK, otherwise the invalid mimeType to be shown in the CMS UI
 	 */
 	public function validateMimes() {
-		$selectedMimes = MimeTypeProcessor::get_mimetypes_from_text($this->MimeTypes);
+		$selectedMimes = StaticSiteMimeProcessor::get_mimetypes_from_text($this->MimeTypes);
 		$dt = $this->DataType ? $this->DataType : $_POST['DataType']; // @todo
 		if(!$dt) {
 			return true; // probably just creating
@@ -456,7 +456,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 				break;
 		}
 
-		$mimesForSSType = MimeTypeProcessor::get_mime_for_ss_type($type);
+		$mimesForSSType = StaticSiteMimeProcessor::get_mime_for_ss_type($type);
 		foreach($selectedMimes as $mime) {
 			if(!in_array($mime,$mimesForSSType)) {
 				return $mime;

@@ -57,7 +57,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 * @todo Create a static array somewhere (_config??) comprising all legit mime-types, or fetch directly from IANA..
 	 */
 	public function getType() {
-		if(singleton('MimeTypeProcessor')->isOfFileOrImage($this->ProcessedMIME)) {
+		if(singleton('StaticSiteMimeProcessor')->isOfFileOrImage($this->ProcessedMIME)) {
 			return "file";
 		}
 		return 'sitetree';

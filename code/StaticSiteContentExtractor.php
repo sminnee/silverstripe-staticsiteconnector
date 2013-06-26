@@ -60,7 +60,7 @@ class StaticSiteContentExtractor extends Object {
 	/**
 	 * "Caches" the mime-processor for use throughout
 	 *
-	 * @var MimeTypeProcessor
+	 * @var StaticSiteMimeProcessor
 	 */
 	protected $mimeProcessor;
 
@@ -72,7 +72,7 @@ class StaticSiteContentExtractor extends Object {
 	public function __construct($url,$mime) {
 		$this->url = $url;
 		$this->mime = $mime;
-		$this->mimeProcessor = singleton('MimeTypeProcessor');
+		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
 	}
 
 	/**
