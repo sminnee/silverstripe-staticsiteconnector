@@ -9,6 +9,17 @@
  */
 class StaticSiteFileTransformer implements ExternalContentTransformer {
 
+	/*
+	 * @var Object
+	 *
+	 * Holds the StaticSiteUtils object on construct
+	 */
+	protected $utils;
+
+	public function __construct() {
+		$this->utils = singleton('StaticSiteUtils');
+	}
+
 	/**
 	 *
 	 * @param type $item
@@ -19,9 +30,11 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
 
+		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
-			$this->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -41,7 +54,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
 			return false;
 		}
 
@@ -49,7 +62,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$dataType = $schema->DataType;
 
 		if(!$dataType) {
-			$this->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
 
@@ -74,6 +87,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
 
+		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+
 		return new StaticSiteTransformResult($file, $item->stageChildren());
 	}
 
@@ -93,7 +108,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		if(!$file->write()) {
 			$uploadedFileMsg = "!! {$item->AbsoluteURL} not imported";
-			$this->log($uploadedFileMsg , $file->Filename, $item->ProcessedMIME);
+			$this->utils->log($uploadedFileMsg , $file->Filename, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -110,7 +125,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Get the import rules from the content source
 		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
 		if(!$importSchema) {
-			$this->log("Couldn't find an import schema for ",$item->AbsoluteURL,$item->ProcessedMIME,'WARNING');
+			$this->utils->log("Couldn't find an import schema for ",$item->AbsoluteURL,$item->ProcessedMIME,'WARNING');
 			return null;
 		}
 		$importRules = $importSchema->getImportRules();
@@ -120,23 +135,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$extraction = $contentExtractor->extractMapAndSelectors($importRules,$item);
 		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		return $extraction;
-	}
-
-	/**
-	 * Log a message if the logging has been setup according to docs
-	 *
-	 * @param string $message
-	 * @return void
-	 */
-	protected function log($message, $filename, $mime) {
-		$logFile = Config::inst()->get('StaticSiteContentExtractor', 'log_file');
-		if(!$logFile) {
-			return;
-		}
-
-		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-			error_log($message.' '.$filename.' '.'('.$mime.')'. PHP_EOL, 3, $logFile);
-		}
 	}
 
 	/*

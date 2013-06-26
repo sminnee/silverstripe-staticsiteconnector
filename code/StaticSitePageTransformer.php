@@ -6,6 +6,17 @@
  */
 class StaticSitePageTransformer implements ExternalContentTransformer {
 
+	/*
+	 * @var Object
+	 *
+	 * Holds the StaticSiteUtils object on construct
+	 */
+	protected $utils;
+
+	public function __construct() {
+		$this->utils = singleton('StaticSiteUtils');
+	}
+
 	/**
 	 *
 	 * @param type $item
@@ -16,8 +27,11 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
 
+		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+
 		$item->runChecks('sitetree');
 		if($item->checkStatus['ok'] !== true) {
+			$this->utils->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -43,12 +57,14 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$source = $item->getSource();
 		$schema = $source->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
 		if(!$schema) {
+			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
 			return false;
 		}
 
 		$pageType = $schema->DataType;
 
 		if(!$pageType) {
+			$this->utils->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
 			throw new Exception('Pagetype for migration schema is empty!');
 		}
 
@@ -78,6 +94,8 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 
 		$page->write();
+
+		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($page, $item->stageChildren());
 	}

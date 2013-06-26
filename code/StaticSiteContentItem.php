@@ -107,7 +107,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	/*
-	 * Performs some checks on $item. If it is the wrong type, or if it has already been imported by matching on StaticSiteURL, it returns false
+	 * Performs some checks on $item. If it is the wrong type, returns false
 	 *
 	 * @param string $type e.g. 'sitetree'
 	 * @return void
@@ -122,34 +122,6 @@ class StaticSiteContentItem extends ExternalContentItem {
 			$this->checkStatus = array(
 				'ok'	=> false,
 				'msg'	=> 'Item not of type '.$type
-			);
-		}
-
-		$SSClass = ($type == 'sitetree' ? 'SiteTree' : 'File');
-
-		/*
-		 * By default, the crawler crawls everything to allow users fine-grained control over what is imported using Schema and Schema rules.
-		 * During some crawls however, multiple URLs can be found that appear to point to the same canonical location.
-		 * This causes issues for StaticSiteRewriteLinksTask which sees them as totally different URLs and cannot rewrite them.
-		 *
-		 * e.g.
-		 * - /foo/Bar Fu Ba/foo
-		 * - /foo/Bar%20Fu%20Ba/foo
-		 * - /foo/bar fu ba/foo
-		 * - /foo/bar%20fu%20ba/foo
-		 *
-		 * This logic prevents the importation of duplicates
-		 */
-		// Normalise what's already in the DB with what's being imported
-		$this->AbsoluteURLFaux = str_replace(array(' ','%20'),array('-','-'),strtolower(trim($this->AbsoluteURLFaux)));
-		// Here's why we use $this->AbsoluteURLFaux: So $this->AbsoluteURL can still be used to show "imported URL" in the imported content,
-		// but we also get to filter out duplicated content
-		$found = ($SSClass::get()->filter(array('StaticSiteURLFaux'=>$this->AbsoluteURLFaux))->count() >0);
-
-		if($found) {
-			$this->checkStatus = array(
-				'ok'	=> false,
-				'msg'	=> 'Item already imported!'
 			);
 		}
 	}

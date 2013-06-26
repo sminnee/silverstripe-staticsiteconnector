@@ -64,6 +64,13 @@ class StaticSiteContentExtractor extends Object {
 	 */
 	protected $mimeProcessor;
 
+	/*
+	 * @var Object
+	 *
+	 * Holds the StaticSiteUtils object on construct
+	 */
+	protected $utils;
+
 	/**
 	 * Create a StaticSiteContentExtractor for a single URL/.
 	 *
@@ -73,6 +80,7 @@ class StaticSiteContentExtractor extends Object {
 		$this->url = $url;
 		$this->mime = $mime;
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
+		$this->utils = singleton('StaticSiteUtils');
 	}
 
 	/**
@@ -128,7 +136,7 @@ class StaticSiteContentExtractor extends Object {
 				// We found a match, select that one and ignore any other selectors
 				$output[$fieldName] = $extractionRule;
 				$output[$fieldName]['content'] = $content;
-				$this->log("Value set for $fieldName");
+				$this->utils->log("Selector match found: value set for $fieldName");
 				break;
 			}
 		}
@@ -193,7 +201,7 @@ class StaticSiteContentExtractor extends Object {
 			if($element) {
 				$remove = $element->htmlOuter();
 				$content = str_replace($remove, '', $content);
-				$this->log(' - Excluded content from "'.$parentSelector.' '.$excludeSelector.'"');
+				$this->utils->log(' - Excluded content from "'.$parentSelector.' '.$excludeSelector.'"');
 			}
 		}
 		return ($content);
@@ -229,7 +237,7 @@ class StaticSiteContentExtractor extends Object {
 	 * @todo deal-to defaults when $this->mime isn't matched..
 	 */
 	protected function fetchContent() {
-		$this->log("Fetching {$this->url} ({$this->mime})");
+		$this->utils->log("Fetching {$this->url} ({$this->mime})");
 
 		$response = $this->curlRequest($this->url, "GET");
 		if($response == 'file') {
@@ -250,7 +258,7 @@ class StaticSiteContentExtractor extends Object {
 
 		$base = (substr($this->url,-1) == '/') ? $this->url : dirname($this->url) . '/';
 
-		$this->log('Rewriting links in content');
+		$this->utils->log('Rewriting links in content');
 
 		$rewriter = new StaticSiteLinkRewriter(function($url) use($protocol, $server, $base) {
 			// Absolute
@@ -291,8 +299,11 @@ class StaticSiteContentExtractor extends Object {
 	 * @todo Add checks when fetching multi Mb images to ignore anything over 2Mb??
 	 */
 	protected function curlRequest($url, $method, $data = null, $headers = null, $curlOptions = array()) {
+
+		$this->utils->log("CURL START: {$this->url} ({$this->mime})");
+
 		$ch        = curl_init();
-		$timeout   = 5;
+		$timeout   = 10;
 		$ssInfo = new SapphireInfo;
 		$useragent = 'SilverStripe/' . $ssInfo->version();
 
@@ -301,6 +312,7 @@ class StaticSiteContentExtractor extends Object {
 		curl_setopt($ch, CURLOPT_USERAGENT, $useragent);
 		curl_setopt($ch, CURLOPT_CUSTOMREQUEST, $method);
 		curl_setopt($ch, CURLOPT_HEADER, 1);
+		curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 
 		if($headers) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
 
@@ -335,7 +347,6 @@ class StaticSiteContentExtractor extends Object {
 			$fp = fopen($tmp_name, 'w+');
 			curl_setopt($ch, CURLOPT_HEADER, 0);	// We do not want _any_ header info, it corrupts the file data
 			curl_setopt($ch, CURLOPT_FILE, $fp);	// write curl response directly to file, no messing about
-			curl_setopt($ch, CURLOPT_TIMEOUT, 50);
 			curl_exec($ch);
 			curl_close($ch);
 			fclose($fp);
@@ -360,6 +371,7 @@ class StaticSiteContentExtractor extends Object {
 		curl_close($ch);
 
 		if($curlError !== '' || $statusCode == 0) {
+			$this->utils->log("CURL ERROR: Error: {$curlError} Status: {$statusCode}");
 			$statusCode = 500;
 		}
 
@@ -371,24 +383,8 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
+		$this->utils->log("CURL END: {$this->url} ({$this->mime})");
 		return $response;
-	}
-
-	/**
-	 * Log a message if the logging has been setup according to docs
-	 *
-	 * @param string $message
-	 * @return void
-	 */
-	protected function log($message) {
-		$logFile = Config::inst()->get('StaticSiteContentExtractor','log_file');
-		if(!$logFile) {
-			return;
-		}
-
-		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-			error_log($message . "\n", 3, $logFile);
-		}
 	}
 
 	public function setTmpFileName($tmp) {
