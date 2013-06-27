@@ -31,13 +31,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public $listFailedRewrites = array();
 
 	/**
-	 * Tells the  task if a URL is normalisable or not
-	 *
-	 * @var boolean
-	 */
-	public $urlNormalisable = true;
-
-	/**
 	 *
 	 * @var Object
 	 */
@@ -75,12 +68,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fragment = '#'.$fragment;
 			}
 
-
-			$url = $task->normaliseUrl($url, $baseURL);
-			if(!$task->urlNormalisable) {
+			$normalized = $task->normaliseUrl($url, $baseURL);
+			if($normalized['ok'] !== true) {
 				$task->printMessage("{$url} isn't normalisable (logged)",'WARNING',$url);
 				return;
 			}
+			$url = $normalized['url'];
 			// Replace phpQuery processed Page-URLs with SiteTree shortcode
 			if($pageLookup[$url]) {
 				return '[sitetree_link,id='.$pageLookup[$url] .']' . $fragment;
@@ -153,7 +146,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		}
 		if($url && $level == 'WARNING') {
 			// Attempt some context for the log, so we can tell what page the rewrite failed in
-			$url = preg_replace("#/$#",'',str_ireplace($this->contentSource->BaseUrl, '', $this->normaliseUrl($url, $this->contentSource->BaseUrl)));
+			$normalized = $this->normaliseUrl($url, $this->contentSource->BaseUrl);
+			$url = preg_replace("#/$#",'',str_ireplace($this->contentSource->BaseUrl, '', $normalized['url']));
 			$pages = $this->contentSource->Pages();
 			$dbFieldsToMatchOn = array();
 			foreach($pages as $page) {
@@ -239,10 +233,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 *
 	 * @param string $url
 	 * @param string $baseURL
+	 * @param boolean $ret
 	 * @return string $processed
 	 * @todo Is this logic better located in `SiteTree.StaticSiteURLList`?
 	 */
-	public function normaliseUrl($url, $baseURL) {
+	public function normaliseUrl($url, $baseURL, $ret = false) {
 		// Leave empty, root, special and pre-converted URLs alone
 		$url = trim($url);
 		$noLength = (!strlen($url)>1);
@@ -250,8 +245,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
 		$alreadyProcessed = (preg_match("#\[sitetree#",$url));
 		if($noLength || $nonHTTPSchemes || $alreadyProcessed) {
-			$this->urlNormalisable = false;
-			return $url;
+			return array(
+				'url' => $url,
+				'ok'	=> false
+			);
 		}
 		$processed = trim($url);
 		if(!preg_match("#^http(s)?://#",$processed)) {
@@ -262,6 +259,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$processed = $baseURL.'/'.$url;
 			}
 		}
-		return $processed;
+		return array(
+			'url' => $processed,
+			'ok'	=> true
+		);
 	}
 }

@@ -14,6 +14,19 @@ class StaticSiteContentItem extends ExternalContentItem {
 		'msg'	=>	null
 	);
 
+	/**
+	 * Set this by using the yml config system
+	 *
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
+	private static $log_file = null;
+
 	public function init() {
 		$url = $this->externalId;
 
@@ -62,6 +75,8 @@ class StaticSiteContentItem extends ExternalContentItem {
 		if($mimeTypeProcessor->isOfHtml($this->ProcessedMIME)) {
 			return "sitetree";
 		}
+		// Log everything that doesn't fit:
+		singleton('StaticSiteUtils')->log('Schema not configured for URL & Mime',$this->AbsoluteURL,$this->ProcessedMIME);
 		return false;
 	}
 

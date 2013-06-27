@@ -34,8 +34,10 @@ Some are already registered as issues on Github, others are more in the "would l
  * This should make it far easier and faster to get up and running with the module
 * Is the `$rewriter = new StaticSiteLinkRewriter` logic needed in `StaticSiteContentExtractor`? The rewriting logic is now in a BuildTask.
 * Some bad image encoding is causing errors in the CMS from GD.php - temporarily supressing them by switching to `isTest=1` or prepending '@' to the imagecreatefrom*() functions helps
-* tmp files seem to be created for text/html pages when a server error occurs e.g. 400
-* Asset import should go into assets/Documents and assets/Images
-* Imports fail for some reason without error (browser, SS, apache, syslog etc)
- * Check import log
+* tmp files seem to be created for text/html pages when a server error occurs e.g. 400 fix this or write a task that can clean these up
 * Issues with image/gif - need to see browser errors when these fail
+* Some pages in the 'urls' cache file are not being imported
+ * They exist in 'urls' cache
+ * Importer isn't importing them
+ * They are not therefore showing as having their links rewritten
+* Add an onAfterImport() (see external-content module) to StaticSiteImporter and run link-rewrite task in there based on user-selection in the CMS (default it to 'yes')
