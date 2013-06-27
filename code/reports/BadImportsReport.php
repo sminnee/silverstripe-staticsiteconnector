@@ -39,13 +39,12 @@ class BadImportsReport extends SS_Report {
 	}
 	
 	/*
-	 * @return array
+	 * @return mixed boolean|array
 	 */
 	protected function getBadImportData() {
 		$logFile = '/tmp/'.StaticSiteRewriteLinksTask::$failure_log;
 		if(!$logFile || !file_exists($logFile)) {
-			user_error('No source data exists. Re-run an import and check back.');
-			exit;
+			return false;
 		}
 		return explode(PHP_EOL,file_get_contents($logFile));
 	}
@@ -56,6 +55,9 @@ class BadImportsReport extends SS_Report {
 	protected function getDataAsSSList() {
 		$data = $this->getBadImportData();
 		$list = new ArrayList();
+		if(!$data) {
+			return $list;
+		}
 		foreach($data as $line) {
 			if(!strlen($line)>0 || !$processed = $this->processBadImportDataByLine($line)) {
 				continue;
