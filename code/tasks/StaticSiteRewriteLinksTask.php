@@ -178,13 +178,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function writeFailedRewrites() {
-		$logFile = getTempFolder().'/'.self::$failure_log;
+		$logFile = '/tmp/'.self::$failure_log;
 		$logFail = implode(PHP_EOL,$this->listFailedRewrites);
-		$totals = 'Failures:'.PHP_EOL.PHP_EOL;
+		$header = 'Failures: ('.date('d/m/Y H:i:s').')'.PHP_EOL.PHP_EOL;
 		foreach($this->countFailureTypes() as $label => $count) {
-			$totals .= FormField::name_to_label($label).': '.$count.PHP_EOL;
+			$header .= FormField::name_to_label($label).': '.$count.PHP_EOL;
 		}
-		$logData = $totals.PHP_EOL.$logFail.PHP_EOL;
+		$logData = $header.PHP_EOL.$logFail.PHP_EOL;
 		file_put_contents($logFile, $logData);
 	}
 
@@ -244,6 +244,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function normaliseUrl($url, $baseURL) {
 		// Leave empty, root, special and pre-converted URLs alone
+		$url = trim($url);
 		$noLength = (!strlen($url)>1);
 		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
