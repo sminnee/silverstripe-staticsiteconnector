@@ -48,6 +48,11 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			return false;
 		}
 
+		$source = $item->getSource();
+
+		// Cleanup StaticSiteURLs
+		//$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'SiteTree');
+
 		// Sleep for 100ms to reduce load on the remote server
 		usleep(100*1000);
 
@@ -67,7 +72,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$contentFields['URLSegment'] = array('content' => $urlSegment);
 		}
 
-		$source = $item->getSource();
 		$schema = $source->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
 		if(!$schema) {
 			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
@@ -130,24 +134,5 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);
 
 		return $contentExtractor->extractMapAndSelectors($importRules, $item);
-	}
-
-	/*
-	 * Resets the value of `File.StaticSiteURL` to NULL before import, to ensure it's unique to the current import.
-	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content to link-to, when multiple imports have been made.
-	 *
-	 * @param string $url
-	 * @param number $sourceID
-	 */
-	public function resetStaticSiteURL($url,$sourceID) {
-		$url = trim($url);
-		$resetFiles = File::get()->filter(array(
-			'StaticSiteURL'=>$url,
-			'StaticSiteContentSourceID' => $sourceID
-		));
-		foreach($resetFiles as $file) {
-			$file->StaticSiteURL = NULL;
-			$file->write();
-		}
 	}
 }

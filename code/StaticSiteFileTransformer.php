@@ -59,6 +59,11 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			return false;
 		}
 
+		$source = $item->getSource();
+
+		// Cleanup StaticSiteURLs
+		//$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
+
 		// Sleep for 10ms to reduce load on the remote server
 		usleep(10*1000);
 
@@ -156,24 +161,5 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$extraction = $contentExtractor->extractMapAndSelectors($importRules,$item);
 		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		return $extraction;
-	}
-
-	/*
-	 * Resets the value of `SiteTree.StaticSiteURL` to NULL before import, to ensure it's unique to the current import.
-	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content to link-to, when multiple imports have been made.
-	 *
-	 * @param string $url
-	 * @param number $sourceID
-	 */
-	public function resetStaticSiteURL($url,$sourceID) {
-		$url = trim($url);
-		$resetPages = SiteTree::get()->filter(array(
-			'StaticSiteURL'=>$url,
-			'StaticSiteContentSourceID' => $sourceID
-		));
-		foreach($resetPages as $page) {
-			$page->StaticSiteURL = NULL;
-			$page->write();
-		}
 	}
 }
