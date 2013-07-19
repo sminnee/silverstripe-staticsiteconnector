@@ -49,4 +49,27 @@ class StaticSiteUtils {
 		}
 	}
 
+	/*
+	 * If operating in a specific environment, set some proxy options for it for passing to curl and to phpCrawler (if set in config)
+	 *
+	 * @param boolean $set e.g. !Director::isDev()
+	 * @param StaticSiteCrawler $crawler (Warning: Pass by reference)
+	 * @return array Returns an array of the config options in a format consumable by curl.
+	 */
+	public function defineProxyOpts($set, &$crawler = null) {
+		if($set && is_bool($set) && $set !== false) {
+			$proxyOpts = Config::inst()->get('StaticSiteContentExtractor', 'curl_opts_proxy');
+			if(!$proxyOpts || !is_array($proxyOpts) || !sizeof($proxyOpts)>0) {
+				return;
+			}
+			if($crawler) {
+				$crawler->setProxy($proxyOpts['hostname'], $proxyOpts['port']);
+			}
+			return array(
+				'CURLOPT_PROXY' => $proxyOpts['hostname'],
+				'CURLOPT_PROXYPORT' => $proxyOpts['port']
+			);
+		}
+	}
+
 }
