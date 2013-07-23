@@ -60,7 +60,7 @@ class StaticSiteUtils {
 		if($set && is_bool($set) && $set !== false) {
 			$proxyOpts = Config::inst()->get('StaticSiteContentExtractor', 'curl_opts_proxy');
 			if(!$proxyOpts || !is_array($proxyOpts) || !sizeof($proxyOpts)>0) {
-				return;
+				return array();
 			}
 			if($crawler) {
 				$crawler->setProxy($proxyOpts['hostname'], $proxyOpts['port']);
@@ -70,6 +70,7 @@ class StaticSiteUtils {
 				'CURLOPT_PROXYPORT' => $proxyOpts['port']
 			);
 		}
+		return array();
 	}
 
 }
