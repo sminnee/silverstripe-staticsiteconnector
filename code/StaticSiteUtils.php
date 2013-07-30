@@ -66,8 +66,8 @@ class StaticSiteUtils {
 				$crawler->setProxy($proxyOpts['hostname'], $proxyOpts['port']);
 			}
 			return array(
-				'CURLOPT_PROXY' => $proxyOpts['hostname'],
-				'CURLOPT_PROXYPORT' => $proxyOpts['port']
+				CURLOPT_PROXY => $proxyOpts['hostname'],
+				CURLOPT_PROXYPORT => $proxyOpts['port']
 			);
 		}
 		return array();
