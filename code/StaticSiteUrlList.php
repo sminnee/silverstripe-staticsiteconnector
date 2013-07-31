@@ -65,7 +65,7 @@ class StaticSiteUrlList {
 	 * @param string $cacheDir The local path to cache data into
 	 */
 	public function __construct($baseURL, $cacheDir) {
-		// baseURL mus not have a trailing slash
+		// baseURL must not have a trailing slash
 		if(substr($baseURL,-1) == "/") $baseURL = substr($baseURL,0,-1);
 		// cacheDir must have a trailing slash
 		if(substr($cacheDir,-1) != "/") $cacheDir .= "/";
@@ -273,7 +273,6 @@ class StaticSiteUrlList {
 			$this->urls['regular'][$url] = $processedURLData;
 
 			// Trigger parent URL back-filling on new processed URL
-			//$this->parentProcessedURL($processedURL);
 			$this->parentProcessedURL($processedURLData);
 		}
 
@@ -601,6 +600,7 @@ class StaticSiteUrlList {
 }
 
 class StaticSiteCrawler extends PHPCrawler {
+	
 	protected $urlList;
 
 	/**
@@ -608,6 +608,26 @@ class StaticSiteCrawler extends PHPCrawler {
 	 * @var bool
 	 */
 	protected $verbose = false;
+	
+	/*
+	 * @var Object
+	 *
+	 * Holds the StaticSiteUtils object on construct
+	 */
+	protected $utils;
+	
+	/**
+	 * Set this by using the yml config system
+	 *
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+	 *	log_file:  ../logs/crawler-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
+	private static $log_file = null;	
 
 	function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
 		parent::__construct();
@@ -616,28 +636,35 @@ class StaticSiteCrawler extends PHPCrawler {
 		if($limit) {
 			$this->setPageLimit($limit);
 		}
+		$this->utils = singleton('StaticSiteUtils');
 	}
 
-	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
-		// Don't parse 400/500 responses
-		if($header->http_status_code > 399) {
-			$message = $header->source_url . " - skipped as it's $header->http_status_code".PHP_EOL;
-			error_log($message, 3, '/tmp/urls');
-			if($this->verbose) {
-				echo "[!] ".$message;
-			}
-			return -1;
-		}
-	}
-
-	function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
+	/*
+	 * After checking raw status codes out of PHPCrawler we continue to save each URL to our cache file
+	 * 
+	 * @param \PHPCrawlerDocumentInfo $info
+	 * @return mixed (null | void)
+	 */
+	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
+		
+		/*
+		 * MOSS has many URLs with brackets, resembling this one below BRHU
+		 * These result in a 404 and don't filter down to our caching logic, e.g. http://www.transport.govt.nz/news/newsevents/budget2013/(/
+		 * We can "recover" these URLs by stripping and replacing with a trailing slash (So we eventually fetch all child nodes, if present)
+		 */
+		$mossBracketRegex = "(\(|%28)+(.+)?$";
+		$isRecoverableUrl = preg_match("#$mossBracketRegex#i",$info->url);
 		// Ignore errors and redirects
-		if($info->http_status_code < 200) return;
-		if($info->http_status_code > 299) return;
-
-		// Ignore non HTML
-		//if(!preg_match('#/x?html#', $info->content_type)) return;
-
+		$badStatusCode = (($info->http_status_code < 200) || ($info->http_status_code > 299));		
+		
+		if($badStatusCode && !$isRecoverableUrl) {
+			$message = $info->url . " Skipped. We got a {$info->http_status_code}".PHP_EOL;
+			$this->utils->log($message);
+			return;
+		}
+		
+		// Continue building our cache
+		$info->url = preg_replace("#$mossBracketRegex#i",'',$info->url);
 		$this->urlList->addAbsoluteURL($info->url,$info->content_type);
 		if($this->verbose) {
 			echo "[+] ".$info->url.PHP_EOL;

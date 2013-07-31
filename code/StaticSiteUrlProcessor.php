@@ -54,24 +54,30 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		return "Drop file extensions and trailing slashes on URLs but otherwise leave them the same";
 	}
 
+	/*
+	 * @todo:
+	 * - Find out the reason for the replacement of a trailing slash in URLs
+	 * - These are needed if child-nodes are to be discovered and imported later
+	 */
 	function processURL($urlData) {
 		$url = '';
-		if(preg_match('/^([^?]*)\?(.*)$/', $urlData['url'], $matches)) {
+		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-			if($url != '/') {
-				$url = preg_replace('#/$#','',$url);
-			}
-			$url = preg_replace('#\.[^.]*$#','',$url);
+//			if($url != '/') {
+//				$url = preg_replace("#/$#",'',$url);
+//			}
+			$url = preg_replace("#\.[^.]*$#",'',$url);
 			return array(
 				'url'=>"$url?$qs",
 				'mime'=>$urlData['mime']
 			);
 		} else {
-			if($urlData['url'] != '/') {
-				$url = preg_replace('#/$#','',$urlData['url']);
-			}
-			$url = preg_replace('#\.[^.]*$#','',$url);
+			$url = $urlData['url'];
+//			if($url != '/') {
+//				$url = preg_replace("#/$#",'',$url);
+//			}
+			$url = preg_replace("#\.[^.]*$#",'',$url);
 			return array(
 				'url'=>$url,
 				'mime'=>$urlData['mime']
@@ -83,6 +89,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
  * Processor for MOSS URLs
  */
 class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
+	
 	function getName() {
 		return "MOSS-style URLs";
 	}
