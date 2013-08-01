@@ -114,6 +114,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$filename = parse_url($item->AbsoluteURL);
 			$file->Filename = $path . DIRECTORY_SEPARATOR . $filename['path'];
 			$file->Name = $filename['path'];
+			$origFilename = explode('/',$item->AbsoluteURL);
+			$origFilename = end($origFilename) ? end($origFilename) : $filename['path'];
+			$file->Filename = $path . DIRECTORY_SEPARATOR . $origFilename;
+			$file->Name = $origFilename;
 			$file->ParentID = $parentFolder->ID;
 		}
 
