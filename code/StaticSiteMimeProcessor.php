@@ -101,30 +101,32 @@ class StaticSiteMimeProcessor extends Object {
 	 * @param string $ext The file extension to comapre e.g. .doc
 	 * @param string $mime The Mime-Type to compare e.g. application/msword
 	 * @param boolean $fix whether or not to try and "fix" borked file-extensions coming through from third-parties.
-	 * - If true, the matched extension is returned instead of boolean true
+	 * - If true, the matched extension is returned (if found, otherwise false) instead of boolean false
 	 * - This is a pretty sketchy way of doing things and relies on the file-extension as a string bein gpresent somewhere in the mime-type
 	 * - e.g. "pdf" can be found in "application/pdf" but "doc" cannot be found in "application/msword"
-	 * @return mixed boolean or string $coreExt if the $fix param is set to true
+	 * @return mixed boolean or string $ext | $coreExt if the $fix param is set to true, no extra processing is required
+	 * @todo this method could really benefit from some tests..
 	 */
 	public static function ext_to_mime_compare($ext,$mime,$fix = false) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
 		$mimeCategories = singleton('File')->config()->app_categories;
 		list($ext,$mime) = array(strtolower($ext),strtolower($mime));
-		$notAuthoratative = !isset($httpMimeTypes[$ext]);
-		$notMatch = ($httpMimeTypes[$ext] !== $mime);
+		$notAuthoratative = !isset($httpMimeTypes[$ext]);					// We've found ourselves a weird extension
+		$notMatch = (!$notAuthoratative && $httpMimeTypes[$ext] !== $mime);	// No match found for passed extension in our ext=>mime mapping from config
 		if($notAuthoratative || $notMatch) {
 			if(!$fix) {
 				return false;
 			}
-			// Attempt to "fix" broken or badly encoded extensions by guessing what the extension should be from the mime-type
+			// Attempt to "fix" broken or badly encoded file-extensions by guessing what it should be based on the passed mime-type
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
-			foreach($coreTypes as $coreExt) {
+			foreach($coreExts as $coreExt) {
 				if(stristr($mime,$coreExt) !== false) {
 					return $coreExt;
 				}
 			}
+			return false;
 		}
-		return true;
+		return false;
  	}
 
 	/*

@@ -108,17 +108,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			// - Do we really want to rely on user-input to ascertain the correct container class?
 			// - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
 			$file = new $dataType(array());
-			$isImage = $this->mimeProcessor->IsOfImage($item->ProcessedMIME);
-			$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
-			$parentFolder = Folder::find_or_make($path);
-			$filename = parse_url($item->AbsoluteURL);
-			$file->Filename = $path . DIRECTORY_SEPARATOR . $filename['path'];
-			$file->Name = $filename['path'];
-			$origFilename = explode('/',$item->AbsoluteURL);
-			$origFilename = end($origFilename) ? end($origFilename) : $filename['path'];
-			$file->Filename = $path . DIRECTORY_SEPARATOR . $origFilename;
-			$file->Name = $origFilename;
-			$file->ParentID = $parentFolder->ID;
+			if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
+				return false;
+			}
 		}
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
@@ -169,5 +161,55 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$extraction = $contentExtractor->extractMapAndSelectors($importRules,$item);
 		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		return $extraction;
+	}
+	
+	/*
+	 * Build the properties required for a safely saved SS asset
+	 * 
+	 * @param $file
+	 * @param string $mime
+	 * @return mixed (boolean | \File)
+	 * @todo Currently, if we can't "fix" borked file-extensions, they're discarded. Need to append our new file-extension ($newExt).
+	 */
+	public function buildFileProperties($file, $url, $mime) {
+		// Build the container directory to hold imported files
+		$isImage = $this->mimeProcessor->IsOfImage($mime);
+		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
+		$parentFolder = Folder::find_or_make($path);
+		
+		// Run some checks on the original filename and name it as per a default if we can do nothing useful with it
+		$origFilename = explode('/',$url);
+		$origFilename = end($origFilename);
+		$origFilenameIsOk = (!is_bool($origFilename) && mb_strlen($origFilename) >0);
+		$origFilename = ($origFilenameIsOk ? $origFilename : 'unknown');
+		
+		// Some assets come through with no extension, which confuses SS's File logic and throws errors causing the import to stop. 
+		// Check for these and add an appropriate extension if appropriate
+		$oldExt = File::get_file_extension($origFilename);
+		$extIsValid = in_array($oldExt, $this->getSSExtensions());
+		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
+			$this->utils->log("WARNING: Unable to import file with bad file-extension: ", $url, $mime);
+			return false;
+		}
+		
+		// Complete construction of $file
+		$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
+		$file->setName($origFilename);
+		$file->setParentID($parentFolder->ID);
+		return $file;
+	}
+
+	/*
+	 * @return array $exts
+	 */
+	protected function getSSExtensions() {
+		$extensions = singleton('File')->config()->app_categories;
+		$exts = array();
+		foreach($extensions as $category => $extArray) {
+			foreach($extArray as $ext) {
+				$exts[] = $ext;
+			}
+		}
+		return $exts;
 	}
 }

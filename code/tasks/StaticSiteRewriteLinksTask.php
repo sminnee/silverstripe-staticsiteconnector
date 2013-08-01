@@ -1,10 +1,12 @@
 <?php
-
 /**
- * Rewrite all links in content imported via staticsiteimporter
+ * Rewrite all links in content imported via staticsiteimporter. 
+ * All rewrite failures are written to a logfile (@see $failure_log)
+ * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're 
+ * able to anaylise why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
  *
- * @todo Add ORM StaticSiteURL field NULL update to import process
- * @todo add a link in the CMS UI that users can select to run this task
+ * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
+ * @todo add a link in the CMS UI that users can select to run this task @see https://github.com/phptek/silverstripe-staticsiteconnector/tree/feature/link-rewrite-ui
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
@@ -16,7 +18,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public static $failure_log = 'failedRewrite.log';
 
 	/**
-	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert
+	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert/normalise
 	 *
 	 * @see http://en.wikipedia.org/wiki/URI_scheme
 	 * @var array
@@ -136,6 +138,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $level
 	 * @param string $baseURL
 	 * @return void
+	 *
+	 * @todo find a more intelligent way of matching the $page->field (See WARNING below)
+	 * @todo Extrapolate the field-matching into a separate method
 	 */
 	public function printMessage($msg,$level,$url=null) {
 		if(Director::is_cli()) {
@@ -152,12 +157,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$dbFieldsToMatchOn = array();
 			foreach($pages as $page) {
 				foreach($page->db() as $name=>$field) {
-					// @todo Note: We're hard-coding a connection between fields named 'Contentxxxx' on the selected DataType!
-					if(stristr('Content', $name)) {
+					// Check that the $name is available on this particular Page subclass
+					// WARNING: We're hard-coding a connection between fields partially named as '.*Content.*' on the selected DataType!
+					if(strstr($name, 'Content') && in_array($name, $page->database_fields($page->ClassName))) {
 						$dbFieldsToMatchOn["{$name}:PartialMatch"] = $url;
 					}
 				}
 			}
+			// Query SiteTree for the page in which the link to be rewritten, was found
 			$failureContext = 'unknown';
 			if($page = SiteTree::get()->filter($dbFieldsToMatchOn)->First()) {
 				$failureContext = '"'.$page->Title.'" (#'.$page->ID.')';
@@ -172,7 +179,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function writeFailedRewrites() {
-		$logFile = '/tmp/'.self::$failure_log;
+		$logFile = '/var/tmp/'.self::$failure_log;
 		$logFail = implode(PHP_EOL,$this->listFailedRewrites);
 		$header = 'Failures: ('.date('d/m/Y H:i:s').')'.PHP_EOL.PHP_EOL;
 		foreach($this->countFailureTypes() as $label => $count) {
@@ -229,7 +236,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * $url example: /Style%20Library/MOT/Images/MoTivate_198-pixels.png
 	 * File.StaticSiteURL example: http://www.transport.govt.nz/Style%20Library/MOT/Images/MoTivate_198-pixels.png
 	 *
-	 * Ignore any URLs that are not normalisable and flags them ready for reporting
+	 * Ignore any URLs that are not normalisable and flag them for reporting
 	 *
 	 * @param string $url
 	 * @param string $baseURL
@@ -238,21 +245,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo Is this logic better located in `SiteTree.StaticSiteURLList`?
 	 */
 	public function normaliseUrl($url, $baseURL, $ret = false) {
-		// Leave empty, root, special and pre-converted URLs alone
+		// Leave all empty, root, special and pre-converted URLs - alone
 		$url = trim($url);
 		$noLength = (!strlen($url)>1);
 		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
-		$alreadyProcessed = (preg_match("#\[sitetree#",$url));
-		if($noLength || $nonHTTPSchemes || $alreadyProcessed) {
+		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#",$url));
+		if($noLength || $nonHTTPSchemes || $alreadyRewritten) {
 			return array(
 				'url' => $url,
 				'ok'	=> false
 			);
 		}
+
 		$processed = trim($url);
 		if(!preg_match("#^http(s)?://#",$processed)) {
-			// Add a slash if there isn't one at the end of $baseURL or at the beginning of $url
+			// Add a slash if there isn't one at the end of $baseURL or at the beginning of $url to properly separate them
 			$addSlash = !(preg_match("#/$#",$baseURL) || preg_match("#^/#",$processed));
 			$processed = $baseURL.$processed;
 			if($addSlash) {
