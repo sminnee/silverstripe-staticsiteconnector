@@ -162,10 +162,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		return $extraction;
 	}
-	
+
 	/*
 	 * Build the properties required for a safely saved SS asset
-	 * 
+	 *
 	 * @param $file
 	 * @param string $mime
 	 * @return mixed (boolean | \File)
@@ -176,14 +176,14 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
 		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
 		$parentFolder = Folder::find_or_make($path);
-		
+
 		// Run some checks on the original filename and name it as per a default if we can do nothing useful with it
 		$origFilename = explode('/',$url);
 		$origFilename = end($origFilename);
 		$origFilenameIsOk = (!is_bool($origFilename) && mb_strlen($origFilename) >0);
 		$origFilename = ($origFilenameIsOk ? $origFilename : 'unknown');
-		
-		// Some assets come through with no extension, which confuses SS's File logic and throws errors causing the import to stop. 
+
+		// Some assets come through with no extension, which confuses SS's File logic and throws errors causing the import to stop.
 		// Check for these and add an appropriate extension if appropriate
 		$oldExt = File::get_file_extension($origFilename);
 		$extIsValid = in_array($oldExt, $this->getSSExtensions());
@@ -191,7 +191,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$this->utils->log("WARNING: Unable to import file with bad file-extension: ", $url, $mime);
 			return false;
 		}
-		
+
 		// Complete construction of $file
 		$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
 		$file->setName($origFilename);

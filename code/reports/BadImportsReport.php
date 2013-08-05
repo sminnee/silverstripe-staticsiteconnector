@@ -42,7 +42,7 @@ class BadImportsReport extends SS_Report {
 	 * @return mixed boolean|array
 	 */
 	protected function getBadImportData() {
-		$logFile = '/tmp/'.StaticSiteRewriteLinksTask::$failure_log;
+		$logFile = StaticSiteRewriteLinksTask::$log_file;
 		if(!$logFile || !file_exists($logFile)) {
 			return false;
 		}

@@ -1,7 +1,7 @@
 <?php
 /**
  * Rewrite all links in content imported via staticsiteimporter. 
- * All rewrite failures are written to a logfile (@see $failure_log)
+ * All rewrite failures are written to a logfile (@see $log_file)
  * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're 
  * able to anaylise why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
  *
@@ -11,11 +11,11 @@
 class StaticSiteRewriteLinksTask extends BuildTask {
 
 	/**
-	 * Where the failure log is cached
+	 * Where the log file is cached
 	 *
 	 * @var string
 	 */
-	public static $failure_log = 'failedRewrite.log';
+	public static $log_file = '/var/tmp/rewrite_links.log';
 
 	/**
 	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert/normalise
@@ -38,10 +38,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public $contentSource = null;
 
+	/**
+	 * runs the task
+	 */
 	function run($request) {
 		$id = $request->getVar('ID');
 		if(!$id || !is_numeric($id)) {
-			$this->printMessage("Specify ?ID=(number)",'WARNING');
+			$message = "Please specify a StaticSiteContentSource.ID";
+			if(Director::is_cli()) {
+				$this->printMessage($message . " e.g. ./framework/sake dev/tasks/StaticSiteRewriteLinksTask ID={StaticSiteContentSource.ID}",'WARNING');
+			}
+			else {
+				$this->printMessage($message . " e.g. /dev/tasks/StaticSiteRewriteLinksTask?ID={StaticSiteContentSource.ID}",'WARNING');
+			}
 			return;
 		}
 
@@ -55,6 +64,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$files = $this->contentSource->Files();
 
 		$this->printMessage("Looking through {$pages->count()} imported pages.",'NOTICE');
+		$this->printMessage("Looking through {$files->count()} imported files.",'NOTICE');
 
 		// Set up rewriter
 		$pageLookup = $pages->map('StaticSiteURL', 'ID');
@@ -179,7 +189,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function writeFailedRewrites() {
-		$logFile = '/var/tmp/'.self::$failure_log;
+		$logFile = self::$log_file;
+		if (!$logFile) {
+			error_log(__CLASS__.' log_file filename is not defined'.PHP_EOL, 3, null);
+			return;
+		}
+		if (!is_writable($logFile)) {
+			error_log(__CLASS__.' log_file is not writable: '.$logFile.PHP_EOL, 3, $logFile);
+			return;
+		}
+
 		$logFail = implode(PHP_EOL,$this->listFailedRewrites);
 		$header = 'Failures: ('.date('d/m/Y H:i:s').')'.PHP_EOL.PHP_EOL;
 		foreach($this->countFailureTypes() as $label => $count) {
