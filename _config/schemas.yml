@@ -38,6 +38,7 @@ StaticSiteConnectors:
         StaticSiteConnector: =>TransportNewsConnector
         Url: '(.*)'
         Priority: 1
+        MimeTypes: 'text/html'
         Rules:
           Title:
             CSS Selector: "#content h1"
@@ -97,6 +98,7 @@ StaticSiteConnectors:
         StaticSiteConnector: =>TransportConnectorEverythingButNews
         Url: '(.*)'
         Priority: 1
+        MimeTypes: 'text/html'
         Rules:
           Title:
             CSS Selector: "#content h1"
