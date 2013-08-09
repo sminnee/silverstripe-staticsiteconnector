@@ -341,22 +341,54 @@ class StaticSiteUrlList {
 	}
 
 	/**
+	 * Return the relative URL corresponding to the given absolute URL.
+	 * Returns null if the URL is from another site.
+	 * 
+	 * @param  string $url The absolute URL
+	 * @return string      The relative URL
+	 */
+	public function relativiseUrl($url) {
+		$simpifiedURL = $this->simplifyURL($url);
+		$simpifiedBase = $this->simplifyURL($this->baseURL);
+
+		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+			return substr($url, strlen($this->baseURL));
+		} else {
+			return null;
+		}
+	}
+	
+	/**
 	 * Add a URL to this list, given the absolute URL
 	 * @param string $url The absolute URL
 	 * @param string $content_type The Mime-Type found at this URL e.g text/html or image/png
 	 */
 	public function addAbsoluteURL($url,$content_type) {
-		$simpifiedURL = $this->simplifyURL($url);
-		$simpifiedBase = $this->simplifyURL($this->baseURL);
-
-		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
-			$relURL = substr($url, strlen($this->baseURL));
-		} else {
+		$relURL = $this->relativiseUrl($url);
+		if($relURL === null) {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
 		return $this->addURL($relURL,$content_type);
 	}
+
+	/**
+	 * Add an alias for a URL.
+	 * 
+	 * A URL can have 0 or more aliases; for example, other URLs that redirect to this URL.
+	 * 
+	 * @param string $url The primary URL (relative), e.g. the destination of a redirection
+	 * @param string $alias The alias URL (reliatve), e.g. the source of a redirection
+	 */
+	public function addURLAlias($url, $alias) {
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
+
+		if(!$this->urls['aliases'][$url]) $this->urls['alises'][$url] = array();
+		$this->urls['aliases'][$url][] = $alias;
+	}
+
 
 	/**
 	 *
@@ -633,7 +665,22 @@ class StaticSiteCrawler extends PHPCrawler {
 	function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 		// Ignore errors and redirects
 		if($info->http_status_code < 200) return;
-		if($info->http_status_code > 299) return;
+		if($info->http_status_code > 399) return;
+
+		// If the URL is a redirection, register it as an alias of the destination URL:
+		if($info->http_status_code >= 300) {
+			$baseUrlParts = PHPCrawlerUrlPartsDescriptor::fromURL($info->url);
+			$redirectLink = PHPCrawlerUtils::getRedirectURLFromHeader($info->header)
+			$destinationUrl = PHPCrawlerUtils::buildURLFromLink($redirectLink, $baseUrlParts);
+
+			$src = $this->urlList->relativiseURL($info->url);
+			$dest = $this->urlList->relativiseURL($destinationUrl);
+
+			// Aliases only apply for redirections within the site
+			if($dest !== null) {
+				$this->urlList->addURLAlias($dest, $src);
+			}
+		}
 
 		// Ignore non HTML
 		//if(!preg_match('#/x?html#', $info->content_type)) return;
