@@ -6,6 +6,22 @@
 class StaticSiteRewriteLinksJob extends AbstractQueuedJob implements QueuedJob {
 
 	/**
+	 * The ID number of the StaticSiteContentSource which has the links to be rewritten
+	 *
+	 * @var int
+	 */
+	protected $contentSourceID;
+
+	/**
+	 * sets the content source id
+	 */
+	public function __construct($contentSourceID = null) {
+		if ($contentSourceID) {
+			$this->contentSourceID = $contentSourceID;
+		}
+	}
+
+	/**
 	 * 
 	 * @return string
 	 */
@@ -15,11 +31,12 @@ class StaticSiteRewriteLinksJob extends AbstractQueuedJob implements QueuedJob {
 	}
 
 	/**
-	 * Starts the crawl urls task
+	 * Starts the rewrite links task
 	 */
 	public function process() {
 		$task = singleton('StaticSiteRewriteLinksTask');
-		$task->run();
+		$task->setContentSourceID($this->contentSourceID);
+		$task->process();
 		$this->currentStep = 1;
 		$this->isComplete = true;
 	}

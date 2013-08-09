@@ -33,33 +33,51 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public $listFailedRewrites = array();
 
 	/**
+	 * The ID number of the StaticSiteContentSource which has the links to be rewritten
 	 *
-	 * @var Object
+	 * @var int
 	 */
-	public $contentSource = null;
+	protected $contentSourceID;
 
 	/**
-	 * runs the task
+	 * The StaticSiteContentSource which has the links to be rewritten
+	 *
+	 * @var StaticSiteContentSource
+	 */
+	protected $contentSource = null;
+
+	/**
+	 * Starts the task
+	 *
+	 * @var HTTPRequest $request The request parameter passed from the task initiator, browser or cli
 	 */
 	function run($request) {
-		$id = $request->getVar('ID');
-		if(!$id || !is_numeric($id)) {
-			$message = "Please specify a StaticSiteContentSource.ID";
-			if(Director::is_cli()) {
-				$this->printMessage($message . " e.g. ./framework/sake dev/tasks/StaticSiteRewriteLinksTask ID={StaticSiteContentSource.ID}",'WARNING');
-			}
-			else {
-				$this->printMessage($message . " e.g. /dev/tasks/StaticSiteRewriteLinksTask?ID={StaticSiteContentSource.ID}",'WARNING');
+		$this->contentSourceID = $request->getVar('ID');
+		if (!$this->contentSourceID || !is_numeric($this->contentSourceID)) {
+			$this->printMessage("Please choose a Content Source ID, e.g. ?ID=(number)",'WARNING');
+			
+			// List the content sources to prompt user for selection
+			if ($contentSources = StaticSiteContentSource::get()) {
+				foreach ($contentSources as $i => $contentSource) {
+					$this->printMessage('dev/tasks/'.__CLASS__.' ID=' . $contentSource->ID, 'ID: '. $contentSource->ID . ', NAME: '. $contentSource->Name);
+				}
 			}
 			return;
 		}
+		$this->process();
+	}
 
-		// Find all pages from a content source
-		if(!$this->contentSource = StaticSiteContentSource::get()->byID($id)) {
-			$this->printMessage("No StaticSiteContentSource found via ID: {$id}",'WARNING');
+	/**
+	 * Performs the actions of the task
+	 */
+	public function process() {
+		// Load the content source using the ID number
+		if(!$this->contentSource = StaticSiteContentSource::get()->byID($this->contentSourceID)) {
+			$this->printMessage("No StaticSiteContentSource found via ID: ".$this->contentSourceID,'WARNING');
 			return;
 		}
 
+		// Load pages and files imported by the content source
 		$pages = $this->contentSource->Pages();
 		$files = $this->contentSource->Files();
 
@@ -290,5 +308,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			'url' => $processed,
 			'ok'	=> true
 		);
+	}
+
+	/**
+	 * Setter method for $this->staticSiteContentSourceID
+	 *
+	 * @param int $id
+	 * @return void
+	 */
+	public function setContentSourceID($id) {
+		$this->contentSourceID = $id;
 	}
 }
