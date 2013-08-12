@@ -30,7 +30,13 @@ class StaticSiteUrlList {
 	/**
 	 * Two element array: contains keys 'inferred' and 'regular':
 	 *  - 'regular' is an array mapping raw URLs to processed URLs
-	 *  - 'inferred' is an array of inferred URLs
+	 *     '/original-url/' = array(
+	 *         'url' => '/processed-url',
+	 *         'mime' => "text/html"
+	 *     )
+	 *  - 'inferred' is an array of inferred URLs, parent pages not found
+	 * 
+	 *  - 'aliases'
 	 */
 	protected $urls = null;
 
@@ -227,7 +233,29 @@ class StaticSiteUrlList {
 			);
 		}
 	}
-
+	
+	/**
+	 * Return a list of aliases (redirects) for an absolute url
+	 * 
+	 * @param string $absoluteURL
+	 * @return false|array[string] - an array of urls
+	 */
+	public function getURLAliases($absoluteURL) {
+		
+		$relativeURL = $this->relativiseUrl($absoluteURL);
+		
+		if($this->hasCrawled() || $this->autoCrawl) {
+			if($this->urls === null) {
+				$this->loadUrls();
+			}
+			if(empty($this->urls['aliases'][$relativeURL])) {
+				return false;
+			}
+			return $this->urls['aliases'][$relativeURL];
+		}
+		return false;
+	}
+	
 	/**
 	 * There are URLs and we're not in the middle of a crawl
 	 *
@@ -326,6 +354,23 @@ class StaticSiteUrlList {
 
 		unlink($this->cacheDir.'crawlerid');
 
+		// Sort out all redirects from regular and inferred
+		foreach($this->urls['aliases'] as $redirectDestination => $redirects) {
+			foreach($redirects as $redirectFrom) {
+				// Move the keyname of the inferred url to be the destination
+				// url that we found in the alias array
+				if(!empty($this->urls['inferred'][$redirectFrom])) {
+					$inferredData = $this->urls['inferred'][$redirectFrom];
+					unset($this->urls['inferred'][$redirectFrom]);
+					// If the alias destination don't exist as a regular url
+					// add this page into the inferred list 
+					if(empty($this->urls['regular'][$redirectDestination])) {
+						$this->urls['inferred'][$redirectDestination] = $inferredData;
+					}
+				}
+			}
+		}
+		
 		ksort($this->urls['regular']);
 		ksort($this->urls['inferred']);
 		ksort($this->urls['aliases']);
@@ -364,14 +409,28 @@ class StaticSiteUrlList {
 	 * Add a URL to this list, given the absolute URL
 	 * @param string $url The absolute URL
 	 * @param string $content_type The Mime-Type found at this URL e.g text/html or image/png
+	 * @param string $hash - The unique hash of the page content 
 	 */
-	public function addAbsoluteURL($url,$content_type) {
+	public function addAbsoluteURL($url, $content_type, $hash) {
 		$relURL = $this->relativiseUrl($url);
 		if($relURL === null) {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
-
-		return $this->addURL($relURL,$content_type);
+		
+		// See if the url is already in the list
+		foreach($this->urls['regular'] as $originalURL => $page) {
+			// page not in list
+			if($page['hash'] !== $hash) {
+				continue;
+			}
+			// This seems to be an alias 
+			if($relURL !== $page['url']) {
+				$this->addURLAlias($originalURL, $relURL);
+			}
+			// We found an duplicate page, don't add it to the list.
+			return;
+		}
+		return $this->addURL($relURL, $content_type, $hash);
 	}
 
 	/**
@@ -398,8 +457,9 @@ class StaticSiteUrlList {
 	 *
 	 * @param string $url
 	 * @param string $contentType
+	 * @param string $hash - a unique hash for the content of the page
 	 */
-	public function addURL($url, $contentType) {
+	public function addURL($url, $contentType, $hash) {
 		if($this->urls === null) {
 			$this->loadUrls();
 		}
@@ -411,6 +471,7 @@ class StaticSiteUrlList {
 		);
 		
 		$this->urls['regular'][$url] = $this->generateProcessedURL($urlData);
+		$this->urls['regular'][$url]['hash'] = $hash;
 
 		// Trigger parent URL back-filling
 		$this->parentProcessedURL($this->urls['regular'][$url]);
@@ -479,9 +540,13 @@ class StaticSiteUrlList {
 	function hasProcessedURL($processedURL) {
 		if($this->urls === null) $this->loadUrls();
 
-		//return in_array($processedURL, $this->urls['regular']) || in_array($processedURL, $this->urls['inferred']);
-		return in_array($processedURL, array_keys($this->urls['regular'])) || in_array($processedURL, array_keys($this->urls['inferred']));
-
+		if(in_array($processedURL, array_keys($this->urls['regular']))) {
+			return true;
+		}
+		if(in_array($processedURL, array_keys($this->urls['inferred']))) {
+			return true;
+		}
+		return false;
 	}
 
 	/**
@@ -509,7 +574,7 @@ class StaticSiteUrlList {
 
 		if($processedURL == "/") return $default('');
 
-		// URL heirachy can be broken down by querystring or by URL
+		// URL heirarchy can be broken down by querystring or by URL
 		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL,'/'));
 
 		// Special case for children of the root
@@ -610,8 +675,11 @@ class StaticSiteUrlList {
 		$processedURL = $processedURL['url'];
 
 		// Subtly different regex if the URL ends in ? or /
-		if(preg_match('#[/?]$#',$processedURL)) $regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
-		else $regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
+		if(preg_match('#[/?]$#',$processedURL)) {
+			$regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
+		} else {
+			$regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+/?$#';
+		}
 
 		$children = array();
 		foreach($this->urls['regular'] as $urlKey => $potentialProcessedChild) {
@@ -710,17 +778,10 @@ class StaticSiteCrawler extends PHPCrawler {
 		// Ignore errors and redirects
 		$relativeSrc = $this->urlList->relativiseURL($info->url);
 		
-		if($info->http_status_code <= 199) return;
-		if($info->http_status_code >= 400) {
-			$message = $relativeSrc . " - skipped as it's $info->http_status_code".PHP_EOL;
-			$message .= '   found at '.$info->referer_url.PHP_EOL;
-			error_log($message, 3, '/tmp/urls');
-			if($this->verbose) {
-				echo '['.$info->http_status_code.'] '.$relativeSrc.' from '.$info->referer_url.PHP_EOL;
-			}
+		if($info->http_status_code <= 199) {
 			return;
 		}
-
+		
 		// If the URL is a redirection, register it as an alias of the destination URL:
 		if($info->http_status_code >= 300 && $info->http_status_code <= 399) {
 			$baseUrlParts = PHPCrawlerUrlPartsDescriptor::fromURL($info->url);
@@ -734,12 +795,25 @@ class StaticSiteCrawler extends PHPCrawler {
 				if($this->verbose) {
 					echo '['.$info->http_status_code.'] '.$relativeSrc.' -> '.$dest.PHP_EOL;
 				}
+				$this->urlList->saveURLs();
+				return;
 			}
-		} elseif($this->verbose) {
-			echo '['.$info->http_status_code.'] '.$relativeSrc.PHP_EOL;
+		}
+		
+		if($info->http_status_code >= 400) {
+			$message = $relativeSrc . " - skipped as it's $info->http_status_code".PHP_EOL;
+			$message .= ' found at '.$info->referer_url.PHP_EOL;
+			error_log($message, 3, '/tmp/urls');
+			if($this->verbose) {
+				echo '['.$info->http_status_code.'] '.$relativeSrc.' from '.$info->referer_url.PHP_EOL;
+			}
+			return;
 		}
 
-		$this->urlList->addAbsoluteURL($info->url, $info->content_type);
+		$this->urlList->addAbsoluteURL($info->url, $info->content_type, sha1($info->content));
 		$this->urlList->saveURLs();
+		if($this->verbose) {
+			echo '['.$info->http_status_code.'] '.$relativeSrc.PHP_EOL;
+		}
 	}
 }

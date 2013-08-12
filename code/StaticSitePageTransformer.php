@@ -32,14 +32,13 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 	/**
 	 *
-	 * @param type $item
+	 * @param StaticSiteContentItem $item
 	 * @param type $parentObject
 	 * @param type $duplicateStrategy
 	 * @return boolean|\StaticSiteTransformResult
 	 * @throws Exception
 	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
-
 		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
 		$item->runChecks('sitetree');
@@ -109,6 +108,11 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 
 		$page->write();
+		
+		$aliases = $item->getSource()->urlList()->getURLAliases($item->AbsoluteURL);
+		if($aliases) {
+			StaticSiteURLAlias::set_object($page, $aliases);
+		}
 
 		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
