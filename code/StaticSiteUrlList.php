@@ -328,13 +328,15 @@ class StaticSiteUrlList {
 
 		ksort($this->urls['regular']);
 		ksort($this->urls['inferred']);
+		ksort($this->urls['aliases']);
 		$this->saveURLs();
 		return $crawler;
 	}
 
 	/**
 	 * Save the current list of URLs to disk
-	 * @return [type] [description]
+	 * 
+	 * @return void
 	 */
 	public function saveURLs() {
 		file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
@@ -348,14 +350,14 @@ class StaticSiteUrlList {
 	 * @return string      The relative URL
 	 */
 	public function relativiseUrl($url) {
-		$simpifiedURL = $this->simplifyURL($url);
-		$simpifiedBase = $this->simplifyURL($this->baseURL);
-
-		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
-			return substr($url, strlen($this->baseURL));
-		} else {
+		$migrationURLParts = parse_url($this->baseURL);
+		$urlParts = parse_url($url);
+		
+		if($urlParts['host'] !== $migrationURLParts['host']) {
 			return null;
 		}
+		
+		return $urlParts['path'];
 	}
 	
 	/**
@@ -385,7 +387,9 @@ class StaticSiteUrlList {
 			$this->loadUrls();
 		}
 
-		if(!$this->urls['aliases'][$url]) $this->urls['alises'][$url] = array();
+		if(empty($this->urls['aliases'][$url])) {
+			$this->urls['alises'][$url] = array();
+		}
 		$this->urls['aliases'][$url][] = $alias;
 	}
 
@@ -632,7 +636,17 @@ class StaticSiteUrlList {
 
 }
 
+/**
+ * Extended version of the PHPCrawler that sets options related for 
+ * StaticSiteConnector module.
+ * 
+ */
 class StaticSiteCrawler extends PHPCrawler {
+	
+	/**
+	 *
+	 * @var StaticSiteUrlList
+	 */
 	protected $urlList;
 
 	/**
@@ -641,60 +655,31 @@ class StaticSiteCrawler extends PHPCrawler {
 	 */
 	protected $verbose = false;
 
-	function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
+	/**
+	 * Set some specific options for this instance of the crawler.
+	 * 
+	 * @param StaticSiteUrlList $urlList
+	 * @param int $limit
+	 * @param bool $verbose
+	 */
+	public function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
 		parent::__construct();
 		$this->urlList = $urlList;
 		$this->verbose = $verbose;
 		if($limit) {
 			$this->setPageLimit($limit);
 		}
+		$this->setFollowRedirectsTillContent(true);
 	}
-
-	function handleHeaderInfo(PHPCrawlerResponseHeader $header) {
-		// Don't parse 400/500 responses
-		if($header->http_status_code > 399) {
-			$message = $header->source_url . " - skipped as it's $header->http_status_code".PHP_EOL;
-			error_log($message, 3, '/tmp/urls');
-			if($this->verbose) {
-				echo "[!] ".$message;
-			}
-			return -1;
-		}
-	}
-
-	function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
-		// Ignore errors and redirects
-		if($info->http_status_code < 200) return;
-		if($info->http_status_code > 399) return;
-
-		// If the URL is a redirection, register it as an alias of the destination URL:
-		if($info->http_status_code >= 300) {
-			$baseUrlParts = PHPCrawlerUrlPartsDescriptor::fromURL($info->url);
-			$redirectLink = PHPCrawlerUtils::getRedirectURLFromHeader($info->header)
-			$destinationUrl = PHPCrawlerUtils::buildURLFromLink($redirectLink, $baseUrlParts);
-
-			$src = $this->urlList->relativiseURL($info->url);
-			$dest = $this->urlList->relativiseURL($destinationUrl);
-
-			// Aliases only apply for redirections within the site
-			if($dest !== null) {
-				$this->urlList->addURLAlias($dest, $src);
-			}
-		}
-
-		// Ignore non HTML
-		//if(!preg_match('#/x?html#', $info->content_type)) return;
-
-		$this->urlList->addAbsoluteURL($info->url,$info->content_type);
-		if($this->verbose) {
-			echo "[+] ".$info->url.PHP_EOL;
-		}
-		$this->urlList->saveURLs();
-	}
-
+	
+	/**
+	 * Init the crawled and set some options.
+	 * 
+	 * @throws InvalidArgumentException
+	 */
 	protected function initCrawlerProcess() {
 		parent::initCrawlerProcess();
-
+		
 		// Add additional URLs to crawl to the crawler's LinkCache
 		// NOTE: This is using an undocumented API
 		if($extraURLs = $this->urlList->getExtraCrawlURLs()) {
@@ -714,4 +699,47 @@ class StaticSiteCrawler extends PHPCrawler {
 			}
 		}
     }
+
+	/**
+	 * Overriden so that we can collect any found urls into a StaticSiteUrlList 
+	 * 
+	 * @param PHPCrawlerDocumentInfo $info
+	 * @return void
+	 */
+	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
+		// Ignore errors and redirects
+		$relativeSrc = $this->urlList->relativiseURL($info->url);
+		
+		if($info->http_status_code <= 199) return;
+		if($info->http_status_code >= 400) {
+			$message = $relativeSrc . " - skipped as it's $info->http_status_code".PHP_EOL;
+			$message .= '   found at '.$info->referer_url.PHP_EOL;
+			error_log($message, 3, '/tmp/urls');
+			if($this->verbose) {
+				echo '['.$info->http_status_code.'] '.$relativeSrc.' from '.$info->referer_url.PHP_EOL;
+			}
+			return;
+		}
+
+		// If the URL is a redirection, register it as an alias of the destination URL:
+		if($info->http_status_code >= 300 && $info->http_status_code <= 399) {
+			$baseUrlParts = PHPCrawlerUrlPartsDescriptor::fromURL($info->url);
+			$redirectLink = PHPCrawlerUtils::getRedirectURLFromHeader($info->header);
+			$destinationUrl = PHPCrawlerUtils::buildURLFromLink($redirectLink, $baseUrlParts);
+
+			$dest = $this->urlList->relativiseURL($destinationUrl);
+			// Aliases only apply for redirections within the site
+			if($dest !== null) {
+				$this->urlList->addURLAlias($dest, $relativeSrc);
+				if($this->verbose) {
+					echo '['.$info->http_status_code.'] '.$relativeSrc.' -> '.$dest.PHP_EOL;
+				}
+			}
+		} elseif($this->verbose) {
+			echo '['.$info->http_status_code.'] '.$relativeSrc.PHP_EOL;
+		}
+
+		$this->urlList->addAbsoluteURL($info->url, $info->content_type);
+		$this->urlList->saveURLs();
+	}
 }
