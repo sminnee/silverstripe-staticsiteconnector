@@ -25,6 +25,13 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public $staticSiteCacheDir = null;
 
+	/*
+	 * @var Object
+	 *
+	 * Holds the StaticSiteUtils object on construct
+	 */
+	protected $utils;
+
 	/**
 	 *
 	 * @param array|null $record This will be null for a new database record.
@@ -35,6 +42,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		parent::__construct($record, $isSingleton, $model);
 		// We need this in calling logic
 		$this->staticSiteCacheDir = "static-site-{$this->ID}";
+		$this->utils = singleton('StaticSiteUtils');
 	}
 
 	/**
@@ -190,7 +198,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
-		foreach($this->Schemas() as $schema) {
+		foreach($this->Schemas() as $i => $schema) {
+			//MIKE
+			//$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo);
+
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
@@ -220,8 +231,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 		// backslash the delimiters for the reg exp pattern
 		$appliesTo = str_replace('|', '\|', $appliesTo);
 		if(preg_match("|^$appliesTo|", $url) == 1) {
+			//$this->utils->log(' - Matched: ' . $appliesTo . ', Url: '. $url);
 			return true;
 		}
+		//$this->utils->log(' - Patterns not matched!');
 		return false;
 	}
 

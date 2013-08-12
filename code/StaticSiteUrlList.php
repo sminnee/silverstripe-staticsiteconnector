@@ -372,7 +372,7 @@ class StaticSiteUrlList {
 			'url'	=> $url,
 			'mime'	=> $contentType
 		);
-		
+
 		$this->urls['regular'][$url] = $this->generateProcessedURL($urlData);
 
 		// Trigger parent URL back-filling
@@ -532,7 +532,7 @@ class StaticSiteUrlList {
 			'url'	=> $url,
 			'mime'	=> $mime
 		);
-		
+
 		if(isset($this->urls['regular'][$url])) {
 			// Generate it if missing
 			if($this->urls['regular'][$url] === true) {
@@ -600,7 +600,7 @@ class StaticSiteUrlList {
 }
 
 class StaticSiteCrawler extends PHPCrawler {
-	
+
 	protected $urlList;
 
 	/**
@@ -608,14 +608,14 @@ class StaticSiteCrawler extends PHPCrawler {
 	 * @var bool
 	 */
 	protected $verbose = false;
-	
+
 	/*
 	 * @var Object
 	 *
 	 * Holds the StaticSiteUtils object on construct
 	 */
 	protected $utils;
-	
+
 	/**
 	 * Set this by using the yml config system
 	 *
@@ -627,7 +627,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	 *
 	 * @var string
 	 */
-	private static $log_file = null;	
+	private static $log_file = null;
 
 	function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
 		parent::__construct();
@@ -641,12 +641,12 @@ class StaticSiteCrawler extends PHPCrawler {
 
 	/*
 	 * After checking raw status codes out of PHPCrawler we continue to save each URL to our cache file
-	 * 
+	 *
 	 * @param \PHPCrawlerDocumentInfo $info
 	 * @return mixed (null | void)
 	 */
 	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
-		
+
 		/*
 		 * MOSS has many URLs with brackets, resembling this one below BRHU
 		 * These result in a 404 and don't filter down to our caching logic, e.g. http://www.transport.govt.nz/news/newsevents/budget2013/(/
@@ -655,14 +655,14 @@ class StaticSiteCrawler extends PHPCrawler {
 		$mossBracketRegex = "(\(|%28)+(.+)?$";
 		$isRecoverableUrl = preg_match("#$mossBracketRegex#i",$info->url);
 		// Ignore errors and redirects
-		$badStatusCode = (($info->http_status_code < 200) || ($info->http_status_code > 299));		
-		
+		$badStatusCode = (($info->http_status_code < 200) || ($info->http_status_code > 299));
+
 		if($badStatusCode && !$isRecoverableUrl) {
 			$message = $info->url . " Skipped. We got a {$info->http_status_code}".PHP_EOL;
 			$this->utils->log($message);
 			return;
 		}
-		
+
 		// Continue building our cache
 		$info->url = preg_replace("#$mossBracketRegex#i",'',$info->url);
 		$this->urlList->addAbsoluteURL($info->url,$info->content_type);
