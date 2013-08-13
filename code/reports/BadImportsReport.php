@@ -10,7 +10,7 @@ class BadImportsReport extends SS_Report {
 	public function title() {
 		return "A list of pages containing links to unimported URLs";
 	}
-	
+
 	/*
 	 * @return ArrayList
 	 *
@@ -37,12 +37,12 @@ class BadImportsReport extends SS_Report {
 			)
 		);
 	}
-	
+
 	/*
 	 * @return mixed boolean|array
 	 */
 	protected function getBadImportData() {
-		$logFile = StaticSiteRewriteLinksTask::$log_file;
+		$logFile = Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file');
 		if(!$logFile || !file_exists($logFile)) {
 			return false;
 		}

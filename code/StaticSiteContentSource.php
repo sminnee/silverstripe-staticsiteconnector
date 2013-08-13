@@ -236,7 +236,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		// backslash the delimiters for the reg exp pattern
 		$appliesTo = str_replace('|', '\|', $appliesTo);
 		if(preg_match("|^$appliesTo|", $url) == 1) {
-			$this->utils->log(' - URL Pattern matched: ' . $appliesTo . ', Url: '. $url);
+			//$this->utils->log(' - URL Pattern matched: ' . $appliesTo . ', Url: '. $url);
 			return true;
 		}
 		return false;

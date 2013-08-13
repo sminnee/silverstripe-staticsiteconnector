@@ -27,8 +27,7 @@ Once that's done, you can use [Composer](http://getcomposer.org) to add the modu
 
     #> composer require silverstripe/staticsiteconnector
 
-Migration
----------
+## Migration
 
  * After you have installed the module, log into the CMS. You will see a new section called 'External Content', open it.
 
@@ -120,10 +119,32 @@ You can obviously adapt this to suit other &lt;meta&gt; elements you wish to imp
 
 * __Field Name:__ `MetaDescription`
 * __CSS Selector:__ `meta[name=description]`
-* __Exclude CSSSelector:__ 
+* __Exclude CSSSelector:__
 * __Element attribute:__ `value`
 * __Convert to plain text:__ Check this box to remove any/all markup found in the crawled site (v.unlikely!)
 * __Schema:__ Select "Page" or your custom SilverStripe DataObject to import content into
+
+## Migration Post-Processing
+
+After the import has completed, the content will most likely contain urls and asset source paths that reference static urls on the legacy site.
+
+### Static Site Link Rewriting
+
+This task replaces static site urls in the imported pages, replacing the src & href attributes of links, images and files with cms shortcodes to imported assets and pages.
+
+	Source location:
+		staticsiteconnector/code/tasks/StaticSiteRewriteLinksTask.php
+
+	Usage: __Note:__ replace X with the ID number of the StaticSiteContentSource used to import the content
+		#> ./framework/sake dev/tasks/StaticSiteRewriteLinksTask ID=X
+
+To enable output logging for this task, edit your environemnt configuration file (see: mysite/_config/config.yml) and add the following:
+
+  StaticSiteRewriteLinksTask
+    log_file: '/var/tmp/rewrite_links.log'
+
+Note: you need to manually create the log file and make sure the webservice can write to it, e.g.
+	#> touch /var/tmp/rewrite_links.log && chmod 766 /var/tmp/rewrite_links.log
 
 License
 -------

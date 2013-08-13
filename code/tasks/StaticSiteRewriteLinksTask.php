@@ -1,9 +1,9 @@
 <?php
 /**
- * Rewrite all links in content imported via staticsiteimporter. 
+ * Rewrite all links in content imported via staticsiteimporter.
  * All rewrite failures are written to a logfile (@see $log_file)
- * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're 
- * able to anaylise why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
+ * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're
+ * able to anaylse why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
  *
  * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
  * @todo add a link in the CMS UI that users can select to run this task @see https://github.com/phptek/silverstripe-staticsiteconnector/tree/feature/link-rewrite-ui
@@ -13,9 +13,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	/**
 	 * Where the log file is cached
 	 *
+	 * The $log_file is loaded from config settings, see: mysite/_config/config.yml, e.g.
+  	 *   StaticSiteRewriteLinksTask
+  	 *    log_file: '/var/tmp/rewrite_links.log'
+	 *
+	 * Note: you need to manually create the log file and make sure the webservice can write to it, e.g. (via cli)
+	 *   touch /var/tmp/rewrite_links.log && chmod 766 /var/tmp/rewrite_links.log
+	 *
 	 * @var string
 	 */
-	public static $log_file = '/var/tmp/rewrite_links.log';
+	public static $log_file = null;
 
 	/**
 	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert/normalise
@@ -52,14 +59,18 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var HTTPRequest $request The request parameter passed from the task initiator, browser or cli
 	 */
 	function run($request) {
+		// Load the logging file name from configuration settings in mysite/_config/config.yml
+		self::$log_file = Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file');
+
+		// Get the StaticSiteContentSource ID from the request parameters
 		$this->contentSourceID = $request->getVar('ID');
 		if (!$this->contentSourceID || !is_numeric($this->contentSourceID)) {
 			$this->printMessage("Please choose a Content Source ID, e.g. ?ID=(number)",'WARNING');
-			
+
 			// List the content sources to prompt user for selection
 			if ($contentSources = StaticSiteContentSource::get()) {
 				foreach ($contentSources as $i => $contentSource) {
-					$this->printMessage('dev/tasks/'.__CLASS__.' ID=' . $contentSource->ID, 'ID: '. $contentSource->ID . ', NAME: '. $contentSource->Name);
+					$this->printMessage('dev/tasks/'.__CLASS__.' ID=' . $contentSource->ID, 'ID: '. $contentSource->ID . ' | ' . $contentSource->Name);
 				}
 			}
 			return;
@@ -126,21 +137,28 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 		// Perform rewriting
 		$changedFields = 0;
-		foreach($pages as $page) {
+		foreach($pages as $i => $page) {
+			$url = $page->Link();
+			$mimeType = 'text/html';
+			$this->output($i + 1 . '. ' . $url);
 
-			$schema = $this->contentSource->getSchemaForURL($page->URLSegment);
-			if(!$schema) {
+			// Get the schema that matches the page's url
+			if ($schema = $this->contentSource->getSchemaForURL($url, $mimeType)) {
+				$this->output(' - schema: ' . $schema->DataType . ' (' . $schema->AppliesTo . ')');
+
+				// Get fields to process
+				$fields = array();
+				foreach($schema->ImportRules() as $rule) {
+					if(!$rule->PlainText) {
+						$fields[] = $rule->FieldName;
+					}
+				}
+				$fields = array_unique($fields);
+			}
+			else {
 				$this->printMessage("No schema found for {$page->URLSegment}",'WARNING');
 				continue;
 			}
-			// Get fields to process
-			$fields = array();
-			foreach($schema->ImportRules() as $rule) {
-				if(!$rule->PlainText) {
-					$fields[] = $rule->FieldName;
-				}
-			}
-			$fields = array_unique($fields);
 
 			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
@@ -197,7 +215,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			if($page = SiteTree::get()->filter($dbFieldsToMatchOn)->First()) {
 				$failureContext = '"'.$page->Title.'" (#'.$page->ID.')';
 			}
-			array_push($this->listFailedRewrites,"Couldn't rewrite: {$url}. Found in: {$failureContext}");
+			array_push($this->listFailedRewrites, "Couldn't rewrite: {$url}. Found in: {$failureContext}");
 		}
 	}
 
@@ -318,5 +336,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function setContentSourceID($id) {
 		$this->contentSourceID = $id;
+	}
+
+	/**
+	 * Prints a message to stdout
+	 *
+	 * @param string The message to print, defaults to empty string, the newline character gets prepended
+	 */
+	public function output($message = '') {
+		if (Director::is_cli()) {
+			print($message . PHP_EOL);
+		}
+		else  {
+			print "<p>" . $message . "</p>" . PHP_EOL;
+		}
 	}
 }
