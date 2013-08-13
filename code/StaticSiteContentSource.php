@@ -15,6 +15,13 @@ class StaticSiteContentSource extends ExternalContentSource {
 		"Files" => "File"
 	);
 
+	public static $export_columns = array(
+		"StaticSiteContentSource_ImportSchema.DataType",
+		"StaticSiteContentSource_ImportSchema.Order",
+		"StaticSiteContentSource_ImportSchema.AppliesTo",
+		"StaticSiteContentSource_ImportSchema.MimeTypes"
+	);
+
 	public $absoluteURL = null;
 
 	/*
@@ -53,30 +60,35 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getCMSFields() {
 		$fields = parent::getCMSFields();
 
-		$importRules = $fields->dataFieldByName('Schemas');
-		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
-		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
-		$addNewButton = new GridFieldAddNewButton('after');
-		$addNewButton->setButtonName("Add schema");
-		$importRules->getConfig()->addComponent($addNewButton);
-
-		$fields->removeFieldFromTab("Root", "Schemas");
 		$fields->removeFieldFromTab("Root", "Pages");
 		$fields->removeFieldFromTab("Root", "Files");
-		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Each import rule will import content for a field"
-			. " by getting the results of a CSS selector.  If more than one rule exists for a field, then they will be"
-			. " processed in the order they appear.  The first rule that returns content will be the one used.</p>"));
-		$fields->addFieldToTab("Root.Main", $importRules);
 
+		// Processing Option
 		$processingOptions = array("" => "No pre-processing");
 		foreach(ClassInfo::implementorsOf('StaticSiteUrlProcessor') as $processor) {
 			$processorObj = new $processor;
 			$processingOptions[$processor] = "<strong>" . Convert::raw2xml($processorObj->getName())
 				. "</strong><br>" . Convert::raw2xml($processorObj->getDescription());
 		}
-
 		$fields->addFieldToTab("Root.Main", new OptionsetField("UrlProcessor", "URL processing", $processingOptions));
 
+		// Schemas Gridfield
+		$importRules = $fields->dataFieldByName('Schemas');
+		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
+		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
+		$addNewButton = new GridFieldAddNewButton('before');
+		$addNewButton->setButtonName("Add Schema");
+		$importRules->getConfig()->addComponent($addNewButton);
+		$fields->removeFieldFromTab("Root", "Schemas");
+		$fields->addFieldToTab("Root.Schema", new HeaderField("ImportRulesHeaderField", "Import Schemas and Rules"));
+		$fields->addFieldToTab("Root.Schema", new LiteralField("", "<p>Schemas define rules for importing content into fields"
+			. " by getting the results of their CSS selector rules. If more than one schema exists for a field, then they will be"
+			. " processed in the order of Priority. The first Schema to a match a URL Pattern will be the one used for that field.</p>"));
+		$fields->addFieldToTab("Root.Schema", $importRules);
+
+		// Export to CSV button
+		$exportButton = new GridFieldExportButton('before');
+		$importRules->getConfig()->addComponent($exportButton);
 
 		switch($this->urlList()->getSpiderStatus()) {
 			case "Not started":
@@ -199,9 +211,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
 		foreach($this->Schemas() as $i => $schema) {
-			//MIKE
 			//$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo);
-
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
@@ -231,10 +241,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 		// backslash the delimiters for the reg exp pattern
 		$appliesTo = str_replace('|', '\|', $appliesTo);
 		if(preg_match("|^$appliesTo|", $url) == 1) {
-			//$this->utils->log(' - Matched: ' . $appliesTo . ', Url: '. $url);
+			$this->utils->log(' - URL Pattern matched: ' . $appliesTo . ', Url: '. $url);
 			return true;
 		}
-		//$this->utils->log(' - Patterns not matched!');
 		return false;
 	}
 
@@ -327,10 +336,10 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		"Order"
 	);
 	public static $field_labels = array(
-		"AppliesTo" => "URLs applied to",
+		"AppliesTo" => "URL Pattern",
 		"DataType" => "Data type",
 		"Order" => "Priority",
-		"MimeTypes"	=> "Applies rule to these Mime-types"
+		"MimeTypes"	=> "Mime-types"
 	);
 
 	public static $default_sort = "Order";
@@ -361,7 +370,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
 		$mimes = new TextareaField('MimeTypes', 'Mime-types');
 		$mimes->setRows(3);
-		$mimes->setDescription('Be sure to pick a MIME-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg separated by a newline.');
+		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg separated by a newline.');
 		$fields->addFieldToTab('Root.Main', $mimes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');
@@ -437,7 +446,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$result = new ValidationResult;
 		$mime = $this->validateMimes();
 		if(!is_bool($mime)) {
-			$result->error('Invalid mime-type "'.$mime.'" for DataType "'.$this->DataType.'"');
+			$result->error('Invalid Mime-type "'.$mime.'" for DataType "'.$this->DataType.'"');
 		}
 		return $result;
 	}
