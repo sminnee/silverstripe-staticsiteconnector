@@ -76,19 +76,14 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$importRules = $fields->dataFieldByName('Schemas');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
-		$addNewButton = new GridFieldAddNewButton('before');
+		$addNewButton = new GridFieldAddNewButton('after');
 		$addNewButton->setButtonName("Add Schema");
 		$importRules->getConfig()->addComponent($addNewButton);
 		$fields->removeFieldFromTab("Root", "Schemas");
-		$fields->addFieldToTab("Root.Schema", new HeaderField("ImportRulesHeaderField", "Import Schemas and Rules"));
-		$fields->addFieldToTab("Root.Schema", new LiteralField("", "<p>Schemas define rules for importing content into fields"
+		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Schemas define rules for importing content into fields"
 			. " by getting the results of their CSS selector rules. If more than one schema exists for a field, then they will be"
 			. " processed in the order of Priority. The first Schema to a match a URL Pattern will be the one used for that field.</p>"));
-		$fields->addFieldToTab("Root.Schema", $importRules);
-
-		// Export to CSV button
-		$exportButton = new GridFieldExportButton('before');
-		$importRules->getConfig()->addComponent($exportButton);
+		$fields->addFieldToTab("Root.Main", $importRules);
 
 		switch($this->urlList()->getSpiderStatus()) {
 			case "Not started":
