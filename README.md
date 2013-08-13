@@ -74,6 +74,37 @@ Schema is the name given to the collection of rules that comprise how a crawled 
 Each rule in a schema hinges on a CSS selector that defines the content area on a specific page of the crawled site, and the respective DataObject field within SilverStripe
 where this content should be stored.
 
+#### Schema Urls
+
+The schema field 'URLs Applied to' is where you define preg_match regular expressions to match urls from the legacy site to the imported DataTypes in the new site.
+Each url is matched against the absolute urls crawled from the legacy site, so you'll need to include the protocol and domain in your urls patterns to make them absolute as well, e.g.
+		http://www.legacysite.com/news/.*
+
+The actual preg_match expression is located in staticsiteconnector/code/StaticSiteContentSource.php in the function schemaCanParseURL
+
+	if(preg_match("|^$appliesTo|", $url) == 1) {
+
+#### Schema Priority
+
+Priority order of your schemas is important, the 'Applies To' url patterns are matched against the imported urls in priority order until the first matching schema is found.
+This means you need to order your schemas with the most specific patterns first (e.g. CustomNewsPage, NewsPage, NewsHolder), then gradually filtering down the priority order to the default catch-all patterns for Page, Image and File.
+
+The default catch-all patterns are:
+	(Url Applies To | Data Type | Mime-types)
+
+	.* 		Page  	text/html
+
+	.* 		Image 	image/png
+					image/jpeg
+					image/gif
+
+	.* 		File  	application/vnd.ms-excel
+					application/vnd.openxmlformats-officedocument.spreadsheetml.sheet
+					application/msword
+					application/pdf
+					application/vnd.ms-powerpoint
+					application/xml
+
 #### Examples Rules:
 
 __Note:__ This example is based on your import using a subclass of `SiteTree`
@@ -145,6 +176,8 @@ To enable output logging for this task, edit your environemnt configuration file
 
 Note: you need to manually create the log file and make sure the webservice can write to it, e.g.
 	#> touch /var/tmp/rewrite_links.log && chmod 766 /var/tmp/rewrite_links.log
+
+__Note:__ The report BadImportsReport depends on this log file and uses its content for the report, see: staticsiteconntector/code/reports/BadImportsReport.php
 
 License
 -------
