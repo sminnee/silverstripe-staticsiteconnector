@@ -96,17 +96,22 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			throw new Exception('DataType for migration schema is empty!');
 		}
 
+		// Check if the file is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
 		$file = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
 		if($file && $duplicateStrategy === 'Overwrite') {
 			if(get_class($file) !== $dataType) {
 				$file->ClassName = $dataType;
 			}
-		} elseif($file && $duplicateStrategy === 'Skip') {
+		} 
+		else if($file && $duplicateStrategy === 'Skip') {
 			return false;
-		} else {
-			// @todo
-			// - Do we really want to rely on user-input to ascertain the correct container class?
-			// - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
+		} 
+		else {
+			/*
+			 * @todo
+			 * - Do we really want to rely on user-input to ascertain the correct container class
+			 * - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
+			 */
 			$file = new $dataType(array());
 			if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
 				return false;
@@ -114,7 +119,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
-
 		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($file, $item->stageChildren());
@@ -164,12 +168,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 
 	/*
-	 * Build the properties required for a safely saved SS asset
+	 * Build the properties required for a safely saved SS asset and try and fixup bad file-extensions.
 	 *
-	 * @param $file
-	 * @param string $mime
+	 * @param \File $file
+	 * @param string $url
+	 * @param string $mime This is used to fixup bad-file extensions or filenames with no extension but which _do_ have a Mime-Type
 	 * @return mixed (boolean | \File)
-	 * @todo Currently, if we can't "fix" borked file-extensions, they're discarded. Need to append our new file-extension ($newExt).
 	 */
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
@@ -178,31 +182,30 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$parentFolder = Folder::find_or_make($path);
 
 		// Run some checks on the original filename and name it as per a default if we can do nothing useful with it
-		$origFilename = explode('/',$url);
-		$origFilename = end($origFilename);
-		$origFilenameIsOk = (!is_bool($origFilename) && mb_strlen($origFilename) >0);
-		$origFilename = ($origFilenameIsOk ? $origFilename : 'unknown');
+		// '.zzz' not in framework/_config/mimetypes.yml and unlikely ever to be found in \File so will fail gracefully
+		$dummy = 'unknown.zzz';
+		$origFilename = pathinfo($url,PATHINFO_FILENAME);
+		$origFilename = (mb_strlen($origFilename)>0 ? $origFilename : $dummy);
 
-		// Some assets come through with no extension, which confuses SS's File logic and throws errors causing the import to stop.
-		// Check for these and add an appropriate extension if appropriate
-		$oldExt = File::get_file_extension($origFilename);
+		/*
+		 * Some assets come through with no file-extension, which confuses SS's File logic and throws errors causing the import to stop dead.
+		 * Check for these and add (guess) an appropriate file-extension if possible
+		 */
+		$oldExt = pathinfo($url,PATHINFO_EXTENSION);
 		$extIsValid = in_array($oldExt, $this->getSSExtensions());
 
-		//MIKE
-		$this->utils->log(' - oldext: '. $oldExt . ', extIsValid: ' . $extIsValid);
-
+		// Only attempt to define and append a new filename ($newExt) if the $oldExt is itself invalid
 		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
-			$this->utils->log("WARNING: #1 Unable to import file with bad file-extension: ", $url, $mime);
+			$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: ", $url, $mime);
 			return false;
 		}
 		else if($newExt) {
 			$file->setFilename($path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt);
-			$this->utils->log("NOTICE #2 Assigned new file-extension ", $url, $mime);
+			$this->utils->log("NOTICE: Assigned new file-extension: {$newExt} based on Mime.", $url, $mime);
 		}
 		else {
 			$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
-			$this->utils->log("NOTICE #3 NOT Assigned new file-extension ", $url, $mime);
 		}
 
 		// Complete construction of $file

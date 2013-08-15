@@ -111,28 +111,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fragment = '#'.$fragment;
 			}
 
-			// Create a URI for partial/regex matching
+			/*
+			 * Create a URI for partial/regex matching
+			 * Need to create a "mime" key so processURL() doesn't complain, but it's not actually used for current purposes
+			 */
 			$url = array(
 				'url' => $url,
 				'mime'=> ''
 			);
-			$url = $proc->processURL($url);
 			
+			/*
+			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL when writing to it during import
+			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
+			 */
+			$url = $proc->processURL($url);
 			if(!$url = $task->postProcessUrl($url['url'])) {
 				return;
-			}
-
-			/*
-			 * Rewrite Asset links
-			 * Replaces phpQuery processed Asset-URLs with the appropriate asset-filename
-			 * @todo replace with $fileLookup->each(function() {}) ...faster??
-			 * @todo put into own method
-			 */
-			if($fileLookup[$url]) {
-				if($file = DataObject::get_by_id('File',$ID)) {
-					$task->printMessage("File: {$url} found",'NOTICE',$url);
-					return preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
-				}
 			}
 
 			/*
@@ -142,11 +136,28 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * @todo put into own method
 			 */
 			if($pageLookup[$url]) {
-				$task->printMessage("SiteTree: {$url} found",'NOTICE',$url);
+				$task->printMessage("SiteTree link: {$url} found in #{$pageLookup[$url]}",'NOTICE',$url);
 				return '[sitetree_link,id='.$pageLookup[$url].']' . $fragment;
 			}
+			
+			/*
+			 * Rewrite Asset links
+			 * Replaces phpQuery processed Asset-URLs with the appropriate asset-filename
+			 * @todo replace with $fileLookup->each(function() {}) ...faster??
+			 * @todo put into own method
+			 */
+			if($fileLookup[$url]) {
+				if($file = DataObject::get_by_id('File',$fileLookup[$url])) {
+					$task->printMessage("File: {$url} found in #{$fileLookup[$url]}",'NOTICE',$url);
+					// Ensure we remove the base URL as SS doesn't save this to the Filename property
+					return preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
+				}
+			}			
 
-			// If we've got here, none of the return statements above have been run so, throw an error
+			/*
+			 * If we've got here, none of the return statements above have been run so, throw an error
+			 * @todo put into own method
+			 */
 			if(substr($url,0,strlen($baseURL)) == $baseURL) {
 				// This invocation writes a log-file so it contains all failed link-rewrites for analysis
 				$task->printMessage("{$url} couldn't be rewritten (logged)",'WARNING',$url);
@@ -159,11 +170,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$changedFields = 0;
 		foreach($pages as $i => $page) {
 			$url = $page->StaticSiteURL;
-			$mimeType = 'text/html';
 			$modified = false;
 
 			// Get the schema that matches the page's url
-			if ($schema = $this->contentSource->getSchemaForURL($url, $mimeType)) {
+			if ($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
 
 				// Get fields to process
 				$fields = array();
@@ -191,11 +201,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 
-			if ($modified) {
+			// Only write if mods have ocurred
+			if($modified) {
 				$page->write();
 			}
 		}
 		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
+		// Write failed rewrites to a logfile for later analysis
 		$this->writeFailedRewrites();
 	}
 
