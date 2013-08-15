@@ -201,9 +201,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			return false;
 		}
 		else if($newExt) {
-			$file->setFilename($path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt);
-			$file->setName($origFilename.'.'.$newExt);
-			$this->utils->log("NOTICE: Assigned new file-extension: {$newExt} based on Mime.", $url, $mime);
+			$this->utils->log("NOTICE: Assigned new file-extension: {$newExt} based on MimeType.".PHP_EOL."\t - FROM: {$url}".PHP_EOL."\t - TO: {$fileName}", '', $mime);
+			$fileName = $path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt;
 		}
 		else {
 			// If $newExt didn't work, we need to check again if $oldExt is invalid and just dispose of it.
@@ -211,11 +210,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 				$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: #2", $url, $mime);
 				return false;
 			}
-			$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename.'.'.$oldExt);
+			$fileName = $path . DIRECTORY_SEPARATOR .$origFilename.'.'.$oldExt;
 		}
 
 		// Complete construction of $file
-		$file->setName($origFilename.'.'.$oldExt);
+		$file->setName($fileName);
+		$file->setFilename($fileName);
 		$file->setParentID($parentFolder->ID);
 		return $file;
 	}
