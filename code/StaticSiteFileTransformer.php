@@ -191,6 +191,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		//MIKE
 		$this->utils->log(' - oldext: '. $oldExt . ', extIsValid: ' . $extIsValid);
 
+		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
 			$this->utils->log("WARNING: #1 Unable to import file with bad file-extension: ", $url, $mime);
 			return false;
