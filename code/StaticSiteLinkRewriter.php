@@ -12,11 +12,6 @@ class StaticSiteLinkRewriter {
 		'img' => 'src',
 	);
 
-	protected $tagMap2 = array(
-		'a' => array('href'),
-		'img' => array('src'),
-	);
-
 	protected $callback;
 
 	function __construct($callback) {
@@ -39,24 +34,16 @@ class StaticSiteLinkRewriter {
 		$this->tagMap = $tagMap;
 	}
 
-	/**
-	 * Rewrite URLs in a PHPQuery object.  The content of the object will be modified.
-	 *
-	 * @param  phpQuery $pq The content containing the links to rewrite
-	 */
 	function rewriteInPQ($pq) {
-
 		$callback = $this->callback;
 
 		// Make URLs absolute
-		foreach($this->tagMap as $element) {
-			foreach($pq[$element] as $tag => $attribute) {
-		//	foreach($attributes as $attribute) {
-					if($url = pq($tag)->attr($attribute)) {
-						$newURL = $callback($url);
-						pq($tag)->attr($attribute, $newURL);
-					}
-		//		}
+		foreach($this->tagMap as $tag => $attribute) {
+			foreach($pq[$tag] as $tagObj) {
+				if($url = pq($tagObj)->attr($attribute)) {
+					$newURL = $callback($url);
+					pq($tagObj)->attr($attribute, $newURL);
+				}
 			}
 		}
 	}
