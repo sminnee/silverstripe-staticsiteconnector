@@ -197,25 +197,32 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Only attempt to define and append a new filename ($newExt) if the $oldExt is itself invalid
 		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
-			$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: #1", $url, $mime);
+			$this->utils->log("WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
 			return false;
 		}
 		else if($newExt) {
-			$this->utils->log("NOTICE: Assigned new file-extension: {$newExt} based on MimeType.".PHP_EOL."\t - FROM: {$url}".PHP_EOL."\t - TO: {$fileName}", '', $mime);
-			$fileName = $path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt;
+			$useExtension = $newExt;
+			$logMessagePt1 = "NOTICE: Bad file-extension: \"{$oldExt}\". Assigned new file-extension: \"{$newExt}\" based on MimeType.";
+			$logMessagePt2 = PHP_EOL."\t - FROM: {$url}".PHP_EOL."\t - TO: {$fileName}";
+			$this->utils->log($logMessagePt1.$logMessagePt2, '', $mime);
 		}
 		else {
 			// If $newExt didn't work, we need to check again if $oldExt is invalid and just dispose of it.
 			if(!$extIsValid) {
-				$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: #2", $url, $mime);
+				$this->utils->log("WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
 				return false;
 			}
-			$fileName = $path . DIRECTORY_SEPARATOR .$origFilename.'.'.$oldExt;
+			$useExtension = $oldExt;
 		}
+		
+		$fileName = $path . DIRECTORY_SEPARATOR . $origFilename;
+		// Some files fail to save becuase of multiple dots in the filename. \FileNameFilter only removes leading dots, so pre-convert these:
+		// @todo add another filter expression as per \FileNameFilter to module _config
+		$definitiveFilename = str_replace(".","-",$fileName).'.'.$useExtension;
 
-		// Complete construction of $file
-		$file->setName($fileName);
-		$file->setFilename($fileName);
+		// Complete construction of $file.
+		$file->setName($definitiveFilename);
+		$file->setFilename($definitiveFilename);
 		$file->setParentID($parentFolder->ID);
 		return $file;
 	}
