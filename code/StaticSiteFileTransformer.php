@@ -186,14 +186,26 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Some assets come through with no extension, which confuses SS's File logic and throws errors causing the import to stop.
 		// Check for these and add an appropriate extension if appropriate
 		$oldExt = File::get_file_extension($origFilename);
-		$extIsValid = in_array($oldExt, $this->getSSExtensions());
-		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
-			$this->utils->log("WARNING: Unable to import file with bad file-extension: ", $url, $mime);
+		//$extIsValid = in_array($oldExt, $this->getSSExtensions());
+
+		//MIKE
+		$this->utils->log(' - oldext: '. $oldExt . ', extIsValid: ' . $extIsValid);
+
+		if(!$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
+			$this->utils->log("WARNING: #1 Unable to import file with bad file-extension: ", $url, $mime);
 			return false;
+		}
+		else if($newExt) {
+			$file->setFilename($path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt);
+			$this->utils->log("NOTICE #2 Assigned new file-extension ", $url, $mime);
+		}
+		else {
+			$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
+			$this->utils->log("NOTICE #3 NOT Assigned new file-extension ", $url, $mime);
 		}
 
 		// Complete construction of $file
-		$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
+		//$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
 		$file->setName($origFilename);
 		$file->setParentID($parentFolder->ID);
 		return $file;

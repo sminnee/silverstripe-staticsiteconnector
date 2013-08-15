@@ -93,7 +93,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$files = $this->contentSource->Files();
 
 		$this->printMessage("Looking through {$pages->count()} imported pages.",'NOTICE');
-		$this->printMessage("Looking through {$files->count()} imported files.",'NOTICE');
+		//$this->printMessage("Looking through {$files->count()} imported files.",'NOTICE');
 
 		// Set up rewriter
 		$pageLookup = $pages->map('StaticSiteURL', 'ID');
@@ -103,48 +103,61 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$task = $this;
 
 		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task) {
+
 			$fragment = "";
 			if(strpos($url,'#') !== false) {
 				list($url,$fragment) = explode('#', $url, 2);
 				$fragment = '#'.$fragment;
 			}
 
-			$normalized = $task->normaliseUrl($url, $baseURL);
-			if($normalized['ok'] !== true) {
-				$task->printMessage("{$url} isn't normalisable (logged)",'WARNING',$url);
+			// Create a URI for partial/regex matching
+			$uri = $task->urlToUri($url);
+			if($uri === false) {
+				$task->output("{$url} isn't normalisable (logged)",'WARNING',$url);
 				return;
 			}
-			$url = $normalized['url'];
-			// Replace phpQuery processed Page-URLs with SiteTree shortcode
-			if($pageLookup[$url]) {
-				return '[sitetree_link,id='.$pageLookup[$url] .']' . $fragment;
-			}
-			// Replace phpQuery processed Asset-URLs with the appropriate asset-filename
-			else if($fileLookup[$url]) {
-				if($file = DataObject::get_by_id('File', $fileLookup[$url])) {
-					return str_replace($baseURL,'',$file->Filename) . $fragment;
+
+			/*
+			* Rewrite Asset links
+			* Replaces phpQuery processed Asset-URLs with the appropriate asset-filename
+			* @todo replace with $fileLookup->each(function() {}) ...faster??
+			* @todo put into own method
+			*/
+			foreach($fileLookup as $staticSiteUrl=>$ID) {
+				if(preg_match("#$uri#i", $staticSiteUrl)) {
+					if($file = File::get()->filter(array('Filename:PartialMatch'=>$uri))) {
+						$task->output("File: {$uri} found",'NOTICE',$uri);
+						return str_replace($baseURL,'',$file->Filename) . $fragment;
+					}
 				}
 			}
-			// Before writing any error, ensures that the base url of $url matches the root/base URL ($baseURL)
-			else {
-				if(substr($url,0,strlen($baseURL)) == $baseURL) {
-					// This invocation writes a log-file so it contains all failed link-rewrites for analysis
-					$task->printMessage("{$url} couldn't be rewritten (logged)",'WARNING',$url);
+
+			/*
+			* Rewrite SiteTree links
+			* Replaces phpQuery processed Page-URLs with SiteTree shortcodes
+			* @todo replace with $pageLookup->each(function() {}) ...faster??
+			* @todo put into own method
+			*/
+			foreach($pageLookup as $staticSiteUrl=>$ID) {
+				if(preg_match("#$uri#i", $staticSiteUrl)) {
+					$task->output("SiteTree: ".$baseURL.$uri." found",'NOTICE',$baseURL.$uri);
+					return '[sitetree_link,id='.$pageLookup[$baseURL.$uri] .']' . $fragment;
 				}
-				return $url . $fragment;
 			}
 		});
 
 		// Perform rewriting
 		$changedFields = 0;
 		foreach($pages as $i => $page) {
-			$url = $page->Link();
+			//$url = Controller::join_links($baseURL, $page->RelativeLink());
+			$url = $page->StaticSiteURL;
 			$mimeType = 'text/html';
-			$this->output($i + 1 . '. ' . $url);
+			$modified = false;
+			$this->output($i + 1 . '. ' . $url . ' [ID: ' . $page->ID . ']');
 
 			// Get the schema that matches the page's url
 			if ($schema = $this->contentSource->getSchemaForURL($url, $mimeType)) {
-				$this->output(' - schema: ' . $schema->DataType . ' (' . $schema->AppliesTo . ')');
+				//$this->output(' - schema: ' . $schema->DataType . ' (' . $schema->AppliesTo . ')');
 
 				// Get fields to process
 				$fields = array();
@@ -156,7 +169,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fields = array_unique($fields);
 			}
 			else {
-				$this->printMessage("No schema found for {$page->URLSegment}",'WARNING');
+				//$this->printMessage("No schema found for {$page->URLSegment}",'WARNING');
+				$this->output(" # schema not found");
 				continue;
 			}
 
@@ -166,15 +180,20 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 					$newContent = str_replace(array('%5B','%5D'),array('[',']'),$newContent);
 					$changedFields++;
 
-					$this->printMessage("Changed {$field} on \"{$page->Title}\" (#{$page->ID})",'NOTICE');
+					//$this->printMessage("Changed {$field} on \"{$page->Title}\" (#{$page->ID})",'NOTICE');
+					$this->output(" - Changed {$field}");
 					$page->$field = $newContent;
+					$modified = true;
 				}
 			}
 
-			$page->write();
+			if ($modified) {
+				//$this->output(' - Saved');
+				$page->write();
+			}
 		}
-		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
-		$this->writeFailedRewrites();
+//		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
+//		$this->writeFailedRewrites();
 	}
 
 	/*
@@ -285,21 +304,18 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 
 	/*
-	 * Normalise URLs so DB matches between `SiteTee.StaticSiteURL` and $url can be made.
-	 * $url originates from Imported content post-processed by phpQuery.
+ 	 * Normalise URLs so DB PartialMatches can be done
+ 	 * Note: $url originates from Imported content post-processed by phpQuery.
 	 *
 	 * $url example: /Style%20Library/MOT/Images/MoTivate_198-pixels.png
-	 * File.StaticSiteURL example: http://www.transport.govt.nz/Style%20Library/MOT/Images/MoTivate_198-pixels.png
+	 * File.StaticSiteURL example:
 	 *
 	 * Ignore any URLs that are not normalisable and flag them for reporting
 	 *
-	 * @param string $url
-	 * @param string $baseURL
-	 * @param boolean $ret
-	 * @return string $processed
-	 * @todo Is this logic better located in `SiteTree.StaticSiteURLList`?
+	 * @param string $url A URL
+	 * @return mixed (string | boolean) A URI
 	 */
-	public function normaliseUrl($url, $baseURL, $ret = false) {
+	public function urlToUri($url) {
 		// Leave all empty, root, special and pre-converted URLs - alone
 		$url = trim($url);
 		$noLength = (!strlen($url)>1);
@@ -307,26 +323,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
 		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#",$url));
 		if($noLength || $nonHTTPSchemes || $alreadyRewritten) {
-			return array(
-				'url' => $url,
-				'ok'	=> false
-			);
+			return false;
 		}
-
-		$processed = trim($url);
-		if(!preg_match("#^http(s)?://#",$processed)) {
-			// Add a slash if there isn't one at the end of $baseURL or at the beginning of $url to properly separate them
-			$addSlash = !(preg_match("#/$#",$baseURL) || preg_match("#^/#",$processed));
-			$processed = $baseURL.$processed;
-			if($addSlash) {
-				$processed = $baseURL.'/'.$url;
-			}
-		}
-		return array(
-			'url' => $processed,
-			'ok'	=> true
-		);
+		// For the partial match
+		return preg_replace("#^http(s)?://(www\.)?(.+)/?$#","$3",$url);
 	}
+
 
 	/**
 	 * Setter method for $this->staticSiteContentSourceID

@@ -206,9 +206,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
 		foreach($this->Schemas() as $i => $schema) {
-			//$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo);
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
+			$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo . ' mimetypes: ' . json_encode($schemaMimeTypes));
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
 			if($schemaCanParseURL) {
 				if($mimeType && $schemaMimeTypes && (!in_array($mimeType, $schemaMimeTypes))) {
@@ -236,7 +236,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		// backslash the delimiters for the reg exp pattern
 		$appliesTo = str_replace('|', '\|', $appliesTo);
 		if(preg_match("|^$appliesTo|", $url) == 1) {
-			//$this->utils->log(' - URL Pattern matched: ' . $appliesTo . ', Url: '. $url);
+			$this->utils->log(' - ' . __FUNCTION__ . ' matched: ' . $appliesTo . ', Url: '. $url);
 			return true;
 		}
 		return false;
