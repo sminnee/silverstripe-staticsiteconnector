@@ -197,19 +197,25 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Only attempt to define and append a new filename ($newExt) if the $oldExt is itself invalid
 		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
-			$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: ", $url, $mime);
+			$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: #1", $url, $mime);
 			return false;
 		}
 		else if($newExt) {
 			$file->setFilename($path . DIRECTORY_SEPARATOR .$origFilename.'.'.$newExt);
+			$file->setName($origFilename.'.'.$newExt);
 			$this->utils->log("NOTICE: Assigned new file-extension: {$newExt} based on Mime.", $url, $mime);
 		}
 		else {
-			$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename);
+			// If $newExt didn't work, we need to check again if $oldExt is invalid and just dispose of it.
+			if(!$extIsValid) {
+				$this->utils->log("WARNING: Unable to import file with bad file-extension of .{$oldExt}: #2", $url, $mime);
+				return false;
+			}
+			$file->setFilename($path . DIRECTORY_SEPARATOR . $origFilename.'.'.$oldExt);
 		}
 
 		// Complete construction of $file
-		$file->setName($origFilename);
+		$file->setName($origFilename.'.'.$oldExt);
 		$file->setParentID($parentFolder->ID);
 		return $file;
 	}
