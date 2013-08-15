@@ -203,7 +203,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		else if($newExt) {
 			$useExtension = $newExt;
 			$logMessagePt1 = "NOTICE: Bad file-extension: \"{$oldExt}\". Assigned new file-extension: \"{$newExt}\" based on MimeType.";
-			$logMessagePt2 = PHP_EOL."\t - FROM: {$url}".PHP_EOL."\t - TO: {$fileName}";
+			$logMessagePt2 = PHP_EOL."\t - FROM: \"{$url}\"".PHP_EOL."\t - TO: \"{$origFilename}.{$newExt}\"";
 			$this->utils->log($logMessagePt1.$logMessagePt2, '', $mime);
 		}
 		else {
@@ -217,11 +217,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		
 		$fileName = $path . DIRECTORY_SEPARATOR . $origFilename;
 		// Some files fail to save becuase of multiple dots in the filename. \FileNameFilter only removes leading dots, so pre-convert these:
-		// @todo add another filter expression as per \FileNameFilter to module _config
+		// @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
+		$definitiveName = str_replace(".","-",$origFilename).'.'.$useExtension;
 		$definitiveFilename = str_replace(".","-",$fileName).'.'.$useExtension;
 
 		// Complete construction of $file.
-		$file->setName($definitiveFilename);
+		$file->setName($definitiveName);
 		$file->setFilename($definitiveFilename);
 		$file->setParentID($parentFolder->ID);
 		return $file;

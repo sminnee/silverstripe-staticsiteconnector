@@ -120,7 +120,10 @@ class StaticSiteMimeProcessor extends Object {
 			// Attempt to "fix" broken or badly encoded file-extensions by guessing what it should be based on the passed mime-type
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
 			foreach($coreExts as $coreExt) {
-				if(stristr($mime,$coreExt) !== false) {
+				// Make sure we check the correct category so we don't find a match for ms-excel in the image \File category (.cel) !!
+				$isFile = in_array($coreExt,$mimeCategories['doc']) && self::isOfFile($mime);
+				$isImge = in_array($coreExt,$mimeCategories['image']) && self::isOfImage($mime);
+				if(($isFile || $isImge) && stristr($mime,$coreExt) !== false) {
 					return $coreExt;
 				}
 			}
