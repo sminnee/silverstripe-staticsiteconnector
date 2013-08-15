@@ -128,12 +128,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * @todo replace with $fileLookup->each(function() {}) ...faster??
 			 * @todo put into own method
 			 */
-			foreach($fileLookup as $staticSiteUrl=>$ID) {
-				if(isset($staticSiteUrl[$url])) {
-					if($file = DataObject::get_by_id('File',$ID)) {
-						$task->printMessage("File: {$url} found",'NOTICE',$url);
-						return preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
-					}
+			if($fileLookup[$url]) {
+				if($file = DataObject::get_by_id('File',$ID)) {
+					$task->printMessage("File: {$url} found",'NOTICE',$url);
+					return preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
 				}
 			}
 
@@ -143,12 +141,18 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * @todo replace with $pageLookup->each(function() {}) ...faster??
 			 * @todo put into own method
 			 */
-			foreach($pageLookup as $staticSiteUrl=>$ID) {
-				if(isset($staticSiteUrl[$url])) {
-					$task->printMessage("SiteTree: {$url} found",'NOTICE',$url);
-					return '[sitetree_link,id='.$ID.']' . $fragment;
-				}
+			if($pageLookup[$url]) {
+				$task->printMessage("SiteTree: {$url} found",'NOTICE',$url);
+				return '[sitetree_link,id='.$pageLookup[$url].']' . $fragment;
 			}
+
+			// If we've got here, none of the return statements above have been run so, throw an error
+			if(substr($url,0,strlen($baseURL)) == $baseURL) {
+				// This invocation writes a log-file so it contains all failed link-rewrites for analysis
+				$task->printMessage("{$url} couldn't be rewritten (logged)",'WARNING',$url);
+			}
+			return $url . $fragment;
+
 		});
 
 		// Perform rewriting
