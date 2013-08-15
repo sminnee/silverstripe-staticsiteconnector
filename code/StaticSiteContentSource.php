@@ -208,7 +208,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		foreach($this->Schemas() as $i => $schema) {
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
-			$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo . ' mimetypes: ' . json_encode($schemaMimeTypes));
+			$schemaMimeTypesShow = implode(', ',$schemaMimeTypes);
+			$this->utils->log(' - Schema: ' . ($i + 1) . ', DataType: ' . $schema->DataType . ', AppliesTo: ' . $schema->AppliesTo . ' mimetypes: ' . $schemaMimeTypesShow);
 			array_push($schemaMimeTypes, StaticSiteUrlList::$undefined_mime_type);
 			if($schemaCanParseURL) {
 				if($mimeType && $schemaMimeTypes && (!in_array($mimeType, $schemaMimeTypes))) {
