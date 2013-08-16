@@ -121,8 +121,8 @@ class StaticSiteMimeProcessor extends Object {
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
 			foreach($coreExts as $coreExt) {
 				// Make sure we check the correct category so we don't find a match for ms-excel in the image \File category (.cel) !!
-				$isFile = in_array($coreExt,$mimeCategories['doc']) && self::isOfFile($mime);
-				$isImge = in_array($coreExt,$mimeCategories['image']) && self::isOfImage($mime);
+				$isFile = in_array($coreExt,$mimeCategories['doc']) && singleton(__CLASS__)->isOfFile($mime);		// dirty
+				$isImge = in_array($coreExt,$mimeCategories['image']) && singleton(__CLASS__)->isOfImage($mime);	// more dirt
 				if(($isFile || $isImge) && stristr($mime,$coreExt) !== false) {
 					return $coreExt;
 				}
