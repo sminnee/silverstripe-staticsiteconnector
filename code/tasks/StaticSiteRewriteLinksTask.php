@@ -92,19 +92,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$pages = $this->contentSource->Pages();
 		$files = $this->contentSource->Files();
 
-		$this->printMessage("Looking through {$pages->count()} imported pages.",'NOTICE');
-		$this->printMessage("Looking through {$files->count()} imported files.",'NOTICE');
+		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files",'NOTICE');
 
 		// Set up rewriter
 		$pageLookup = $pages->map('StaticSiteURL', 'ID');
 		$fileLookup = $files->map('StaticSiteURL', 'ID');
 
+//		var_dump($pageLookup->toArray());
+		var_dump($fileLookup->toArray());
+
 		$baseURL = $this->contentSource->BaseUrl;
 		$task = $this;
-		$proc = singleton($this->contentSource->UrlProcessor);
+		$urlProcessor = singleton($this->contentSource->UrlProcessor);
 
-		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task, $proc) {
+		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task, $urlProcessor) {
 
+			$urlInput = $url;
 			$fragment = "";
 			if(strpos($url,'#') !== false) {
 				list($url,$fragment) = explode('#', $url, 2);
@@ -119,15 +122,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				'url' => $url,
 				'mime'=> ''
 			);
-			
+
 			/*
 			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL when writing to it during import
 			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
 			 */
-			$url = $proc->processURL($url);
+			$url = $urlProcessor->processURL($url);
 			if(!$url = $task->postProcessUrl($url['url'])) {
+				//$task->printMessage("FAILED post-processed-url: \"{$url}\"", 'WARNING');
 				return;
 			}
+
+			$mapKey = Controller::join_links($baseURL, $url);
+			$task->printMessage("# rewriting: \"{$urlInput}\"" . PHP_EOL . " - fragment: \"{$fragment}\"" . PHP_EOL . " - post-processed-url: \"{$mapKey}\"");
 
 			/*
 			 * Rewrite SiteTree links
@@ -135,33 +142,40 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * @todo replace with $pageLookup->each(function() {}) ...faster??
 			 * @todo put into own method
 			 */
-			if($pageLookup[$url]) {
-				$task->printMessage("SiteTree link: {$url} found in #{$pageLookup[$url]}",'NOTICE',$url);
-				return '[sitetree_link,id='.$pageLookup[$url].']' . $fragment;
+			if($siteTreeID = $pageLookup[$mapKey]) {
+				$output = '[sitetree_link,id='.$siteTreeID.']' . $fragment;
+				$task->printMessage("+ found: SiteTree ID#".$siteTreeID, null, $output);
+				return $output;
 			}
-			
+
 			/*
 			 * Rewrite Asset links
 			 * Replaces phpQuery processed Asset-URLs with the appropriate asset-filename
 			 * @todo replace with $fileLookup->each(function() {}) ...faster??
 			 * @todo put into own method
 			 */
-			if($fileLookup[$url]) {
-				if($file = DataObject::get_by_id('File',$fileLookup[$url])) {
-					$task->printMessage("File: {$url} found in #{$fileLookup[$url]}",'NOTICE',$url);
+			if($fileID = $fileLookup[$mapKey]) {
+				if($file = DataObject::get_by_id('File',$fileLookup[$mapKey])) {
 					// Ensure we remove the base URL as SS doesn't save this to the Filename property
-					return preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
+					//$output = preg_replace("#^$baseURL(.+)$#","$1",$file->Filename) . $fragment;
+					$output = $file->RelativeLink();
+					$task->printMessage("+ found: File ID#{$file->ID}", null, $output);
+					return $output;
 				}
-			}			
+				else {
+					$task->printMessage('! File get_by_id failed with ID: ' . $fileID, 'WARNING');
+				}
+			}
 
 			/*
 			 * If we've got here, none of the return statements above have been run so, throw an error
 			 * @todo put into own method
-			 */
+
 			if(substr($url,0,strlen($baseURL)) == $baseURL) {
-				// This invocation writes a log-file so it contains all failed link-rewrites for analysis
-				$task->printMessage("{$url} couldn't be rewritten (logged)",'WARNING',$url);
+				// This should write to a log-file so all the failed link-rewrites can be analysed
 			}
+			 */
+			$task->printMessage('Rewriter failed', 'WARNING', $url);
 			return $url . $fragment;
 
 		});
@@ -171,6 +185,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		foreach($pages as $i => $page) {
 			$url = $page->StaticSiteURL;
 			$modified = false;
+
+			$this->printMessage('------------------------------------------------');
+			$this->printMessage($page->URLSegment, $i);
 
 			// Get the schema that matches the page's url
 			if ($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
@@ -222,12 +239,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo find a more intelligent way of matching the $page->field (See WARNING below)
 	 * @todo Extrapolate the field-matching into a separate method
 	 */
-	public function printMessage($msg,$level,$url=null) {
-		if(Director::is_cli()) {
-			echo "[{$level}] {$msg}".PHP_EOL;
+	public function printMessage($msg,$level=null,$url=null) {
+		if ($url) $url = '(' . $url . ')';
+		if ($level) $level = '[' . $level .']';
+		if (Director::is_cli()) {
+			echo "{$level} {$msg} {$url}" . PHP_EOL;
 		}
 		else {
-			echo "<p>[{$level}] {$msg}</p>".PHP_EOL;
+			echo "<p>{$level} {$msg} {$url}</p>" . PHP_EOL;
 		}
 //		if($url && $level == 'WARNING') {
 //			// Attempt some context for the log, so we can tell what page the rewrite failed in
@@ -333,34 +352,35 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function postProcessUrl($url) {
 		// Leave all empty, root, special and pre-converted URLs - alone
 		$url = trim($url);
-		$noLength = (!strlen($url)>1);
+		$noLength = (!strlen($url)>0);
 		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
 		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#",$url));
 		if($noLength) {
-			$this->printMessage("No URL Length: {$url}",'NOTICE');
+			$this->printMessage("+ ignoring empty URL: {$url}");
 			return false;
 		}
 		if($nonHTTPSchemes) {
-			$this->printMessage("Bad URL Scheme: {$url}",'NOTICE');
+			$this->printMessage("+ ignoring Non-HTTP URL: {$url}");
 			return false;
 		}
 		if($alreadyRewritten) {
-			$this->printMessage("URL already re-written: {$url}",'NOTICE');
+			$this->printMessage("+ skipping existing URL: {$url}");
 			return false;
 		}
 		// For the partial match
-		return preg_replace("#^http(s)?://(www\.)?(.+)/?$#","$3",$url);
+		//return preg_replace("#^http(s)?://(www\.)?(.+)/?$#","$3",$url);
+		return parse_url($url, PHP_URL_PATH);
 	}
 
 
 	/**
-	 * Setter method for $this->staticSiteContentSourceID
+	 * Set the ID number of the StaticSiteContentSource
 	 *
-	 * @param int $id
+	 * @param int $contentSourceID
 	 * @return void
 	 */
-	public function setContentSourceID($id) {
-		$this->contentSourceID = $id;
+	public function setContentSourceID($contentSourceID) {
+		$this->contentSourceID = $contentSourceID;
 	}
 }
