@@ -1,15 +1,16 @@
 <?php
-/*
+/**
  * URL transformer specific to SilverStripe's `File` object for use within the import functionality.
  *
  * This both creates SilverStripe's database representation of the fetched-file and also creates a copy of the file itself
  * on the local filesystem.
  *
  * @see {@link StaticSitePageTransformer}
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteFileTransformer implements ExternalContentTransformer {
 
-	/*
+	/**
 	 * @var Object
 	 *
 	 * Holds the StaticSiteUtils object on construct
@@ -102,10 +103,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			if(get_class($file) !== $dataType) {
 				$file->ClassName = $dataType;
 			}
-		} 
+		}
 		else if($file && $duplicateStrategy === 'Skip') {
 			return false;
-		} 
+		}
 		else {
 			/*
 			 * @todo
@@ -214,7 +215,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			}
 			$useExtension = $oldExt;
 		}
-		
+
 		$fileName = $path . DIRECTORY_SEPARATOR . $origFilename;
 		// Some files fail to save becuase of multiple dots in the filename. \FileNameFilter only removes leading dots, so pre-convert these:
 		// @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
