@@ -81,6 +81,10 @@ class StaticSiteContentExtractor extends Object {
 		$this->mime = $mime;
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
 		$this->utils = singleton('StaticSiteUtils');
+
+		if (!class_exists('phpQuery')) {
+			throw new Exception("The third party library 'phpQuery' is required");
+		}
 	}
 
 	/**
@@ -98,23 +102,25 @@ class StaticSiteContentExtractor extends Object {
 		$output = array();
 
 		foreach($selectorMap as $fieldName => $extractionRules) {
+
 			if(!is_array($extractionRules)) {
 				$extractionRules = array($extractionRules);
 			}
 
 			foreach($extractionRules as $extractionRule) {
+				$content = null;
+
 				if(!is_array($extractionRule)) {
 					$extractionRule = array('selector' => $extractionRule);
 				}
 
 				if($this->isMimeHTML()) {
 					$content = $this->extractField($extractionRule['selector'], $extractionRule['attribute'], $extractionRule['outerhtml']);
+					//$this->utils->log(" -- Extracted Content: " . $content);
 				}
 				else if($this->isMimeFileOrImage()) {
 					$content = $item->externalId;
-				}
-				else {
-					$content = null;
+					//$this->utils->log(" -- Extracted File/Image: " . $content);
 				}
 
 				if(!$content) {
@@ -123,6 +129,7 @@ class StaticSiteContentExtractor extends Object {
 
 				if($this->isMimeHTML()) {
 					$content = $this->excludeContent($extractionRule['excludeselectors'], $extractionRule['selector'], $content);
+					//$this->utils->log(" -- Excluded Content: " . $content);
 				}
 
 				if(!$content) {
@@ -131,12 +138,13 @@ class StaticSiteContentExtractor extends Object {
 
 				if(!empty($extractionRule['plaintext'])) {
 					$content = Convert::html2raw($content);
+					//$this->utils->log(" -- Extracted Content Plaintext: " . $content);
 				}
 
 				// We found a match, select that one and ignore any other selectors
 				$output[$fieldName] = $extractionRule;
 				$output[$fieldName]['content'] = $content;
-				$this->utils->log("Selector match found: value set for $fieldName");
+				//$this->utils->log("Selector match found: value set for $fieldName");
 				break;
 			}
 		}
@@ -152,13 +160,18 @@ class StaticSiteContentExtractor extends Object {
 	 * @return string The content for that selector
 	 */
 	public function extractField($cssSelector, $attribute = null, $outerHTML = false) {
+		//$this->utils->log(" --- extractField(cssSelector: " . $cssSelector . ', attr: ' . $attribute . ', outer: ' . $outerHTML . ')');
+
 		if(!$this->phpQuery) {
 			$this->fetchContent();
 		}
 
 		$elements = $this->phpQuery[$cssSelector];
+		//$this->utils->log(" -- Elements: " . json_encode($elements));
+
 		// @todo temporary workaround for File objects
 		if(!$elements) {
+			//$this->utils->log(" --- Elements: empty");
 			return '';
 		}
 
@@ -169,6 +182,7 @@ class StaticSiteContentExtractor extends Object {
 
 		$result = '';
 		foreach($elements as $element) {
+			//$this->utils->log(" --- Element: " . $element);
 			// Get the full html for this element
 			if($outerHTML) {
 				$result .= $this->getOuterHTML($element);
@@ -178,7 +192,10 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
-		return trim($result);
+		$result = trim($result);
+		//$this->utils->log(" -- Result: " . $result);
+
+		return $result;
 	}
 
 	/**
@@ -248,10 +265,16 @@ class StaticSiteContentExtractor extends Object {
 			return;
 		}
 		$this->content = $response->getBody();
+//		$this->utils->log(PHP_EOL . '------------------------------'. PHP_EOL . $this->content . PHP_EOL );
+
+		// Clean up the content so phpQuery doesn't bork
+		$this->prepareContent();
+
 		$this->phpQuery = phpQuery::newDocument($this->content);
 
-		//// Make the URLs all absolute
 
+		//// Make the URLs all absolute
+/*
 		// Useful parts of the URL
 		if(!preg_match('#^[a-z]+:#i', $this->url, $matches)) throw new Exception('Bad URL: ' . $this->url);
 		$protocol = $matches[0];
@@ -261,7 +284,8 @@ class StaticSiteContentExtractor extends Object {
 
 		$base = (substr($this->url,-1) == '/') ? $this->url : dirname($this->url) . '/';
 
-		$this->utils->log('Rewriting links in content');
+
+		$this->utils->log('Rewriting links in content: ' . $this->url);
 
 		$rewriter = new StaticSiteLinkRewriter(function($url) use($protocol, $server, $base) {
 			// Absolute
@@ -284,9 +308,9 @@ class StaticSiteContentExtractor extends Object {
 			return $result;
 
 		});
-
-		#$rewriter->rewriteInPQ($this->phpQuery);
-		#echo($this->phpQuery->html());
+*/
+		//$rewriter->rewriteInPQ($this->phpQuery);
+		//echo($this->phpQuery->html());
 	}
 
 	/**
@@ -412,5 +436,19 @@ class StaticSiteContentExtractor extends Object {
 	}
 	public function isMimeFileOrImage() {
 		return $this->mimeProcessor->isOfFileOrImage($this->mime);
+	}
+
+	/**
+	 * Pre-process the content so phpQuery can parse it without violently barfing
+	 */
+	protected function prepareContent() {
+		// Trim it
+		$this->content = trim($this->content);
+
+		// Ensure the content begins with the 'html' tag
+		if (stripos($this->content, '<html') === false) {
+			//$this->utils->log(' --- ' . __FUNCTION__);
+			$this->content = '<html>' .  $this->content;
+		}
 	}
 }
