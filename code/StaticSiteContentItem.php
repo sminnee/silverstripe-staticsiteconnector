@@ -15,6 +15,12 @@ class StaticSiteContentItem extends ExternalContentItem {
 	);
 
 	/**
+ 	 * Default Mime Type, either 'sitetree', 'file' or false to disable the default
+ 	 * @var mixed (string | boolean)
+ 	 */
+	private $default_mimetype = 'sitetree';
+
+	/**
 	 * Set this by using the yml config system
 	 *
 	 * Example:
@@ -76,8 +82,8 @@ class StaticSiteContentItem extends ExternalContentItem {
 			return "sitetree";
 		}
 		// Log everything that doesn't fit:
-		singleton('StaticSiteUtils')->log('Schema not configured for URL & Mime',$this->AbsoluteURL,$this->ProcessedMIME);
-		return false;
+		singleton('StaticSiteUtils')->log('Schema not configured for URL & Mime: '. $this->ProcessedMIME, $this->AbsoluteURL, $this->ProcessedMIME);
+		return $this->default_mimetype;
 	}
 
 	/*
