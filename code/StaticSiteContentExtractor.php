@@ -265,7 +265,6 @@ class StaticSiteContentExtractor extends Object {
 			return;
 		}
 		$this->content = $response->getBody();
-//		$this->utils->log(PHP_EOL . '------------------------------'. PHP_EOL . $this->content . PHP_EOL );
 
 		// Clean up the content so phpQuery doesn't bork
 		$this->prepareContent();
@@ -447,8 +446,8 @@ class StaticSiteContentExtractor extends Object {
 
 		// Ensure the content begins with the 'html' tag
 		if (stripos($this->content, '<html') === false) {
-			//$this->utils->log(' --- ' . __FUNCTION__);
-			$this->content = '<html>' .  $this->content;
+			$this->content = '<html>' . $this->content;
+			$this->utils->log('Warning: content was missing html open tag');
 		}
 	}
 }
