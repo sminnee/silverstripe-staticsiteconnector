@@ -185,7 +185,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			// Rewrite SiteTree links by replacing the phpQuery processed Page-URL with a SiteTree shortcode
 			// @todo replace with $pageLookup->each(function() {}) ...faster??
 			// @todo put into own method
-			if ($siteTreeID = $pageLookup[$pageMapKey]) {
+			$pageLookup = $pageLookup->toArray();
+			if (isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
 				$output = '[sitetree_link,id='.$siteTreeID.']' . $fragment;
 				if ($task->verbose) $task->printMessage("+ found: SiteTree ID#".$siteTreeID, null, $output);
 				return $output;
@@ -194,7 +195,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			// Rewrite Asset links by replacing phpQuery processed Asset-URLs with the appropriate asset-filename
 			//@todo replace with $fileLookup->each(function() {}) ...faster??
 			//@todo put into own method
-			if ($fileID = $fileLookup[$fileMapKey]) {
+			$fileLookup = $fileLookup->toArray();
+			if (isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if ($file = DataObject::get_by_id('File', $fileID)) {
 					$output = $file->RelativeLink();
 					if ($task->verbose) $task->printMessage("+ found: File ID#{$file->ID}", null, $output);
