@@ -5,10 +5,11 @@
  * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're
  * able to anaylse why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
  *
- * @author Science Ninjas <scienceninjas@silverstripe.com>
+ * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
  *
  * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
  * @todo add a link in the CMS UI that users can select to run this task @see https://github.com/phptek/silverstripe-staticsiteconnector/tree/feature/link-rewrite-ui
+ * @todo Occasionally, we end up with a contentSource without a UrlProcessor (In the case of a url without a trailing slash?)
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
@@ -127,7 +128,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 		$baseURL = $this->contentSource->BaseUrl;
 		$task = $this;
-		$urlProcessor = singleton($this->contentSource->UrlProcessor);
+		
+		// If no URL Processor is set in external-content CMS UI, check for it or calls to singleton() will fail
+		$urlProcessor = null;
+		if($this->contentSource->UrlProcessor) {
+			$urlProcessor = singleton($this->contentSource->UrlProcessor);
+		}
 
 		// Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, passed through the variable: $callback($url)
 		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task, $urlProcessor) {
@@ -139,13 +145,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fragment = '#'.$fragment;
 			}
 
-			// Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import
-			// This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
-			// The "mime" key is an expected argument but it's not actually used within this task but defaults to the page mime type
-			$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
-
-			// processURL returns and array, get the url from it
-			$url = $processedURL['url'];
+			/*
+			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import
+			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
+			 * The "mime" key is an expected argument but it's not actually used within this task but defaults to the page mime type
+			 */
+			if($urlProcessor) {
+				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
+				// processURL returns and array, get the url from it
+				$url = $processedURL['url'];				
+			}
 
 			// Return now if the url is empty, not a http scheme or already processed into a SS shortcode
 			if ($task->ignoreUrl($url)) {
@@ -206,7 +215,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$task->printMessage('Rewriter failed', 'WARNING', $urlInput);
 
 			// log the failed rewrite
-			array_push($task->listFailedRewrites, "Couldn't rewrite: " . $urlInput . ". Found in Page: " . $task->currentPageTitle . " [ID#" . $task->currentPageID . "]");
+			array_push($task->listFailedRewrites, "Couldn't rewrite: " . $urlInput . " Found in Page: " . $task->currentPageTitle . " [ID#" . $task->currentPageID . "]");
 
 			// return the url unchanged
 			return $urlInput;
@@ -328,14 +337,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return boolean true The log filename is valid and writable
 	 */
 	public function isLoggingEnabled($showErrors = true) {
-		if (!self::$log_file) {
-			if ($showErrors) error_log(__CLASS__.' - $log_file is not defined'.PHP_EOL, 3, null);
+		if (!self::$log_file|| !is_writable(self::$log_file)) {
+			if ($showErrors) {
+				echo PHP_EOL;
+				$this->printMessage(__CLASS__.' - $log_file is not defined or not writeable.');
+			}
 			return false;
-		}
-		if (!is_writable(self::$log_file)) {
-			if ($showErrors) error_log(__CLASS__.' - $log_file is not writable, log_file: ' . self::$log_file . PHP_EOL, 3, self::$log_file);
-			return false;
-		}
+		}	
 		return true;
 	}
 
