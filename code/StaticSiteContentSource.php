@@ -205,7 +205,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
-		foreach($this->Schemas() as $i => $schema) {
+		// Ensure the "Priority" setting is respected
+		$schemas = $this->Schemas()->sort('Order','ASC');
+		foreach($schemas as $i => $schema) {
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);
 			$schemaMimeTypesShow = implode(', ',$schemaMimeTypes);
