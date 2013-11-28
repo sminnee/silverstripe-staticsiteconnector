@@ -77,13 +77,14 @@ class BadImportsReport extends SS_Report {
 	protected function processBadImportDataByLine($line) {
 		$badSchemes = implode('|',StaticSiteRewriteLinksTask::$non_http_uri_schemes);
 		// Ignore the header found at the top of the logfile
-		if(stristr($line, "Couldn't rewrite: ") !== false) {
-			$line = str_replace("Couldn't rewrite: ",'',$line);
+		$prefix = "Couldn't rewrite: ";
+		if(stristr($line, $prefix) !== false) {
+			$line = str_replace($prefix, '', $line);
 			if(preg_match("#($badSchemes)#i",$line)) {
 				return false;
 			}
 			$matches = array();
-			preg_match_all("#^(\/[a-zA-Z0-9%]+)+\..+\(\#([0-9]+)\)$#",$line,$matches);
+			preg_match_all("#^(.+)\.?.+\s\[ID\#([0-9]+)\]$#", $line, $matches);
 			if(!isset($matches[1][0]) && !isset($matches[2][0])) {
 				// No matches
 				return false;
