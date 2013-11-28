@@ -136,7 +136,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		}
 
 		// Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, passed through the variable: $callback($url)
-		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task, $urlProcessor) {
+		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $baseURL, $task, $urlProcessor, $request) {
 
 			$urlInput = $url;
 			$fragment = "";
@@ -262,9 +262,17 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 					$modified = true;
 				}
 			}
-			// Only save the page if modifications have occurred
+			
+			/*
+			 * Only save the page if modifications have occurred.
+			 * Default is to just write the page with its changes, but not publish.
+			 * If the 'PUBLISH' flag is passed, then publish it. (Beats a CMS batch update for 100s of pages)
+			 */
 			if ($modified) {
 				$page->write();
+				if($request->getVar('PUBLISH')) {
+					$page->doPublish();
+				}
 			}
 		}
 		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
