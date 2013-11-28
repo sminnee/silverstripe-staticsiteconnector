@@ -8,13 +8,14 @@
 class BadImportsReport extends SS_Report {
 
 	public function title() {
-		return "A list of pages containing links to unimported URLs";
+		return "Pages with links to unimported URLs";
 	}
 
 	/*
 	 * @return ArrayList
 	 *
 	 * @param $params
+	 * @return ArrayList
 	 */
 	public function SourceRecords($params) {
 		return $this->getDataAsSSList();
@@ -31,10 +32,18 @@ class BadImportsReport extends SS_Report {
 				'title' => 'Title',
 				'formatting' => '<a href=\"/admin/pages/edit/show/".$ID."\" title=\"See the page\">$Title</a>'
 			),
+			'ID' => array(
+				'title' => 'Page ID',
+				'formatting' => '".$ID."'
+			),
+			'Total' => array(
+				'title' => 'No. Bad Urls',
+				'formatting' => '".$Total."'
+			),			
 			'Created' => array(
-				'title' => 'Imported',
+				'title' => 'Import date',
 				'casting' => 'SS_Datetime->Full'
-			)
+			)		
 		);
 	}
 
@@ -50,14 +59,18 @@ class BadImportsReport extends SS_Report {
 	}
 
 	/*
+	 * Format the data as we'd like to see it in the presentational GridField
+	 * 
 	 * @return ArrayList
 	 */
 	protected function getDataAsSSList() {
 		$data = $this->getBadImportData();
 		$list = new ArrayList();
+		$linkCount = array();
 		if(!$data) {
 			return $list;
 		}
+		
 		foreach($data as $line) {
 			if(!strlen($line)>0 || !$processed = $this->processBadImportDataByLine($line)) {
 				continue;
@@ -65,12 +78,30 @@ class BadImportsReport extends SS_Report {
 			if(!$foundIn = DataObject::get_by_id('SiteTree', (int)$processed['ID'])) {
 				continue;
 			}
-			$list->push($foundIn);
+			
+			/*
+			 * Prevent the same page showing repeatedly in the report
+			 * and show a total for the No. unimported URLs
+			 */
+			if(!isset($linkCount[$processed['ID']])) {
+				$linkCount[$processed['ID']] = 0;
+			}
+			$linkCount[$processed['ID']] += 1;
+			$foundIn->Total = 1;
+			if(!$list->find('ID', $processed['ID'])) {
+				$list->push($foundIn);
+			}
+			else {
+				$foundIn->Total = $linkCount[$processed['ID']];
+			}
 		}
+		
 		return $list;
 	}
 
 	/*
+	 * Post-process the text-based report - if available - line-by-line.
+	 * 
 	 * @param string $line
 	 * @return mixed boolean|array $line If an array, it contains the Bad URL and the #ID of the page in which it was found
 	 */
@@ -97,4 +128,3 @@ class BadImportsReport extends SS_Report {
 		return false;
 	}
 }
-
