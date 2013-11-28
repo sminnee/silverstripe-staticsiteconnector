@@ -269,9 +269,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * If the 'PUBLISH' flag is passed, then publish it. (Beats a CMS batch update for 100s of pages)
 			 */
 			if ($modified) {
-				$page->write();
 				if($request->getVar('PUBLISH')) {
 					$page->doPublish();
+				}
+				else {
+					$page->write();
 				}
 			}
 		}
