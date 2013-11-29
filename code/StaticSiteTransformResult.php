@@ -4,7 +4,7 @@
  * Subclasses TransformResult to allow dealing-to File objects also
  *
  * @see {@link TransformResult}
- * @author Russell Michell 2013 russell@silverstripe.com
+ * @author Russell Michell 2013 <russell@silverstripe.com>
  */
 class StaticSiteTransformResult extends TransformResult {
 	
@@ -12,15 +12,23 @@ class StaticSiteTransformResult extends TransformResult {
 	 * @var File
 	 */
 	public $file;
+	
 	/**
 	 * @var SiteTree
 	 */
 	public $page;
+	
 	/**
 	 * @var array
 	 */
 	public $children;
 
+	/**
+	 * 
+	 * @param SiteTree $object
+	 * @param SS_List $children
+	 * @return void
+	 */
 	public function __construct($object, $children) {
 		parent::__construct($object, $children);
 		

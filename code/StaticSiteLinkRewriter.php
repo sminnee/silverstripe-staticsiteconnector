@@ -7,34 +7,54 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  */
 class StaticSiteLinkRewriter {
 
+	/*
+	 * @var array 
+	 */
 	protected $tagMap = array(
 		'a' => 'href',
 		'img' => 'src',
 	);
 
+	/*
+	 * @var Object
+	 */
 	protected $callback;
 
-	function __construct($callback) {
+	/**
+	 * 
+	 * @param $callback
+	 * @return void
+	 */
+	public function __construct($callback) {
 		$this->callback = $callback;
 	}
 
 	/**
 	 * Set a map of tags & attributes to search for URls.
-	 *
 	 * Each key is a tagname, and each value is an array of attribute names.
+	 * 
+	 * @param array $tagMap
+	 * @return void
 	 */
-	function setTagMap($tagMap) {
+	public function setTagMap($tagMap) {
 		$this->tagMap = $tagMap;
 	}
 
 	/**
 	 * Return the tagmap
+	 * 
+	 * @return array
 	 */
-	function getTagMap($tagMap) {
-		$this->tagMap = $tagMap;
+	public function getTagMap() {
+		return $this->tagMap;
 	}
 
-	function rewriteInPQ($pq) {
+	/**
+	 * 
+	 * @param type $pq
+	 * @return void
+	 */
+	public function rewriteInPQ($pq) {
 		$callback = $this->callback;
 
 		// Make URLs absolute
@@ -49,11 +69,12 @@ class StaticSiteLinkRewriter {
 	}
 
 	/**
-	 * Rewrite URLs in the given content snippet.  Returns the updated content.
+	 * Rewrite URLs in the given content snippet. Returns the updated content.
 	 *
-	 * @param  phpQuery $pq The content containing the links to rewrite
+	 * @param \phpQuery $pq The content containing the links to rewrite
+	 * @return string
 	 */
-	function rewriteInContent($content) {
+	public function rewriteInContent($content) {
 		$pq = phpQuery::newDocument($content);
 		$this->rewriteInPQ($pq);
 		return $pq->html();

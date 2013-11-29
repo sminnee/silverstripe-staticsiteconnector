@@ -11,7 +11,7 @@
 class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 	/**
-	 * @var Object
+	 * @var \StaticSiteUtils
 	 *
 	 * Holds the StaticSiteUtils object on construct
 	 */
@@ -37,6 +37,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public $mimeProcessor;
 
+	/**
+	 * @return void
+	 */
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
@@ -47,7 +50,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 * @param type $item
 	 * @param type $parentObject
 	 * @param type $duplicateStrategy
-	 * @return boolean|\StaticSiteTransformResult
+	 * @return boolean | \StaticSiteTransformResult
 	 * @throws Exception
 	 */
 	public function transform($item, $parentObject, $duplicateStrategy) {
@@ -64,7 +67,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		// Cleanup StaticSiteURLs
 		$cleanupStaticSiteUrls = false;
-		//TODO: finalise the requirment for this activity by completing the Link Rewrite Task
 		if ($cleanupStaticSiteUrls) {
 			$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
 		}

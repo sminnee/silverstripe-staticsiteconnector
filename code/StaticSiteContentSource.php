@@ -1,7 +1,16 @@
 <?php
-
+/*
+ * Define the overarching content-source:
+ * - Schemas
+ * - Pages
+ * - Files
+ */
 class StaticSiteContentSource extends ExternalContentSource {
 
+	/**
+	 *
+	 * @var array
+	 */
 	public static $db = array(
 		'BaseUrl' => 'Varchar(255)',
 		'UrlProcessor' => 'Varchar(255)',
@@ -9,12 +18,20 @@ class StaticSiteContentSource extends ExternalContentSource {
 		'UrlExcludePatterns' => 'Text',
 	);
 
+	/**
+	 *
+	 * @var array
+	 */	
 	public static $has_many = array(
 		"Schemas" => "StaticSiteContentSource_ImportSchema",
 		"Pages" => "SiteTree",
 		"Files" => "File"
 	);
 
+	/**
+	 *
+	 * @var array
+	 */	
 	public static $export_columns = array(
 		"StaticSiteContentSource_ImportSchema.DataType",
 		"StaticSiteContentSource_ImportSchema.Order",
@@ -22,6 +39,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 		"StaticSiteContentSource_ImportSchema.MimeTypes"
 	);
 
+	/**
+	 *
+	 * @var string
+	 */	
 	public $absoluteURL = null;
 
 	/*
@@ -33,7 +54,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public $staticSiteCacheDir = null;
 
 	/*
-	 * @var Object
+	 * @var StaticSiteUtils $utils
 	 *
 	 * Holds the StaticSiteUtils object on construct
 	 */
@@ -44,6 +65,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @param array|null $record This will be null for a new database record.
 	 * @param bool $isSingleton
 	 * @param DataModel $model
+	 * @return void
 	 */
 	public function __construct($record = null, $isSingleton = false, $model = null) {
 		parent::__construct($record, $isSingleton, $model);
@@ -148,6 +170,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	/**
 	 *
+	 * @return void
 	 */
 	public function onAfterWrite() {
 		parent::onAfterWrite();
@@ -156,7 +179,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		if($this->isChanged('UrlProcessor') && $urlList->hasCrawled()) {
 			if($processorClass = $this->UrlProcessor) {
 				$urlList->setUrlProcessor(new $processorClass);
-			} else {
+			} 
+			else {
 				$urlList->setUrlProcessor(null);
 			}
 			$urlList->reprocessUrls();
@@ -165,7 +189,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	/**
 	 *
-	 * @return StaticSiteUrlList
+	 * @return \StaticSiteUrlList
 	 */
 	public function urlList() {
 		if(!$this->urlList) {
@@ -187,7 +211,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	/**
 	 * Crawl the target site
-	 * @return StaticSiteCrawler
+	 * 
+	 * @param boolean $limit
+	 * @param boolean $verbose
+	 * @return \StaticSiteCrawler
 	 */
 	public function crawl($limit=false, $verbose=false) {
 		if(!$this->BaseUrl) {
@@ -250,18 +277,24 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * Relative URLs are used as the unique identifiers by this importer
 	 *
 	 * @param $id The URL, relative to BaseURL, starting with "/".
-	 * @return DataObject
+	 * @return \StaticSiteContentItem
 	 */
 	public function getObject($id) {
 
 		if($id[0] != "/") {
 			$id = $this->decodeId($id);
-			if($id[0] != "/") throw new InvalidArgumentException("\$id must start with /");
+			if($id[0] != "/") {
+				throw new InvalidArgumentException("\$id must start with /");
+			}
 		}
 
 		return new StaticSiteContentItem($this, $id);
 	}
 
+	/**
+	 * 
+	 * @return \StaticSiteContentItem
+	 */
 	public function getRoot() {
 		return $this->getObject('/');
 	}
@@ -280,6 +313,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	/**
 	 * Return the root node
+	 * 
+	 * @param boolean $showAll
 	 * @return ArrayList A list containing the root node
 	 */
 	public function stageChildren($showAll = false) {
@@ -291,19 +326,40 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	}
 
+	/**
+	 * 
+	 * @param $target
+	 * @return \StaticSiteImporter
+	 */
 	public function getContentImporter($target=null) {
 		return new StaticSiteImporter();
 	}
 
+	/**
+	 * 
+	 * @return boolean
+	 */
 	public function isValid() {
 		if(!(boolean)$this->BaseUrl) {
 			return false;
 		}
 		return true;
 	}
+	
+	/**
+	 * 
+	 * @param \Member $member
+	 * @return boolean
+	 */	
 	public function canImport($member = null) {
 		return $this->isValid();
 	}
+	
+	/**
+	 *
+	 * @param \Member $member 
+	 * @return boolean
+	 */	
 	public function canCreate($member = null) {
 		return true;
 	}
@@ -322,17 +378,28 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 */
 	public static $default_applies_to = '.*';
 
+	/**
+	 * @var array
+	 */
 	public static $db = array(
 		"DataType" => "Varchar", // classname
 		"Order" => "Int",
 		"AppliesTo" => "Varchar(255)", // regex
 		"MimeTypes" => "Text"
 	);
+	
+	/**
+	 * @var array
+	 */	
 	public static $summary_fields = array(
 		"AppliesTo",
 		"DataType",
 		"Order"
 	);
+	
+	/**
+	 * @var array
+	 */	
 	public static $field_labels = array(
 		"AppliesTo" => "URL Pattern",
 		"DataType" => "Data type",
@@ -340,16 +407,29 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		"MimeTypes"	=> "Mime-types"
 	);
 
+	/**
+	 * @var string
+	 */	
 	public static $default_sort = "Order";
 
+	/**
+	 * @var array
+	 */	
 	public static $has_one = array(
 		"ContentSource" => "StaticSiteContentSource",
 	);
 
+	/**
+	 * @var array
+	 */	
 	public static $has_many = array(
 		"ImportRules" => "StaticSiteContentSource_ImportRule",
 	);
 
+	/**
+	 * 
+	 * @return string
+	 */
 	public function getTitle() {
 		return $this->DataType.' ('.$this->AppliesTo.')';
 	}
@@ -385,14 +465,16 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 			$addNewButton = new GridFieldAddNewButton('after');
 			$addNewButton->setButtonName("Add Rule");
 			$importRules->getConfig()->addComponent($addNewButton);
-
-
 			$fields->addFieldToTab('Root.Main', $importRules);
 		}
 
 		return $fields;
 	}
 
+	/**
+	 * 
+	 * @return false
+	 */
 	public function requireDefaultRecords() {
 		foreach(StaticSiteContentSource::get() as $source) {
 			if(!$source->Schemas()->count()) {
@@ -422,7 +504,9 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$output = array();
 
 		foreach($this->ImportRules() as $rule) {
-			if(!isset($output[$rule->FieldName])) $output[$rule->FieldName] = array();
+			if(!isset($output[$rule->FieldName])) {
+				$output[$rule->FieldName] = array();
+			}
 			$ruleArray = array(
 				'selector' => $rule->CSSSelector,
 				'attribute' => $rule->Attribute,
@@ -490,6 +574,11 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
  * A single import rule that forms part of an ImportSchema
  */
 class StaticSiteContentSource_ImportRule extends DataObject {
+	
+	/**
+	 *
+	 * @var array
+	 */
 	public static $db = array(
 		"FieldName" => "Varchar",
 		"CSSSelector" => "Text",
@@ -499,6 +588,10 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		"OuterHTML" => "Boolean"
 	);
 
+	/**
+	 *
+	 * @var array
+	 */	
 	public static $summary_fields = array(
 		"FieldName",
 		"CSSSelector",
@@ -507,6 +600,10 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		"OuterHTML"
 	);
 
+	/**
+	 *
+	 * @var array
+	 */	
 	public static $field_labels = array(
 		"FieldName" => "Field Name",
 		"CSSSelector" => "CSS Selector",
@@ -515,14 +612,26 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		"OuterHTML" => "Use the outer HTML"
 	);
 
+	/**
+	 *
+	 * @var array
+	 */	
 	public static $has_one = array(
 		"Schema" => "StaticSiteContentSource_ImportSchema",
 	);
 
+	/**
+	 * 
+	 * @return string
+	 */
 	public function getTitle() {
 		return ($this->FieldName)?$this->FieldName:$this->ID;
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */	
 	public function getAbsoluteURL() {
 		return ($this->URLSegment)?$this->URLSegment:$this->Filename;
 	}
@@ -545,7 +654,8 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 			$fieldNameField = new DropdownField("FieldName", "Field Name", $fieldList);
 			$fieldNameField->setEmptyString("(choose)");
 			$fields->insertBefore($fieldNameField, "CSSSelector");
-		} else {
+		} 
+		else {
 			$fields->replaceField('FieldName', $fieldName = new ReadonlyField("FieldName", "Field Name"));
 			$fieldName->setDescription('Save this rule before being able to add a field name');
 		}

@@ -13,6 +13,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	protected $utils;
 
+	/**
+	 * @return void
+	 */
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
 	}
@@ -39,7 +42,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		// Cleanup StaticSiteURLs
 		$cleanupStaticSiteUrls = false;
-		//TODO: finalise the requirment for this activity by completing the Link Rewrite Task
 		if ($cleanupStaticSiteUrls) {
 			$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'SiteTree');
 		}
@@ -92,7 +94,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
-
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 
 		foreach($contentFields as $k => $v) {
@@ -110,7 +111,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * Get content from the remote host
 	 *
 	 * @param  StaticSiteeContentItem $item The item to extract
-	 * @return array A map of field name => array('selector' => selector, 'content' => field content)
+	 * @return null | array A map of field name => array('selector' => selector, 'content' => field content)
 	 */
 	public function getContentFieldsAndSelectors($item) {
 		// Get the import rules from the content source

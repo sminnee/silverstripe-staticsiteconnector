@@ -63,6 +63,7 @@ class StaticSiteUrlList {
 	 * Create a new URL List
 	 * @param string $baseURL  The Base URL to find links on
 	 * @param string $cacheDir The local path to cache data into
+	 * @return void
 	 */
 	public function __construct($baseURL, $cacheDir) {
 		// baseURL must not have a trailing slash
@@ -83,7 +84,8 @@ class StaticSiteUrlList {
 	 *
 	 * See {@link StaticSiteMOSSURLProcessor} for an example.
 	 *
-	 * @param StaticSiteUrlProcessor $urlProcessor [description]
+	 * @param StaticSiteUrlProcessor $urlProcessor
+	 * @return void
 	 */
 	public function setUrlProcessor(StaticSiteUrlProcessor $urlProcessor) {
 		$this->urlProcessor = $urlProcessor;
@@ -93,6 +95,9 @@ class StaticSiteUrlList {
 	 * Define additional crawl URLs as an array
 	 * Each of these URLs will be crawled in addition the base URL.
 	 * This can be helpful if pages are getting missed by the crawl
+	 * 
+	 * @param array $extraCrawlURLs
+	 * @return void
 	 */
 	public function setExtraCrawlURls($extraCrawlURLs) {
 		$this->extraCrawlURLs = $extraCrawlURLs;
@@ -100,6 +105,8 @@ class StaticSiteUrlList {
 
 	/**
 	 * Return the additional crawl URLs as an array
+	 * 
+	 * @return array
 	 */
 	public function getExtraCrawlURLs() {
 		return $this->extraCrawlURLs;
@@ -110,6 +117,7 @@ class StaticSiteUrlList {
 	 * being added to the url list
 	 *
 	 * @param array $excludePatterns
+	 * @return void
 	 */
 	public function setExcludePatterns(array $excludePatterns) {
 		$this->excludePatterns = $excludePatterns;
@@ -128,7 +136,8 @@ class StaticSiteUrlList {
 	/**
 	 *
 	 * Set whether the crawl should be triggered on demand.
-	 * @param [type] $autoCrawl [description]
+	 * @param boolean $autoCrawl
+	 * @retutn void
 	 */
 	public function setAutoCrawl($autoCrawl) {
 		$this->autoCrawl = $autoCrawl;
@@ -136,30 +145,32 @@ class StaticSiteUrlList {
 
 	/**
 	 * Returns the status of the spidering: "Complete", "Partial", or "Not started"
-	 * @return [type] [description]
+	 * @return string
 	 */
 	public function getSpiderStatus() {
 		if(file_exists($this->cacheDir . 'urls')) {
-			if(file_exists($this->cacheDir . 'crawlerid')) return "Partial";
-			else return "Complete";
-
-		} else {
-			return "Not started";
-		}
+			if(file_exists($this->cacheDir . 'crawlerid')) {
+				return "Partial";
+			}
+			return "Complete";
+		} 
+		return "Not started";
 	}
 
 	/*
 	 * Raw URL+Mime data "accessor" used internally by logic outside of the class.
 	 *
-	 * @return mixed string $urls or null if no cached URL/Mime data found
+	 * @return mixed string $urls | null if no cached URL/Mime data found
 	 */
 	public function getRawCacheData() {
 		if($this->urls) {
 			$urls = $this->urls;
-		// Don't rely on loadUrls() as it chokes on partially completed imports
-		} else if(file_exists($this->cacheDir . 'urls')) {
+			// Don't rely on loadUrls() as it chokes on partially completed imports
+		} 
+		else if(file_exists($this->cacheDir . 'urls')) {
 			$urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
-		} else {
+		} 
+		else {
 			return null;
 		}
 		return $urls;
@@ -167,6 +178,8 @@ class StaticSiteUrlList {
 
 	/**
 	 * Return the number of URLs crawled so far
+	 * 
+	 * @return null | number
 	 */
 	public function getNumURLs() {
 		if(!$urls = $this->getRawCacheData()) {
@@ -189,29 +202,18 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Return the raw URLs as an array
-	 * @return array
-	 * @todo Unused
-	 */
-	public function getRawURLs() {
-		if($urls = $this->getProcessedURLs()) {
-			$_urls = array();
-			foreach($urls as $url) {
-				array_push($_urls,$url['url']);
-			}
-			return $_urls;
-		}
-	}
-
-	/**
 	 * Return a map of URLs crawled, with raw URLs as keys and processed URLs as values
 	 * @return array
 	 */
 	public function getProcessedURLs() {
 		if($this->hasCrawled() || $this->autoCrawl) {
-			if($this->urls === null) $this->loadUrls();
+			if($this->urls === null) {
+				$this->loadUrls();
+			}
+			
 			$_regular = array();
 			$_inferred = null;
+			
 			foreach($this->urls['regular'] as $key => $urlData) {
 				$_regular[$key] = $urlData['url'];
 			}
@@ -240,6 +242,7 @@ class StaticSiteUrlList {
 	/**
 	 * Load the URLs, either by crawling, or by fetching from cache
 	 * @return void
+	 * @throws \LogicException
 	 */
 	public function loadUrls() {
 		if($this->hasCrawled()) {
@@ -248,10 +251,11 @@ class StaticSiteUrlList {
 			if(!isset($this->urls['regular']) || !isset($this->urls['inferred'])) {
 				$this->urls = array('regular' => array(), 'inferred' => array());
 			}
-		} else if($this->autoCrawl) {
+		} 
+		else if($this->autoCrawl) {
 			$this->crawl();
-
-		} else {
+		} 
+		else {
 			// This happens if you move a cache-file out of the way during debugging...
 			throw new LogicException("Crawl hasn't been executed yet, and autoCrawl is set to false. Maybe a cache file has been moved?");
 		}
@@ -262,7 +266,9 @@ class StaticSiteUrlList {
 	 * @return void
 	 */
 	public function reprocessUrls() {
-		if($this->urls === null) $this->loadUrls();
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		// Clear out all inferred URLs; these will be added
 		$this->urls['inferred'] = array();
@@ -281,7 +287,7 @@ class StaticSiteUrlList {
 
 	/**
 	 *
-	 * @param int $limit
+	 * @param number $limit
 	 * @param bool $verbose
 	 * @return \StaticSiteCrawler
 	 */
@@ -299,6 +305,7 @@ class StaticSiteUrlList {
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
+		
 		// Set some proxy options for phpCrawler
 		singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev(), $crawler);
 
@@ -308,13 +315,15 @@ class StaticSiteUrlList {
 			// This should only happen when we are resuming a partial crawl
 			if(file_exists($this->cacheDir . 'urls')) {
 				$this->urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
-			} else {
+			} 
+			else {
 				$this->urls = array('regular' => array(), 'inferred' => array());
 			}
 
 			$crawlerID = file_get_contents($this->cacheDir.'crawlerid');
 			$crawler->resume($crawlerID);
-		} else {
+		} 
+		else {
 			$crawlerID = $crawler->getCrawlerId();
 			file_put_contents($this->cacheDir.'/crawlerid', $crawlerID);
 			$this->urls = array('regular' => array(), 'inferred' => array());
@@ -332,8 +341,8 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Save the current list of URLs to disk
-	 * @return [type] [description]
+	 * Cache the current list of URLs to disk
+	 * @return void
 	 */
 	public function saveURLs() {
 		file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
@@ -343,6 +352,8 @@ class StaticSiteUrlList {
 	 * Add a URL to this list, given the absolute URL
 	 * @param string $url The absolute URL
 	 * @param string $content_type The Mime-Type found at this URL e.g text/html or image/png
+	 * @throws \InvalidArgumentException
+	 * @return ??
 	 */
 	public function addAbsoluteURL($url,$content_type) {
 		$simpifiedURL = $this->simplifyURL($url);
@@ -350,7 +361,8 @@ class StaticSiteUrlList {
 
 		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
-		} else {
+		} 
+		else {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
@@ -361,6 +373,7 @@ class StaticSiteUrlList {
 	 *
 	 * @param string $url
 	 * @param string $contentType
+	 * @return void
 	 */
 	public function addURL($url, $contentType) {
 		if($this->urls === null) {
@@ -388,7 +401,9 @@ class StaticSiteUrlList {
 	 * @param array $inferredURLData Contains the processed URL and Mime-Type to add.
 	 */
 	public function addInferredURL($inferredURLData) {
-		if($this->urls === null) $this->loadUrls();
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		// Generate and save the processed URLs
 		$this->urls['inferred'][$inferredURLData['url']] = $inferredURLData;
@@ -397,15 +412,16 @@ class StaticSiteUrlList {
 		$this->parentProcessedURL($inferredURLData);
 	}
 
-	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 	/**
 	 * Return true if the given URL exists
 	 * @param  string $url The URL, either absolute, or relative starting with "/"
-	 * @return boolean     Does the URL exist
+	 * @return boolean Does the URL exist
+	 * @throws \InvalidArgumentException
 	 */
 	public function hasURL($url) {
-		if($this->urls === null) $this->loadUrls();
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		// Try and relativise an absolute URL
 		if($url[0] != '/') {
@@ -414,7 +430,8 @@ class StaticSiteUrlList {
 
 			if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
 				$url = substr($simpifiedURL, strlen($simpifiedBase));
-			} else {
+			} 
+			else {
 				throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 			}
 		}
@@ -436,13 +453,14 @@ class StaticSiteUrlList {
 	/**
 	 * Returns true if the given URL is in the list of processed URls
 	 *
-	 * @param  string  $processedURL The processed URL
-	 * @return boolean               True if it exists, false otherwise
+	 * @param string $processedURL The processed URL
+	 * @return boolean True if it exists, false otherwise
 	 */
-	function hasProcessedURL($processedURL) {
-		if($this->urls === null) $this->loadUrls();
+	public function hasProcessedURL($processedURL) {
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
-		//return in_array($processedURL, $this->urls['regular']) || in_array($processedURL, $this->urls['inferred']);
 		return in_array($processedURL, array_keys($this->urls['regular'])) || in_array($processedURL, array_keys($this->urls['inferred']));
 
 	}
@@ -452,10 +470,10 @@ class StaticSiteUrlList {
 	 *
 	 * Both input and output are processed URLs
 	 *
-	 * @param  array $processedURLData URLData comprising a relative URL and Mime-Type
+	 * @param array $processedURLData URLData comprising a relative URL and Mime-Type
 	 * @return array $processedURLData [description]
 	 */
-	function parentProcessedURL($processedURLData) {
+	public function parentProcessedURL($processedURLData) {
 		$mime = self::$undefined_mime_type;
 		$processedURL = $processedURLData;
 		if(is_array($processedURLData)) {
@@ -470,13 +488,17 @@ class StaticSiteUrlList {
 			);
 		};
 
-		if($processedURL == "/") return $default('');
+		if($processedURL == "/") {
+			return $default('');
+		}
 
 		// URL heirachy can be broken down by querystring or by URL
 		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL,'/'));
 
 		// Special case for children of the root
-		if($breakpoint == 0) return $default('/');
+		if($breakpoint == 0) {
+			return $default('/');
+		}
 
 		// Get parent URL
 		$parentProcessedURL = substr($processedURL,0,$breakpoint);
@@ -487,46 +509,30 @@ class StaticSiteUrlList {
 		);
 
 		// If an intermediary URL doesn't exist, create it
-		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addInferredURL($processedURLData);
+		if(!$this->hasProcessedURL($parentProcessedURL)) {
+			$this->addInferredURL($processedURLData);
+		}
 
-		//return $parentProcessedURL;
 		return $processedURLData;
 	}
 
 	/**
-	 * Return the regular URL, given the processed one.
-	 *
-	 * Note that the URL processing isn't reversible, so this function works looks by iterating through all URLs.
-	 * If the URL doesn't exist in the list, this function returns null.
-	 *
-	 * @param  string $processedURL The URL after processing has been applied.
-	 * @return string               The original URL.
-	 * @todo Unused
-	 */
-	function unprocessedURL($processedURL) {
-		if($url = array_search($processedURL, $this->urls['regular'])) {
-			return $url;
-
-		} else if(in_array($processedURL, $this->urls['inferred'])) {
-			return $processedURL;
-		} else {
-			return null;
-		}
-	}
-
-	/**
 	 * Find the processed URL in the URL list
-	 * @param  mixed string|array $urlData [description]
-	 * @return array $urlData [description]
+	 * 
+	 * @param  mixed string | array $urlData
+	 * @return array $urlData
 	 */
-	function processedURL($urlData) {
+	public function processedURL($urlData) {
 		$url = $urlData;
 		$mime = self::$undefined_mime_type;
 		if(is_array($urlData)) {
 			$url = $urlData['url'];
 			$mime = $urlData['mime'];
 		}
-		if($this->urls === null) $this->loadUrls();
+		
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		$urlData = array(
 			'url'	=> $url,
@@ -540,7 +546,8 @@ class StaticSiteUrlList {
 			}
 			return $this->urls['regular'][$url];
 
-		} elseif(in_array($url, array_keys($this->urls['inferred']))) {
+		} 
+		elseif(in_array($url, array_keys($this->urls['inferred']))) {
 			return $this->urls['inferred'][$url];
 		}
 	}
@@ -552,29 +559,43 @@ class StaticSiteUrlList {
 	 *
 	 * @param  array $urlData The unprocessed URLData
 	 * @return array $urlData The processed URLData
+	 * @throws \LogicException
 	 */
-	function generateProcessedURL($urlData) {
+	public function generateProcessedURL($urlData) {
 		$urlIsEmpty = (!$urlData || !isset($urlData['url']));
-		if($urlIsEmpty) throw new LogicException("Can't pass a blank URL to generateProcessedURL");
-		if($this->urlProcessor) $urlData = $this->urlProcessor->processURL($urlData);
-		if(!$urlData) throw new LogicException(get_class($this->urlProcessor) . " returned a blank URL.");
+		if($urlIsEmpty) {
+			throw new LogicException("Can't pass a blank URL to generateProcessedURL");
+		}
+		if($this->urlProcessor) {
+			$urlData = $this->urlProcessor->processURL($urlData);
+		}
+		if(!$urlData) {
+			throw new LogicException(get_class($this->urlProcessor) . " returned a blank URL.");
+		}
 		return $urlData;
 	}
 
 	/**
 	 * Return the URLs that are a child of the given URL
-	 * @param  [type] $url [description]
-	 * @return [type]      [description]
+	 * 
+	 * @param string $url
+	 * @return array
 	 */
 	function getChildren($url) {
-		if($this->urls === null) $this->loadUrls();
+		if($this->urls === null) {
+			$this->loadUrls();
+		}
 
 		$processedURL = $this->processedURL($url);
 		$processedURL = $processedURL['url'];
 
 		// Subtly different regex if the URL ends in ? or /
-		if(preg_match('#[/?]$#',$processedURL)) $regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
-		else $regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
+		if(preg_match('#[/?]$#',$processedURL)) {
+			$regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
+		}
+		else {
+			$regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
+		}
 
 		$children = array();
 		foreach($this->urls['regular'] as $urlKey => $potentialProcessedChild) {
@@ -629,7 +650,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	 */
 	private static $log_file = null;
 
-	function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
+	public function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
 		parent::__construct();
 		$this->urlList = $urlList;
 		$this->verbose = $verbose;
@@ -643,7 +664,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	 * After checking raw status codes out of PHPCrawler we continue to save each URL to our cache file
 	 *
 	 * @param \PHPCrawlerDocumentInfo $info
-	 * @return mixed (null | void)
+	 * @return mixed null | void
 	 */
 	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 
@@ -672,6 +693,10 @@ class StaticSiteCrawler extends PHPCrawler {
 		$this->urlList->saveURLs();
 	}
 
+	/*
+	 * @return void
+	 * @throws \InvalidArgumentException
+	 */
 	protected function initCrawlerProcess() {
 		parent::initCrawlerProcess();
 

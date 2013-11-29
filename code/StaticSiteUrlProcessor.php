@@ -58,25 +58,23 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	 * @todo:
 	 * - Find out the reason for the replacement of a trailing slash in URLs
 	 * - These are needed if child-nodes are to be discovered and imported later
+	 * 
+	 * @param array $urlData
+	 * @return array
 	 */
 	function processURL($urlData) {
 		$url = '';
 		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-//			if($url != '/') {
-//				$url = preg_replace("#/$#",'',$url);
-//			}
 			$url = preg_replace("#\.[^.]*$#",'',$url);
 			return array(
 				'url'=>"$url?$qs",
 				'mime'=>$urlData['mime']
 			);
-		} else {
+		} 
+		else {
 			$url = $urlData['url'];
-//			if($url != '/') {
-//				$url = preg_replace("#/$#",'',$url);
-//			}
 			$url = preg_replace("#\.[^.]*$#",'',$url);
 			return array(
 				'url'=>$url,
@@ -90,14 +88,27 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
  */
 class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	
-	function getName() {
+	/**
+	 * 
+	 * @return string
+	 */
+	public function getName() {
 		return "MOSS-style URLs";
 	}
 
-	function getDescription() {
+	/**
+	 * 
+	 * @return string
+	 */
+	public function getDescription() {
 		return "Remove '/Pages/' from the URL, and drop extensions";
 	}
 
+	/**
+	 * 
+	 * @param array $urlData
+	 * @return array
+	 */
 	function processURL($urlData) {
 		$url = str_ireplace('/Pages/','/',$urlData['url']);
 		$urlData = array(

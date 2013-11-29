@@ -10,7 +10,7 @@ class StaticSiteUtils {
 	 * @param string $message
 	 * @param string $filename
 	 * @param string $mime
-	 * @return void
+	 * @return null | void
 	 */
 	public function log($message, $filename=null, $mime=null) {
 		$logFile = Config::inst()->get('StaticSiteContentExtractor', 'log_file');
@@ -36,6 +36,7 @@ class StaticSiteUtils {
 	 * @param string $url
 	 * @param number $sourceID
 	 * @param string $SSType SiteTree, File, Image
+	 * @return void
 	 */
 	public function resetStaticSiteURLs($url, $sourceID, $SSType) {
 		$url = trim($url);

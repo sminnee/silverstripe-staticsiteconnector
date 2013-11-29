@@ -9,7 +9,6 @@
  *
  * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
  * @todo add a link in the CMS UI that users can select to run this task @see https://github.com/phptek/silverstripe-staticsiteconnector/tree/feature/link-rewrite-ui
- * @todo Occasionally, we end up with a contentSource without a UrlProcessor (In the case of a url without a trailing slash?)
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
@@ -43,7 +42,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public $verbose = false;
 
+	/**
+	 *
+	 * @var string
+	 */
 	public $curentPageTitle = null;
+	
+	/**
+	 *
+	 * @var number
+	 */
 	public $currentPageId = null;
 
 	/**
@@ -70,9 +78,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	/**
 	 * Starts the task
 	 *
-	 * @var HTTPRequest $request The request parameter passed from the task initiator, browser or cli
+	 * @param SS_HTTPRequest $request The request parameter passed from the task initiator, browser or CLI
+	 * @return null | void
 	 */
-	function run($request) {
+	public function run($request) {
 		// Load the logging file name from configuration settings in mysite/_config/config.yml
 		self::$log_file = Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file');
 
@@ -117,7 +126,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$this->printMessage('File Map');
 				foreach ($fileLookup as $url => $id) {
 					$this->printMessage($id . ' => ' . $url);
-					//echo $id . ' => ' . pathinfo($url, PATHINFO_FILENAME) . PHP_EOL;
 				}
 			}
 		}
@@ -207,13 +215,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 
-			/*
-			 * If we've got here, none of the return statements above have been run so, throw an error
-			 * @todo put into own method
-			if(substr($url,0,strlen($baseURL)) == $baseURL) {
-				// This should write to a log-file so all the failed link-rewrites can be analysed
-			}
-			 */
 			$task->printMessage('Rewriter failed', 'WARNING', $urlInput);
 
 			// log the failed rewrite
@@ -298,7 +299,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		else {
 			echo "<p>{$level} {$message} {$url}</p>" . PHP_EOL;
 		}
-
+/*
+ * Commented logic allowed comprehensive and detailed information to be logged for quality debugging.
+ * It is commented for now, as it is simple way too slow for imports comprising 1000s of URLs
+ */
+		
 // @todo find a more intelligent way of matching the $page->field (See WARNING below)
 // @todo Extrapolate the field-matching into a separate method
 //		if($url && $level == 'WARNING') {

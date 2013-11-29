@@ -75,6 +75,7 @@ class StaticSiteContentExtractor extends Object {
 	 * Create a StaticSiteContentExtractor for a single URL/.
 	 *
 	 * @param string $url The absolute URL to extract content from
+	 * @return void
 	 */
 	public function __construct($url,$mime) {
 		$this->url = $url;
@@ -91,7 +92,8 @@ class StaticSiteContentExtractor extends Object {
 	 * Extract content for map of field => css-selector pairs
 	 *
 	 * @param  array $selectorMap A map of field name => css-selector
-	 * @return array              A map of field name => array('selector' => selector, 'content' => field content)
+	 * @param  StaticSiteContentItem $item The item to extract
+	 * @return array A map of field name => array('selector' => selector, 'content' => field content)
 	 */
 	public function extractMapAndSelectors($selectorMap, $item) {
 
@@ -116,11 +118,9 @@ class StaticSiteContentExtractor extends Object {
 
 				if($this->isMimeHTML()) {
 					$content = $this->extractField($extractionRule['selector'], $extractionRule['attribute'], $extractionRule['outerhtml']);
-					//$this->utils->log(" -- Extracted Content: " . $content);
 				}
 				else if($this->isMimeFileOrImage()) {
 					$content = $item->externalId;
-					//$this->utils->log(" -- Extracted File/Image: " . $content);
 				}
 
 				if(!$content) {
@@ -129,7 +129,6 @@ class StaticSiteContentExtractor extends Object {
 
 				if($this->isMimeHTML()) {
 					$content = $this->excludeContent($extractionRule['excludeselectors'], $extractionRule['selector'], $content);
-					//$this->utils->log(" -- Excluded Content: " . $content);
 				}
 
 				if(!$content) {
@@ -138,13 +137,11 @@ class StaticSiteContentExtractor extends Object {
 
 				if(!empty($extractionRule['plaintext'])) {
 					$content = Convert::html2raw($content);
-					//$this->utils->log(" -- Extracted Content Plaintext: " . $content);
 				}
 
 				// We found a match, select that one and ignore any other selectors
 				$output[$fieldName] = $extractionRule;
 				$output[$fieldName]['content'] = $content;
-				//$this->utils->log("Selector match found: value set for $fieldName");
 				break;
 			}
 		}
@@ -160,18 +157,15 @@ class StaticSiteContentExtractor extends Object {
 	 * @return string The content for that selector
 	 */
 	public function extractField($cssSelector, $attribute = null, $outerHTML = false) {
-		//$this->utils->log(" --- extractField(cssSelector: " . $cssSelector . ', attr: ' . $attribute . ', outer: ' . $outerHTML . ')');
 
 		if(!$this->phpQuery) {
 			$this->fetchContent();
 		}
 
 		$elements = $this->phpQuery[$cssSelector];
-		//$this->utils->log(" -- Elements: " . json_encode($elements));
 
 		// @todo temporary workaround for File objects
 		if(!$elements) {
-			//$this->utils->log(" --- Elements: empty");
 			return '';
 		}
 
@@ -182,7 +176,6 @@ class StaticSiteContentExtractor extends Object {
 
 		$result = '';
 		foreach($elements as $element) {
-			//$this->utils->log(" --- Element: " . $element);
 			// Get the full html for this element
 			if($outerHTML) {
 				$result .= $this->getOuterHTML($element);
@@ -193,8 +186,6 @@ class StaticSiteContentExtractor extends Object {
 		}
 
 		$result = trim($result);
-		//$this->utils->log(" -- Result: " . $result);
-
 		return $result;
 	}
 
@@ -202,6 +193,7 @@ class StaticSiteContentExtractor extends Object {
 	 * Strip away content from $content that matches one or many css selectors.
 	 *
 	 * @param array $excludeSelectors
+	 * @param string $parentSelector
 	 * @param string $content
 	 * @return string
 	 */
@@ -221,7 +213,7 @@ class StaticSiteContentExtractor extends Object {
 				$this->utils->log(' - Excluded content from "'.$parentSelector.' '.$excludeSelector.'"');
 			}
 		}
-		return ($content);
+		return $content;
 	}
 
 	/**
@@ -268,48 +260,7 @@ class StaticSiteContentExtractor extends Object {
 
 		// Clean up the content so phpQuery doesn't bork
 		$this->prepareContent();
-
 		$this->phpQuery = phpQuery::newDocument($this->content);
-
-
-		//// Make the URLs all absolute
-/*
-		// Useful parts of the URL
-		if(!preg_match('#^[a-z]+:#i', $this->url, $matches)) throw new Exception('Bad URL: ' . $this->url);
-		$protocol = $matches[0];
-
-		if(!preg_match('#^[a-z]+://[^/]+#i', $this->url, $matches)) throw new Exception('Bad URL: ' . $this->url);
-		$server = $matches[0];
-
-		$base = (substr($this->url,-1) == '/') ? $this->url : dirname($this->url) . '/';
-
-
-		$this->utils->log('Rewriting links in content: ' . $this->url);
-
-		$rewriter = new StaticSiteLinkRewriter(function($url) use($protocol, $server, $base) {
-			// Absolute
-			if(preg_match('#^[a-z]+://[^/]+#i', $url) || substr($url,0,7) == 'mailto:') return $url;
-
-			// Protocol relative
-			if(preg_match('#^//[^/]#i', $url)) return $protocol . $url;
-
-			// Server relative
-			if($url[0] == "/") return $server . $url;
-
-			// Relative
-			$result = $base . $url;
-			while(strpos($result, '/../') !== false) {
-				$result = preg_replace('#[^/]+/+../+#i','/', $result);
-			}
-			while(strpos($result, '/./') !== false) {
-				$result = str_replace('/./','/', $result);
-			}
-			return $result;
-
-		});
-*/
-		//$rewriter->rewriteInPQ($this->phpQuery);
-		//echo($this->phpQuery->html());
 	}
 
 	/**
@@ -321,7 +272,7 @@ class StaticSiteContentExtractor extends Object {
 	 * @param string $data
 	 * @param string $headers
 	 * @param array $curlOptions
-	 * @return \SS_HTTPResponse
+	 * @return boolean | \SS_HTTPResponse
 	 * @todo Add checks when fetching multi Mb images to ignore anything over 2Mb??
 	 */
 	protected function curlRequest($url, $method, $data = null, $headers = null, $curlOptions = array()) {
@@ -346,7 +297,8 @@ class StaticSiteContentExtractor extends Object {
 		if($method == 'POST') {
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
-		} elseif($method == 'PUT') {
+		} 
+		elseif($method == 'PUT') {
 			$put = fopen("php://temp", 'r+');
 			fwrite($put, $data);
 			fseek($put, 0);
@@ -413,10 +365,19 @@ class StaticSiteContentExtractor extends Object {
 		return $response;
 	}
 
+	/**
+	 * 
+	 * @param string $tmp
+	 * @return void
+	 */
 	public function setTmpFileName($tmp) {
 		$this->tmpFileName = $tmp;
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */	
 	public function getTmpFileName() {
 		return $this->tmpFileName;
 	}
@@ -439,6 +400,7 @@ class StaticSiteContentExtractor extends Object {
 
 	/**
 	 * Pre-process the content so phpQuery can parse it without violently barfing
+	 * @return void
 	 */
 	protected function prepareContent() {
 		// Trim it

@@ -33,6 +33,9 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 */
 	private static $log_file = null;
 
+	/*
+	 * @return void
+	 */
 	public function init() {
 		$url = $this->externalId;
 
@@ -48,8 +51,15 @@ class StaticSiteContentItem extends ExternalContentItem {
 		$this->ProcessedMIME = $processedURL['mime'];
 	}
 
+	/**
+	 * 
+	 * @param boolean $showAll
+	 * @return \ArrayList
+	 */
 	public function stageChildren($showAll = false) {
-		if(!$this->source->urlList()->hasCrawled()) return new ArrayList;
+		if(!$this->source->urlList()->hasCrawled()) {
+			return new ArrayList;
+		}
 
 		$childrenURLs = $this->source->urlList()->getChildren($this->externalId);
 
@@ -61,6 +71,10 @@ class StaticSiteContentItem extends ExternalContentItem {
 		return $children;
 	}
 
+	/**
+	 * 
+	 * @return number
+	 */
 	public function numChildren() {
 		if(!$this->source->urlList()->hasCrawled()) return 0;
 
@@ -68,7 +82,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	/*
-	 * Returns the correct SS base-type based on the curent URLs Mime-Type and directs the module to use the correct transformation class
+	 * Returns the correct SS base-type based on the curent URL's Mime-Type and directs the module to use the correct StaticSiteXXXTransformer class
 	 *
 	 * @return mixed string|boolean
 	 * @todo Create a static array somewhere (_config??) comprising all legit mime-types, or fetch directly from IANA..
@@ -89,7 +103,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	/*
 	 * Returns the correct content-object transformation class
 	 *
-	 * @return ExternalContentTransformer
+	 * @return \ExternalContentTransformer
 	 */
 	public function getTransformer() {
 		$type = $this->getType();
@@ -101,6 +115,9 @@ class StaticSiteContentItem extends ExternalContentItem {
 		}
 	}
 
+	/*
+	 * @return \FieldList
+	 */
 	public function getCMSFields() {
 		$fields = parent::getCMSFields();
 

@@ -1,26 +1,40 @@
 <?php
 
 class StaticSiteExternalContentAdminExtension extends Extension {
+	
+	/**
+	 *
+	 * @var array
+	 */
 	static $allowed_actions = array(
 		"crawlsite",
 	);
 
+	/**
+	 * 
+	 * @param type $request
+	 * @return type
+	 */
 	public function crawlsite($request) {
 		$selected = isset($request['ID']) ? $request['ID'] : 0;
 		if(!$selected){
 			$messageType = 'bad';
 			$message = _t('ExternalContent.NOITEMSELECTED', 'No item selected to crawl.');
 		
-		} else {
+		} 
+		else {
 			$source = ExternalContent::getDataObjectFor($selected);
-			if (!($source instanceof ExternalContentSource)) $source = $from->getSource();
+			if (!($source instanceof ExternalContentSource)) {
+				$source = $from->getSource();
+			}
 
 			$messageType = 'good';
 			$message = _t('ExternalContent.CONTENTMIGRATED', 'Crawling successful.');
 
 			try {
 				$source->crawl();
-			} catch(Exception $e) {
+			} 
+			catch(Exception $e) {
 				$messageType = 'bad';
 				$message = "Error crawling: " . $e->getMessage();
 			}

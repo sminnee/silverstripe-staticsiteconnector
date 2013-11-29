@@ -2,8 +2,7 @@
 /**
  * Utility class to deal-to all manner of Mime-Type pre/post-processing.
  *
- * @author Russell Michell 2013 russell@silverstripe.com
- * @todo set both arrays of Mime-Types and single Mime-Types on construct, to class properties so we can go $mime->isOfImage() and the like..
+ * @author Russell Michell 2013 <russell@silverstripe.com>
  */
 class StaticSiteMimeProcessor extends Object {
 
@@ -13,6 +12,9 @@ class StaticSiteMimeProcessor extends Object {
 	 */
 	public $mimeTypes;
 
+	/*
+	 * @return void
+	 */
 	public function __construct() {
 		parent::__construct();
 		$args = func_get_args();
