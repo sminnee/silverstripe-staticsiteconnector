@@ -183,6 +183,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
 		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
 		$parentFolder = Folder::find_or_make($path);
+		if(!file_exists(ASSETS_PATH . DIRECTORY_SEPARATOR . $path)) {
+			$this->utils->log("WARNING: File-import directory wasn't created.", $url, $mime);
+			return false;
+		}
 
 		// Run some checks on the original filename and name it as per a default if we can do nothing useful with it
 		// '.zzz' not in framework/_config/mimetypes.yml and unlikely ever to be found in \File so will fail gracefully
@@ -228,6 +232,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$file->setName($definitiveName);
 		$file->setFilename($definitiveFilename);
 		$file->setParentID($parentFolder->ID);
+		
+		$this->utils->log("NOTICE: \"File-properties built successfully for: ", $url, $mime);
+		
 		return $file;
 	}
 
