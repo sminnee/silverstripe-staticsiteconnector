@@ -16,6 +16,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		'UrlProcessor' => 'Varchar(255)',
 		'ExtraCrawlUrls' => 'Text',
 		'UrlExcludePatterns' => 'Text',
+		'ParseCSS' => 'Boolean'
 	);
 
 	/**
@@ -93,6 +94,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 				. "</strong><br>" . Convert::raw2xml($processorObj->getDescription());
 		}
 		$fields->addFieldToTab("Root.Main", new OptionsetField("UrlProcessor", "URL processing", $processingOptions));
+		$fields->addFieldToTab("Root.Main", $parseCss = new CheckboxField("ParseCSS", "Parse external CSS"));
+		$parseCss->setDescription("Fetches images defined in CSS <strong>background-image</strong> selectors, not reachable through content scraping");
 
 		// Schemas Gridfield
 		$importRules = $fields->dataFieldByName('Schemas');
@@ -193,7 +196,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function urlList() {
 		if(!$this->urlList) {
-			$this->urlList = new StaticSiteUrlList($this->BaseUrl, "../assets/{$this->staticSiteCacheDir}");
+			$this->urlList = new StaticSiteUrlList($this, "../assets/{$this->staticSiteCacheDir}");
 			if($processorClass = $this->UrlProcessor) {
 				$this->urlList->setUrlProcessor(new $processorClass);
 			}

@@ -58,21 +58,28 @@ class StaticSiteUrlList {
 	 * @var array
 	 */
 	protected $excludePatterns = array();
+	
+	/**
+	 * The StaticSiteContentSource object
+	 */
+	protected $source;
 
 	/**
 	 * Create a new URL List
-	 * @param string $baseURL  The Base URL to find links on
+	 * @param \StaticSiteContentSource $source
 	 * @param string $cacheDir The local path to cache data into
 	 * @return void
 	 */
-	public function __construct($baseURL, $cacheDir) {
+	public function __construct(StaticSiteContentSource $source, $cacheDir) {
 		// baseURL must not have a trailing slash
+		$baseURL = $source->BaseUrl;
 		if(substr($baseURL,-1) == "/") $baseURL = substr($baseURL,0,-1);
 		// cacheDir must have a trailing slash
 		if(substr($cacheDir,-1) != "/") $cacheDir .= "/";
 
 		$this->baseURL = $baseURL;
 		$this->cacheDir = $cacheDir;
+		$this->source = $source;
 	}
 
 	/**
@@ -305,7 +312,11 @@ class StaticSiteUrlList {
 		$crawler->enableResumption();
 		$crawler->setUrlCacheType(PHPCrawlerUrlCacheTypes::URLCACHE_SQLITE);
 		$crawler->setWorkingDirectory($this->cacheDir);
-		
+		// Find links in externally-linked CSS files
+		if($this->source->ParseCSS) {
+			$crawler->addLinkSearchContentType("#text/css# i");
+		}
+
 		// Set some proxy options for phpCrawler
 		singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev(), $crawler);
 
