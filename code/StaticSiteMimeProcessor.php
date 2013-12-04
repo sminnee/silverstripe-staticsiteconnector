@@ -25,8 +25,8 @@ class StaticSiteMimeProcessor extends Object {
 	}
 
 	/*
-	 * Based on one of three SS classes, returns an array of suitable mime-types from SS config used to represent matching content,
-	 * or all associated mimes of no type is passed.
+	 * Based on one of three SilverStripe core classes, returns an array of suitable mime-types
+	 * from SilverStripe config, used to represent matching content or all associated mimes if no type is passed.
 	 *
 	 * @param $ssType one of: SiteTree, File, Image
 	 * @return array $mimes
@@ -40,6 +40,11 @@ class StaticSiteMimeProcessor extends Object {
 			'file' => array(),
 			'image' => array(),
 		);
+		
+		// Only support specific classes
+		if($SSType && !in_array(strtolower($SSType), array_keys($mimes))) {
+			return false;
+		}
 
 		foreach($httpMimeTypes as $mimeKey => $mimeType) {
 			// SiteTree
@@ -78,20 +83,27 @@ class StaticSiteMimeProcessor extends Object {
 		 * Imported files and images are going to passed through to Upload#load() and checked aginst File::$app_categories so use this method to
 		 * filter in calls to DataObject#validate()
 		 */
+		// Get SilverStripe supported SiteTree-ish mime categories
 		$mimeKeysForSiteTree = array('html','htm','xhtml');
+		// Get SilverStripe supported File-ish mime categories
 		// File contains values of $mimeKeysForSiteTree which we don't want
 		$mimeKeysForFile = array_merge(
 			array_splice($mimeCategories['doc'],14,2),
 			array_splice($mimeCategories['doc'],0,11)
 		);
+		// Get SilverStripe supported Image-ish mime categories
 		$mimeKeysForImage = $mimeCategories['image'];
 		$map = array(
 			'sitetree'	=> $mimeKeysForSiteTree,
 			'file'		=> $mimeKeysForFile,
 			'image'		=> $mimeKeysForImage
 		);
-		if($SSType) {
+		if($SSType) {	
 			$SSType = strtolower($SSType);
+			// Only support specific classes
+			if(!in_array(strtolower($SSType), array_keys($mimes))) {
+				return false;
+			}			
 			return $map[$key];
 		}
 		return $map;
@@ -104,7 +116,7 @@ class StaticSiteMimeProcessor extends Object {
 	 * @param string $mime The Mime-Type to compare e.g. application/msword
 	 * @param boolean $fix whether or not to try and "fix" borked file-extensions coming through from third-parties.
 	 * - If true, the matched extension is returned (if found, otherwise false) instead of boolean false
-	 * - This is a pretty sketchy way of doing things and relies on the file-extension as a string bein gpresent somewhere in the mime-type
+	 * - This is a pretty sketchy way of doing things and relies on the file-extension string comprising the mime-type
 	 * - e.g. "pdf" can be found in "application/pdf" but "doc" cannot be found in "application/msword"
 	 * @return mixed boolean or string $ext | $coreExt if the $fix param is set to true, no extra processing is required
 	 * @todo this method could really benefit from some tests..

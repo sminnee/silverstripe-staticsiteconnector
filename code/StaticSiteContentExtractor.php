@@ -75,7 +75,9 @@ class StaticSiteContentExtractor extends Object {
 	 * Create a StaticSiteContentExtractor for a single URL/.
 	 *
 	 * @param string $url The absolute URL to extract content from
+	 * @param string $mimr The Mime-Type
 	 * @return void
+	 * @throws \Exception
 	 */
 	public function __construct($url,$mime) {
 		$this->url = $url;
