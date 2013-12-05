@@ -72,6 +72,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		parent::__construct($record, $isSingleton, $model);
 		// We need this in calling logic
 		$this->staticSiteCacheDir = "static-site-{$this->ID}";
+		$this->setCacheDirPath('../assets');
 		$this->utils = singleton('StaticSiteUtils');
 	}
 
@@ -196,7 +197,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function urlList() {
 		if(!$this->urlList) {
-			$this->urlList = new StaticSiteUrlList($this, "../assets/{$this->staticSiteCacheDir}");
+			$this->urlList = new StaticSiteUrlList($this, $this->getCacheDirPath());
 			if($processorClass = $this->UrlProcessor) {
 				$this->urlList->setUrlProcessor(new $processorClass);
 			}
@@ -231,7 +232,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 *
 	 * @param string $absoluteURL
 	 * @param string $mimeType (Optional)
-	 * @return mixed $schema or boolean false if no schema matches are found
+	 * @return mixed \StaticSiteContentSource_ImportSchema $schema or boolean false if no schema matches are found
 	 */
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
@@ -266,9 +267,11 @@ class StaticSiteContentSource extends ExternalContentSource {
 		if(!strlen($appliesTo)) {
 			$appliesTo = $schema::$default_applies_to;
 		}
-		// backslash the delimiters for the reg exp pattern
+		// Use (escaped) pipes for delimeters as pipes unlikely to appear in legitimate URLs
 		$appliesTo = str_replace('|', '\|', $appliesTo);
-		if(preg_match("|^$appliesTo|", $url) == 1) {
+		$urlToTest = str_replace(rtrim($this->BaseUrl, '/'), '', $url);
+	
+		if(preg_match("|^$appliesTo|i", $urlToTest)) {				
 			$this->utils->log(' - ' . __FUNCTION__ . ' matched: ' . $appliesTo . ', Url: '. $url);
 			return true;
 		}
@@ -365,6 +368,20 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */	
 	public function canCreate($member = null) {
 		return true;
+	}
+	
+	/*
+	 * @return string
+	 */
+	public function getCacheDirPath() {
+		return $this->cacheDirPath;
+	}
+	
+	/*
+	 * @param string $path
+	 */
+	public function setCacheDirPath($path) {
+		$this->cacheDirPath = $path. DIRECTORY_SEPARATOR . $this->staticSiteCacheDir;
 	}
 
 }

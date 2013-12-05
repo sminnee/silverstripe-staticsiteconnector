@@ -82,6 +82,15 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 	}
 	
 	/*
+	 * Tests isOfHTML() with string mime-type
+	 */
+	public function testIsOfHTMLString() {
+		$this->assertTrue($this->mimeProcessor->isOfHTML('text/html'));
+		$this->assertFalse($this->mimeProcessor->isOfHTML('text/plain'));
+		$this->assertFalse($this->mimeProcessor->isOfHTML('image/png'));
+	}		
+	
+	/*
 	 * Tests get_mime_for_ss_type() for SiteTree
 	 */
 	public function testGetMimeForSSTypeSiteTree() {
