@@ -112,7 +112,7 @@ class StaticSiteMimeProcessor extends Object {
 	/*
 	 * Compares a file-extension with a mime type and returns true if the passed extension matches the passed mime
 	 *
-	 * @param string $ext The file extension to comapre e.g. .doc
+	 * @param string $ext The file extension to compare e.g. ".doc"
 	 * @param string $mime The Mime-Type to compare e.g. application/msword
 	 * @param boolean $fix whether or not to try and "fix" borked file-extensions coming through from third-parties.
 	 * - If true, the matched extension is returned (if found, otherwise false) instead of boolean false
@@ -121,7 +121,7 @@ class StaticSiteMimeProcessor extends Object {
 	 * @return mixed boolean or string $ext | $coreExt if the $fix param is set to true, no extra processing is required
 	 * @todo this method could really benefit from some tests..
 	 */
-	public static function ext_to_mime_compare($ext,$mime,$fix = false) {
+	public static function ext_to_mime_compare($ext, $mime, $fix = false) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
 		$mimeCategories = singleton('File')->config()->app_categories;
 		list($ext,$mime) = array(strtolower($ext),strtolower($mime));
@@ -131,14 +131,15 @@ class StaticSiteMimeProcessor extends Object {
 			if(!$fix) {
 				return false;
 			}
-			// Attempt to "fix" broken or badly encoded file-extensions by guessing what it should be based on the passed mime-type
+			// Attempt to "fix" broken or badly encoded file-extensions by guessing what it should be, based on $mime
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
 			foreach($coreExts as $coreExt) {
 				// Make sure we check the correct category so we don't find a match for ms-excel in the image \File category (.cel) !!
 				$isFile = in_array($coreExt,$mimeCategories['doc']) && singleton(__CLASS__)->isOfFile($mime);		// dirty
 				$isImge = in_array($coreExt,$mimeCategories['image']) && singleton(__CLASS__)->isOfImage($mime);	// more dirt
 				if(($isFile || $isImge) && stristr($mime,$coreExt) !== false) {
-					return $coreExt;
+					// "Manually" force "jpg" as the file-suffix to be returned
+					return $coreExt == 'jpeg' ? 'jpg' : $coreExt;
 				}
 			}
 			return false;

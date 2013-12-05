@@ -164,7 +164,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$url = $processedURL['url'];				
 			}
 
-			// Return now if the url is empty, not a http scheme or already processed into a SS shortcode
+			// Return now if the url is empty, not an http scheme or already processed into a SS shortcode
 			if ($task->ignoreUrl($url)) {
 				return;
 			}
@@ -196,7 +196,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$pageLookup = $pageLookup->toArray();
 			if (isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
 				$output = '[sitetree_link,id='.$siteTreeID.']' . $fragment;
-				if ($task->verbose) $task->printMessage("+ found: SiteTree ID#".$siteTreeID, null, $output);
+				if ($task->verbose) {
+					$task->printMessage("+ found: SiteTree ID#".$siteTreeID, null, $output);
+				}
 				return $output;
 			}
 
@@ -207,7 +209,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			if (isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if ($file = DataObject::get_by_id('File', $fileID)) {
 					$output = $file->RelativeLink();
-					if ($task->verbose) $task->printMessage("+ found: File ID#{$file->ID}", null, $output);
+					if ($task->verbose) {
+						$task->printMessage("+ found: File ID#{$file->ID}", null, $output);
+					}
 					return $output;
 				}
 				else {
