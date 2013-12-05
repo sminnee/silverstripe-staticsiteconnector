@@ -42,11 +42,13 @@ class StaticSiteContentItem extends ExternalContentItem {
 		$processedURL = $this->source->urlList()->processedURL($url);
 		$parentURL = $this->source->urlList()->parentProcessedURL($processedURL);
 		$subURL = substr($processedURL['url'], strlen($parentURL['url']));
-		if($subURL != "/") $subURL = preg_replace('#(^/)|(/$)#','',$subURL);
+		if($subURL != "/") {
+			$subURL = trim($subURL, '/');
+		}
 
 		$this->Name = $subURL;
 		$this->Title = $this->Name;
-		$this->AbsoluteURL = preg_replace('#/$#','', $this->source->BaseUrl) . $this->externalId;
+		$this->AbsoluteURL = rtrim($this->source->BaseUrl, '/') . $this->externalId;
 		$this->ProcessedURL = $processedURL['url'];
 		$this->ProcessedMIME = $processedURL['mime'];
 	}
@@ -76,7 +78,9 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 * @return number
 	 */
 	public function numChildren() {
-		if(!$this->source->urlList()->hasCrawled()) return 0;
+		if(!$this->source->urlList()->hasCrawled()) {
+			return 0;
+		}
 
 		return sizeof($this->source->urlList()->getChildren($this->externalId));
 	}
