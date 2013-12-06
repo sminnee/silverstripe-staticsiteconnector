@@ -1,0 +1,82 @@
+StaticSiteContentSource_ImportSchema:
+  SchemaSiteTree1:
+    DataType: Page
+    Order: 1
+    AppliesTo: '/*'
+    MimeTypes: 'text/html'
+  SchemaSiteTree2:
+    DataType: Page
+    Order: 1
+    AppliesTo: '/*'
+    MimeTypes: 'text/html'
+  SchemaSiteTree3:
+    DataType: Page
+    Order: 1
+    AppliesTo: '/sub-dir/.*'
+    MimeTypes: 'text/html'
+  SchemaSiteTree4:
+    DataType: Page
+    Order: 2
+    AppliesTo: '/sub-dir/.*'
+    MimeTypes: 'text/html' 
+  SchemaSiteTree5:
+    DataType: Page
+    Order: 3
+    AppliesTo: '/sub-dir/.*'
+    MimeTypes: 'text/html' 
+  SchemaSiteTree6:
+    DataType: Page
+    Order: 1
+    AppliesTo: '/sub-dir/.*'
+    MimeTypes: 'text/html'    
+  SchemaFile1:
+    DataType: File
+    Order: 1
+    AppliesTo: '.*'
+    MimeTypes: 'application/pdf'
+  SchemaImage1:
+    DataType: Image
+    Order: 1
+    AppliesTo: '.*'
+    MimeTypes: 'image/pdf'
+   
+Page:
+  testPage1:
+    Title: 'Test page 1'
+    URLSegment: 'test-page-1'
+  testPage2:
+    Title: 'Test page 2'
+    URLSegment: 'test-page-2'
+  testPage3:
+    Title: 'Test page 3'
+    URLSegment: 'test-page-3'
+
+StaticSiteContentSource:
+  MyContentSourceIsHTML1:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree1
+    Pages: =>Page.testPage1
+  MyContentSourceIsHTML2:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree2
+    Pages: =>Page.testPage2
+  MyContentSourceIsHTML3:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree3
+    Pages: =>Page.testPage3
+  MyContentSourceIsHTML4:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree4,=>StaticSiteContentSource_ImportSchema.SchemaSiteTree5
+    Pages: =>Page.testPage3  
+  MyContentSourceIsHTML5:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree6
+    Pages: =>Page.testPage3 
+    
+
+  

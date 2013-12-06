@@ -1,6 +1,6 @@
 <?php
 
-require_once('../vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
+require_once(BASE_PATH.'/vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
 
 /**
  * Represents a set of URLs parsed from a site.
