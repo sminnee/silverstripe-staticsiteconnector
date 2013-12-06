@@ -15,10 +15,10 @@ class StaticSiteContentItem extends ExternalContentItem {
 	);
 
 	/**
- 	 * Default Mime Type, either 'sitetree', 'file' or false to disable the default
+ 	 * Default Content type, either 'sitetree', 'file' or false to disable the default
  	 * @var mixed (string | boolean)
  	 */
-	private $default_mimetype = 'sitetree';
+	private $default_content_type = 'sitetree';
 
 	/**
 	 * Set this by using the yml config system
@@ -46,6 +46,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 			$subURL = trim($subURL, '/');
 		}
 
+		// Just default values
 		$this->Name = $subURL;
 		$this->Title = $this->Name;
 		$this->AbsoluteURL = rtrim($this->source->BaseUrl, '/') . $this->externalId;
@@ -101,7 +102,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		}
 		// Log everything that doesn't fit:
 		singleton('StaticSiteUtils')->log('Schema not configured for URL & Mime: '. $this->ProcessedMIME, $this->AbsoluteURL, $this->ProcessedMIME);
-		return $this->default_mimetype;
+		return $this->default_content_type;
 	}
 
 	/*
@@ -151,7 +152,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	/*
-	 * Performs some checks on $item. If it is the wrong type, returns false
+	 * Performs some checks on $item. If it is of the wrong type, returns false
 	 *
 	 * @param string $type e.g. 'sitetree'
 	 * @return void
