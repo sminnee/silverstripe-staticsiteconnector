@@ -32,13 +32,18 @@ StaticSiteContentSource_ImportSchema:
   SchemaFile1:
     DataType: File
     Order: 1
-    AppliesTo: '.*'
+    AppliesTo: '/assets/.*'
     MimeTypes: 'application/pdf'
+  SchemaFile2:
+    DataType: File
+    Order: 2
+    AppliesTo: '.*'
+    MimeTypes: 'application/pdf'    
   SchemaImage1:
     DataType: Image
     Order: 1
-    AppliesTo: '.*'
-    MimeTypes: 'image/pdf'
+    AppliesTo: '/assets/.*'
+    MimeTypes: 'image/png'
    
 Page:
   testPage1:
@@ -76,7 +81,14 @@ StaticSiteContentSource:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree6
-    Pages: =>Page.testPage3 
-    
+    Pages: =>Page.testPage3
+  MyContentSourceIsFile1:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaFile1
+  MyContentSourceIsImage1:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1    
 
   

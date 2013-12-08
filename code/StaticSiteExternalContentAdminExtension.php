@@ -20,7 +20,6 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 		if(!$selected){
 			$messageType = 'bad';
 			$message = _t('ExternalContent.NOITEMSELECTED', 'No item selected to crawl.');
-		
 		} 
 		else {
 			$source = ExternalContent::getDataObjectFor($selected);

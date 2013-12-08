@@ -324,7 +324,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @return ArrayList A list containing the root node
 	 */
 	public function stageChildren($showAll = false) {
-		if(!$this->urlList()->hasCrawled()) return new ArrayList;
+		if(!$this->urlList()->hasCrawled()) {
+			return new ArrayList;
+		}
 
 		return new ArrayList(array(
 			$this->getObject("/")
