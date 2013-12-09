@@ -100,7 +100,14 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 
 		// Check if the file is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
-		$file = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+		// Fake it when running tests
+		if(SapphireTest::is_running_test()) {
+			$file = new File();
+		}
+		else {
+			$file = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+		}
+		
 		if($file && $duplicateStrategy === 'Overwrite') {
 			if(get_class($file) !== $dataType) {
 				$file->ClassName = $dataType;

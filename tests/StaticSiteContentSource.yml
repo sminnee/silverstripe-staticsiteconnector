@@ -89,6 +89,11 @@ StaticSiteContentSource:
   MyContentSourceIsImage1:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
-    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1    
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1
+  MyContentSourceIsImage2:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
+    ID: 44
 
   

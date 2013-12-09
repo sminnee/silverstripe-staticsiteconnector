@@ -72,7 +72,6 @@ class StaticSiteContentSource extends ExternalContentSource {
 		parent::__construct($record, $isSingleton, $model);
 		// We need this in calling logic
 		$this->staticSiteCacheDir = "static-site-{$this->ID}";
-		$this->setCacheDirPath('../assets');
 		$this->utils = singleton('StaticSiteUtils');
 	}
 
@@ -197,7 +196,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function urlList() {
 		if(!$this->urlList) {
-			$this->urlList = new StaticSiteUrlList($this, $this->getCacheDirPath());
+			$this->urlList = new StaticSiteUrlList($this, "../assets/{$this->staticSiteCacheDir}");
 			if($processorClass = $this->UrlProcessor) {
 				$this->urlList->setUrlProcessor(new $processorClass);
 			}
@@ -267,7 +266,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		if(!strlen($appliesTo)) {
 			$appliesTo = $schema::$default_applies_to;
 		}
-		// Use (escaped) pipes for delimeters as pipes unlikely to appear in legitimate URLs
+		
+		// Use (escaped) pipes for delimeters as pipes are unlikely to appear in legitimate URLs
 		$appliesTo = str_replace('|', '\|', $appliesTo);
 		$urlToTest = str_replace(rtrim($this->BaseUrl, '/'), '', $url);
 	
@@ -370,20 +370,6 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */	
 	public function canCreate($member = null) {
 		return true;
-	}
-	
-	/*
-	 * @return string
-	 */
-	public function getCacheDirPath() {
-		return $this->cacheDirPath;
-	}
-	
-	/*
-	 * @param string $path
-	 */
-	public function setCacheDirPath($path) {
-		$this->cacheDirPath = $path. DIRECTORY_SEPARATOR . $this->staticSiteCacheDir;
 	}
 
 }
