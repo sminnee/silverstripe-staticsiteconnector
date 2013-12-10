@@ -44,6 +44,22 @@ StaticSiteContentSource_ImportSchema:
     Order: 1
     AppliesTo: '/assets/.*'
     MimeTypes: 'image/png'
+  SchemaImage2:
+    DataType: Image
+    Order: 2
+    AppliesTo: '/images/.*'
+    MimeTypes: 'image/png'
+  SchemaImage3:
+    DataType: Image
+    Order: 2
+    AppliesTo: '/assets/.*'
+    MimeTypes: 'image/png'
+  SchemaImage4:
+    DataType: Image
+    Order: 2
+    AppliesTo: '/images/.*'
+    MimeTypes: 'image/gif'    
+    
    
 Page:
   testPage1:
@@ -58,6 +74,7 @@ Page:
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
+    ID: 1
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree1
@@ -87,13 +104,12 @@ StaticSiteContentSource:
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaFile1
   MyContentSourceIsImage1:
-    BaseUrl: http://localhost
+    BaseUrl: 'http://localhost.com'
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
-    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage3,=>StaticSiteContentSource_ImportSchema.SchemaImage4
+    Pages: =>Page.testPage3
   MyContentSourceIsImage2:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
     ID: 44
-
-  
