@@ -123,10 +123,11 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			 * - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
 			 */
 			$file = new $dataType(array());
-			if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
-				return false;
-			}
 		}
+		
+		if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
+			return false;
+		}		
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
 		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);

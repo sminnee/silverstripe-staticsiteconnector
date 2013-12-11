@@ -1,6 +1,7 @@
 <?php
 /**
  * @author Science Ninjas <scienceninjas@silverstripe.com>
+ * @todo At the moment we're only using the StaticSiteURLProcessor_DropExtensions URL strategy. Add fixtures for the others
  */
 class StaticSiteFileTransformerTest extends SapphireTest {
 
@@ -28,6 +29,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 * 
 	 */
 	public function testBuildFileProperties() {
+				
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'image/png');
 		$this->assertEquals('assets/Import/Images/test.png', $processFile->Filename);
 		
@@ -98,8 +100,12 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
-		// Pass becuase we want to perform something on the URL
-		$this->assertInstanceOf('StaticSiteTransformResult', $this->transformer->transform($item, null, 'Duplicate'));
-		$this->assertInstanceOf('StaticSiteTransformResult', $this->transformer->transform($item, null, 'Overwrite'));
+		// Pass becuase we do want to perform something on the URL
+		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup = $this->transformer->transform($item, null, 'Duplicate'));
+		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyOvr = $this->transformer->transform($item, null, 'Overwrite'));
+		
+		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
+		$this->assertEquals('assets/Import/Images/test-2.png', $fileStrategyDup->file->Filename);
+		$this->assertEquals('assets/Import/Images/test-2.png', $fileStrategyOvr->file->Filename);
 	}	
 }

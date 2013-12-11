@@ -71,6 +71,9 @@ Page:
   testPage3:
     Title: 'Test page 3'
     URLSegment: 'test-page-3'
+  testPage4:
+    Title: 'Test page 4'
+    URLSegment: 'about-us'   
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -99,6 +102,11 @@ StaticSiteContentSource:
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree6
     Pages: =>Page.testPage3
+  MyContentSourceIsHTML6:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree6
+    Pages: =>Page.testPage4 
   MyContentSourceIsFile1:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
