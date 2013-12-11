@@ -1,6 +1,9 @@
 <?php
-/*
+/**
  * Basic class for utility methods unsuited to any other class
+ * 
+ * @package staticsiteconnector
+ * @author Russell Michell <russell@silverstripe.com>
  */
 class StaticSiteUtils {
 

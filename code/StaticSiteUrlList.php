@@ -1,12 +1,17 @@
 <?php
-
-require_once(BASE_PATH.'/vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
-
 /**
  * Represents a set of URLs parsed from a site.
  *
  * Makes use of PHPCrawl to prepare a list of URLs on the site
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com> 
  */
+
+// We need PHPCrawl
+require_once(BASE_PATH.'/vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
+
 class StaticSiteUrlList {
 
 	/**
@@ -76,9 +81,13 @@ class StaticSiteUrlList {
 		}
 		// baseURL must not have a trailing slash
 		$baseURL = $source->BaseUrl;
-		if(substr($baseURL,-1) == "/") $baseURL = substr($baseURL,0,-1);
+		if(substr($baseURL,-1) == "/") {
+			$baseURL = substr($baseURL,0,-1);
+		}
 		// cacheDir must have a trailing slash
-		if(substr($cacheDir,-1) != "/") $cacheDir .= "/";
+		if(substr($cacheDir,-1) != "/") {
+			$cacheDir .= "/";
+		}
 
 		$this->baseURL = $baseURL;
 		$this->cacheDir = $cacheDir;
@@ -88,12 +97,11 @@ class StaticSiteUrlList {
 	/**
 	 * Set a URL processor for this URL List.
 	 *
-	 * URL processors process the URLs before the site heirarchy and inferred meta-data are generated.
-	 * These can be used to tranform URLs from CMSes that don't provide a natural heirarchy into something
+	 * URL processors process the URLs before the site hierarchy and any inferred metadata are generated.
+	 * These can be used to tranform URLs from CMS's that don't provide a natural hierarchy, into something
 	 * more useful.
 	 *
-	 * See {@link StaticSiteMOSSURLProcessor} for an example.
-	 *
+	 * @see {@link StaticSiteMOSSURLProcessor} for an example.
 	 * @param StaticSiteUrlProcessor $urlProcessor
 	 * @return void
 	 */
@@ -144,17 +152,18 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 *
 	 * Set whether the crawl should be triggered on demand.
+	 * 
 	 * @param boolean $autoCrawl
-	 * @retutn void
+	 * @return void
 	 */
 	public function setAutoCrawl($autoCrawl) {
 		$this->autoCrawl = $autoCrawl;
 	}
 
 	/**
-	 * Returns the status of the spidering: "Complete", "Partial", or "Not started"
+	 * Returns the status of the spidering: "Complete", "Partial", or "Not started".
+	 * 
 	 * @return string
 	 */
 	public function getSpiderStatus() {
@@ -167,15 +176,15 @@ class StaticSiteUrlList {
 		return "Not started";
 	}
 
-	/*
-	 * Raw URL+Mime data "accessor" used internally by logic outside of the class.
+	/**
+	 * Raw URL+Mime data accessor method, used internally by logic outside of the class.
 	 *
 	 * @return mixed string $urls | null if no cached URL/Mime data found
 	 */
 	public function getRawCacheData() {
 		if($this->urls) {
-			$urls = $this->urls;
 			// Don't rely on loadUrls() as it chokes on partially completed imports
+			$urls = $this->urls;
 		} 
 		else if(file_exists($this->cacheDir . 'urls')) {
 			$urls = unserialize(file_get_contents($this->cacheDir . 'urls'));
@@ -250,7 +259,8 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Load the URLs, either by crawling, or by fetching from cache
+	 * Load the URLs, either by crawling, or by fetching from cache.
+	 * 
 	 * @return void
 	 * @throws \LogicException
 	 */
@@ -272,7 +282,8 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Re-execute the URL processor on all the fetched URLs
+	 * Re-execute the URL processor on all the fetched URLs.
+	 * 
 	 * @return void
 	 */
 	public function reprocessUrls() {
@@ -355,7 +366,8 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Cache the current list of URLs to disk
+	 * Cache the current list of URLs to disk.
+	 * 
 	 * @return void
 	 */
 	public function saveURLs() {
@@ -363,13 +375,14 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Add a URL to this list, given the absolute URL
+	 * Add a URL to this list, given the absolute URL.
+	 * 
 	 * @param string $url The absolute URL
 	 * @param string $content_type The Mime-Type found at this URL e.g text/html or image/png
 	 * @throws \InvalidArgumentException
-	 * @return ??
+	 * @return void
 	 */
-	public function addAbsoluteURL($url,$content_type) {
+	public function addAbsoluteURL($url, $content_type) {
 		$simpifiedURL = $this->simplifyURL($url);
 		$simpifiedBase = $this->simplifyURL($this->baseURL);
 
@@ -380,11 +393,12 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
-		return $this->addURL($relURL,$content_type);
+		$this->addURL($relURL, $content_type);
 	}
 
 	/**
-	 *
+	 * Appends a processed URL onto the URL cache.
+	 * 
 	 * @param string $url
 	 * @param string $contentType
 	 * @return void
@@ -409,10 +423,11 @@ class StaticSiteUrlList {
 	/**
 	 * Add an inferred URL to the list.
 	 *
-	 * Since the unprocessed URL isn't available, we use the processed URL in its place.  This should be used with
-	 * some caution.
+	 * Since the unprocessed URL isn't available, we use the processed URL in its place.
+	 * This should be used with some caution.
 	 *
-	 * @param array $inferredURLData Contains the processed URL and Mime-Type to add.
+	 * @param array $inferredURLData Contains the processed URL and Mime-Type to add
+	 * @return void
 	 */
 	public function addInferredURL($inferredURLData) {
 		if($this->urls === null) {
@@ -427,8 +442,9 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Return true if the given URL exists
-	 * @param  string $url The URL, either absolute, or relative starting with "/"
+	 * Return true if the given URL exists.
+	 * 
+	 * @param string $url The URL, either absolute, or relative starting with "/"
 	 * @return boolean Does the URL exist
 	 * @throws \InvalidArgumentException
 	 */
@@ -476,7 +492,6 @@ class StaticSiteUrlList {
 		}
 
 		return in_array($processedURL, array_keys($this->urls['regular'])) || in_array($processedURL, array_keys($this->urls['inferred']));
-
 	}
 
 	/**
@@ -485,7 +500,7 @@ class StaticSiteUrlList {
 	 * Both input and output are processed URLs
 	 *
 	 * @param array $processedURLData URLData comprising a relative URL and Mime-Type
-	 * @return array $processedURLData [description]
+	 * @return string | array $processedURLData
 	 */
 	public function parentProcessedURL($processedURLData) {
 		$mime = self::$undefined_mime_type;
@@ -634,8 +649,17 @@ class StaticSiteUrlList {
 
 }
 
+/**
+ * Extends PHPCrawler essentially to override its handleDocumentInfo() method.
+ * 
+ * @see {@link \PHPCrawler}
+ */
 class StaticSiteCrawler extends PHPCrawler {
 
+	/**
+	 *
+	 * @var array
+	 */
 	protected $urlList;
 
 	/**
@@ -683,13 +707,14 @@ class StaticSiteCrawler extends PHPCrawler {
 	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 
 		/*
-		 * MOSS has many URLs with brackets, resembling this one below BRHU
-		 * These result in a 404 and don't filter down to our caching logic, e.g. http://www.transport.govt.nz/news/newsevents/budget2013/(/
-		 * We can "recover" these URLs by stripping and replacing with a trailing slash (So we eventually fetch all child nodes, if present)
+		 * MOSS has many URLs with brackets, e.g. http://www.stuff.co.nz/news/cat-stuck-up-tree/(/
+		 * These result in a 404 returned from curl requests for it, and won't filter down to our caching or URL Processor logic.
+		 * We can "recover" these URLs by stripping and replacing with a trailing slash. This allows us to be able to fetch all its child nodes, if present.
 		 */
 		$mossBracketRegex = "(\(|%28)+(.+)?$";
-		$isRecoverableUrl = preg_match("#$mossBracketRegex#i",$info->url);
-		// Ignore errors and redirects
+		$isRecoverableUrl = preg_match("#$mossBracketRegex#i", $info->url);
+		
+		// Ignore errors and redirects, they'll get logged for later analysis
 		$badStatusCode = (($info->http_status_code < 200) || ($info->http_status_code > 299));
 
 		if($badStatusCode && !$isRecoverableUrl) {
@@ -701,13 +726,14 @@ class StaticSiteCrawler extends PHPCrawler {
 		// Continue building our cache
 		$info->url = preg_replace("#$mossBracketRegex#i",'',$info->url);
 		$this->urlList->addAbsoluteURL($info->url,$info->content_type);
+		
 		if($this->verbose) {
 			echo "[+] ".$info->url.PHP_EOL;
 		}
 		$this->urlList->saveURLs();
 	}
 
-	/*
+	/**
 	 * @return void
 	 * @throws \InvalidArgumentException
 	 */

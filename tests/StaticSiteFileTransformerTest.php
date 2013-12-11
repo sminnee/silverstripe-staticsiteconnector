@@ -1,4 +1,4 @@
-<?php
+h<?php
 /**
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  * @todo At the moment we're only using the StaticSiteURLProcessor_DropExtensions URL strategy. Add fixtures for the others
@@ -77,7 +77,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 */
 	public function testTransformForURLIsInCacheNotFile() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage1');
-		$item = new StaticSiteContentItem($source, '/about-us');
+		$item = new StaticSiteContentItem($source, '/test-page-44');
 		$item->source = $source;
 		
 		// Fail becuase we're using a StaticSiteFileTransformer on a Mime-Type of text/html

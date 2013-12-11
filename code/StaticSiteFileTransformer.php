@@ -5,6 +5,7 @@
  * This both creates SilverStripe's database representation of the fetched-file and also creates a copy of the file itself
  * on the local filesystem.
  *
+ * @package staticsiteconnector
  * @see {@link StaticSitePageTransformer}
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
@@ -102,26 +103,31 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Check if the file is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
 		// Fake it when running tests
 		if(SapphireTest::is_running_test()) {
-			$file = new File();
+			$existingFile = new File();
 		}
 		else {
-			$file = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+			$existingFile = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
 		}
 		
-		if($file && $duplicateStrategy === 'Overwrite') {
-			if(get_class($file) !== $dataType) {
-				$file->ClassName = $dataType;
+		/*
+		 * @todo to "Overwrite" strategy isn't working. To "overwrite" something is to:
+		 * - Delete it
+		 * - Write a new one
+		 */	
+		if($existingFile && $duplicateStrategy === 'Overwrite') {
+			if(get_class($existingFile) !== $dataType) {
+				$existingFile->ClassName = $dataType;
+				$existingFile->write();
 			}
+			if($existingFile) {
+				$file = $existingFile;
+			}			
 		}
-		else if($file && $duplicateStrategy === 'Skip') {
+		else if($existingFile && $duplicateStrategy === 'Skip') {
 			return false;
 		}
 		else {
-			/*
-			 * @todo
-			 * - Do we really want to rely on user-input to ascertain the correct container class
-			 * - Should it be detected based on Mime-Type(s) first and if none found, _then_ default to user-input?
-			 */
+			// This deals to the "Duplicate" strategy, as well as creating new, non-existing objects
 			$file = new $dataType(array());
 		}
 		

@@ -1,10 +1,16 @@
 <?php
+/**
+ *
+ * Helper class for rewriting links using phpQuery.
+ * 
+ * @package staticsiteconnector
+ * @see {@link StaticSiteFileTransformer}
+ * @author Sam Minee <sam@silverstripe.com>
+ */
 
+// We need phpQuery
 require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
 
-/**
- * Helper class for rewriting links using phpQuery.
- */
 class StaticSiteLinkRewriter {
 
 	/*
@@ -71,7 +77,7 @@ class StaticSiteLinkRewriter {
 	/**
 	 * Rewrite URLs in the given content snippet. Returns the updated content.
 	 *
-	 * @param \phpQuery $pq The content containing the links to rewrite
+	 * @param string $content The content containing the links to rewrite
 	 * @return string
 	 */
 	public function rewriteInContent($content) {

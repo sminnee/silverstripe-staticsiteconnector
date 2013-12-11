@@ -1,3 +1,15 @@
+StaticSiteContentSource_ImportRule:
+  Title1:
+    FieldName: Title
+    CSSSelector: h1
+    PlainText: false
+    OuterHTML: False
+  Content1:
+    FieldName: Content
+    CSSSelector: 'div#main'
+    PlainText: false
+    OuterHTML: False
+
 StaticSiteContentSource_ImportSchema:
   SchemaSiteTree1:
     DataType: Page
@@ -28,7 +40,13 @@ StaticSiteContentSource_ImportSchema:
     DataType: Page
     Order: 1
     AppliesTo: '/sub-dir/.*'
-    MimeTypes: 'text/html'    
+    MimeTypes: 'text/html'  
+  SchemaSiteTree7:
+    DataType: Page
+    Order: 1
+    AppliesTo: '.*'
+    MimeTypes: 'text/html'
+    ImportRules: =>StaticSiteContentSource_ImportRule.Title1,=>StaticSiteContentSource_ImportRule.Content1
   SchemaFile1:
     DataType: File
     Order: 1
@@ -58,9 +76,8 @@ StaticSiteContentSource_ImportSchema:
     DataType: Image
     Order: 2
     AppliesTo: '/images/.*'
-    MimeTypes: 'image/gif'    
-    
-   
+    MimeTypes: 'image/gif'
+
 Page:
   testPage1:
     Title: 'Test page 1'
@@ -73,7 +90,8 @@ Page:
     URLSegment: 'test-page-3'
   testPage4:
     Title: 'Test page 4'
-    URLSegment: 'about-us'   
+    URLSegment: 'test-about-the-team'
+    Content: 'Some test page content'
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -96,7 +114,7 @@ StaticSiteContentSource:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree4,=>StaticSiteContentSource_ImportSchema.SchemaSiteTree5
-    Pages: =>Page.testPage3  
+    Pages: =>Page.testPage3
   MyContentSourceIsHTML5:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
@@ -106,7 +124,12 @@ StaticSiteContentSource:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree6
-    Pages: =>Page.testPage4 
+    Pages: =>Page.testPage4
+  MyContentSourceIsHTML7:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree7
+    Pages: =>Page.testPage4
   MyContentSourceIsFile1:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions

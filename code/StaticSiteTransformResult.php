@@ -1,10 +1,11 @@
 <?php
 /**
- * Class to encapsulate the result of a transformation.
- * Subclasses TransformResult to allow dealing-to File objects also
+ * Encapsulates the result of a transformation.
+ * It subclasses TransformResult to allow dealing-to File objects also
  *
+ * @package staticsiteconnector
  * @see {@link TransformResult}
- * @author Russell Michell 2013 <russell@silverstripe.com>
+ * @author Russell Michell <russell@silverstripe.com>
  */
 class StaticSiteTransformResult extends TransformResult {
 	
