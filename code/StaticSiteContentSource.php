@@ -172,7 +172,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 	}
 
 	/**
-	 *
+	 * If the site has been crawled and then subsequently the URLProcessor was changed, we need to ensure
+	 * URLs are re-processed using the newly selected URL Preprocessor
+	 * 
 	 * @return void
 	 */
 	public function onAfterWrite() {
