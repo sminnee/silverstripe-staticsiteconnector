@@ -11,7 +11,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * Fix the UI under the "Import" tab to store saved values. Currently you will lose your changes if you move away from the "Import" tab and then go back to it.
  * N.b this is an issue with the externalcontent module
 * Make the CMS UI reload when users click the "Create" button.
-* Add a $description static to `GridField to "Import Schemas" and move it under the "Import" tab.
+* Add a $description static to `GridField to "Import Schemas".
 * After selecting the the "Crawl site", its label should switch to read "Crawling site..". Maybe show the CMS default "timer" icon too.
 * Change the laxternalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
  * Make that text disappear onfocus if it equals the default text
