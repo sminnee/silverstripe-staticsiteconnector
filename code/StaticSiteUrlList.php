@@ -383,10 +383,10 @@ class StaticSiteUrlList {
 	 * @return void
 	 */
 	public function addAbsoluteURL($url, $content_type) {
-		$simpifiedURL = $this->simplifyURL($url);
-		$simpifiedBase = $this->simplifyURL($this->baseURL);
+		$simplifiedURL = $this->simplifyURL($url);
+		$simplifiedBase = $this->simplifyURL($this->baseURL);
 
-		if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+		if(substr($simplifiedURL,0,strlen($simplifiedBase)) == $simplifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
 		} 
 		else {
@@ -471,12 +471,13 @@ class StaticSiteUrlList {
 
 	/**
 	 * Simplify a URL.
-	 * Ignores https/http differences and "www." / non differences.
+	 * - Ignores https/http differences and "www." / non differences.
+	 * - We needn't run strtolower() to force lowercase URLs, SilverStripe does this for us.
 	 *
 	 * @param  string $url
 	 * @return string
 	 */
-	protected function simplifyURL($url) {
+	public function simplifyURL($url) {
 		return preg_replace('#^https?://(www\.)?#i','http://www.', $url);
 	}
 
@@ -521,7 +522,7 @@ class StaticSiteUrlList {
 			return $default('');
 		}
 
-		// URL heirachy can be broken down by querystring or by URL
+		// URL hierarchy can be broken down by querystring or by URL
 		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL,'/'));
 
 		// Special case for children of the root
@@ -646,7 +647,33 @@ class StaticSiteUrlList {
 
 		return array_values($children);
 	}
-
+	
+	/*
+	 * Simple property getter. Used in unit-testing.
+	 * 
+	 * @param string $prop
+	 * @return mixed
+	 */
+	public function getProperty($prop) {
+		if($this->$prop) {
+			return $this->$prop;
+		}
+	}
+	
+	/*
+	 * Get the serialized cache content and return the unserialized string
+	 * 
+	 * @todo implement to replace x3 refs to unserialize(file_get_contents($this->cacheDir . 'urls'));
+	 * @return string
+	 */
+	public function getCacheFileContents() {
+		$cache = '';
+		$cacheFile = $this->cacheDir . 'urls';
+		if(file_exists($cacheFile)) {
+			$cache = unserialize(file_get_contents($cacheFile));
+		}
+		return $cache;
+	}	
 }
 
 /**
@@ -748,7 +775,7 @@ class StaticSiteCrawler extends PHPCrawler {
     		}
     	}
 
-		// Prevent URLs that matches the exclude patterns to be fetched
+		// Prevent URLs that match the exclude patterns from being fetched
 		if($excludePatterns = $this->urlList->getExcludePatterns()) {
 			foreach($excludePatterns as $pattern) {
 				$validRegExp = $this->addURLFilterRule('|'.str_replace('|', '\|', $pattern).'|');
