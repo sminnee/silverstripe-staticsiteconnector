@@ -283,6 +283,8 @@ class StaticSiteUrlList {
 
 	/**
 	 * Re-execute the URL processor on all the fetched URLs.
+	 * If the site has been crawled and then subsequently the URLProcessor was changed, we need to ensure
+	 * URLs are re-processed using the newly selected URL Preprocessor.
 	 * 
 	 * @return void
 	 */
@@ -386,6 +388,7 @@ class StaticSiteUrlList {
 		$simplifiedURL = $this->simplifyURL($url);
 		$simplifiedBase = $this->simplifyURL($this->baseURL);
 
+		// Check we're adhering to the correct base URL
 		if(substr($simplifiedURL,0,strlen($simplifiedBase)) == $simplifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
 		} 
@@ -575,7 +578,6 @@ class StaticSiteUrlList {
 				$this->urls['regular'][$url] = $this->generateProcessedURL($urlData);
 			}
 			return $this->urls['regular'][$url];
-
 		} 
 		elseif(in_array($url, array_keys($this->urls['inferred']))) {
 			return $this->urls['inferred'][$url];
@@ -730,6 +732,9 @@ class StaticSiteCrawler extends PHPCrawler {
 	 *
 	 * @param \PHPCrawlerDocumentInfo $info
 	 * @return mixed null | void
+	 * @todo Can we make use of PHPCrawlerDocumentInfo#error_occured instead of manually checkng server codes??
+	 * @todo The comments below state that badly formatted URLs never make it to our caching logic. Wrong.
+	 *	- Pass the preg_replace() call for "fixing" $mossBracketRegex into StaticSiteUrlProcessor#postProcessUrl()
 	 */
 	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
 
@@ -744,16 +749,21 @@ class StaticSiteCrawler extends PHPCrawler {
 		// Ignore errors and redirects, they'll get logged for later analysis
 		$badStatusCode = (($info->http_status_code < 200) || ($info->http_status_code > 299));
 
+		/*
+		 * We're checking for a bad status code AND for "recoverability", becuase we might be able to recover the URL
+		 * when re-requesting it using Curl in the import stage, as long as we cache it correctly here
+		 */		
 		if($badStatusCode && !$isRecoverableUrl) {
-			$message = $info->url . " Skipped. We got a {$info->http_status_code}".PHP_EOL;
+			$message = $info->url . " Skipped. We got a {$info->http_status_code} and URL was irrecoverable".PHP_EOL;
 			$this->utils->log($message);
 			return;
 		}
 
 		// Continue building our cache
-		$info->url = preg_replace("#$mossBracketRegex#i",'',$info->url);
-		$this->urlList->addAbsoluteURL($info->url,$info->content_type);
+		//$info->url = preg_replace("#$mossBracketRegex#i", '', $info->url);
+		$this->urlList->addAbsoluteURL($info->url, $info->content_type);
 		
+		// @todo is this needed?
 		if($this->verbose) {
 			echo "[+] ".$info->url.PHP_EOL;
 		}
@@ -779,7 +789,6 @@ class StaticSiteCrawler extends PHPCrawler {
 		if($excludePatterns = $this->urlList->getExcludePatterns()) {
 			foreach($excludePatterns as $pattern) {
 				$validRegExp = $this->addURLFilterRule('|'.str_replace('|', '\|', $pattern).'|');
-
 				if(!$validRegExp) {
 					throw new InvalidArgumentException('Exclude url pattern "'.$pattern.'" is not a valid regular expression.');
 				}
