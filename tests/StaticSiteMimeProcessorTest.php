@@ -41,6 +41,10 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertEquals('jpg', StaticSiteMimeProcessor::ext_to_mime_compare('.zzz', 'image/jpeg', true));
 		$this->assertEquals('png', StaticSiteMimeProcessor::ext_to_mime_compare('.zzz', 'image/png', true));
 		$this->assertEquals('gif', StaticSiteMimeProcessor::ext_to_mime_compare('.zzz', 'image/gif', true));
+		$this->assertFalse(StaticSiteMimeProcessor::ext_to_mime_compare('.zzz', 'unknown', true));
+		$this->assertFalse(StaticSiteMimeProcessor::ext_to_mime_compare('.png', 'unknown', true));
+		$this->assertFalse(StaticSiteMimeProcessor::ext_to_mime_compare('.zzz', 'unknown', false));
+		$this->assertFalse(StaticSiteMimeProcessor::ext_to_mime_compare('.png', 'unknown', false));		
 	}
 	
 	/*
@@ -55,7 +59,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 	}
 	
 	/*
-	 * Tests isOfImage() with array mime-types
+	 * Tests isOfImage() with an array of mime-types
 	 */
 	public function testIsOfImageArray() {
 		$this->assertTrue($this->mimeProcessor->isOfImage(self::$mime_types_image));
@@ -88,7 +92,22 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertTrue($this->mimeProcessor->isOfHTML('text/html'));
 		$this->assertFalse($this->mimeProcessor->isOfHTML('text/plain'));
 		$this->assertFalse($this->mimeProcessor->isOfHTML('image/png'));
-	}		
+	}
+	
+	/*
+	 * Test for bad mime-types
+	 */
+	public function testIsBadMime() {
+		$this->assertTrue($this->mimeProcessor->isBadMimeType('text/text'));
+		$this->assertTrue($this->mimeProcessor->isBadMimeType('unknown'));
+		$this->assertTrue($this->mimeProcessor->isBadMimeType(''));
+		$this->assertTrue($this->mimeProcessor->isBadMimeType(' '));
+		$this->assertTrue($this->mimeProcessor->isBadMimeType(null));
+		$this->assertFalse($this->mimeProcessor->isBadMimeType('image/png'));
+		$this->assertFalse($this->mimeProcessor->isBadMimeType('image/png '));
+		$this->assertFalse($this->mimeProcessor->isBadMimeType(' image/png'));
+		$this->assertFalse($this->mimeProcessor->isBadMimeType('image/png'));
+	}	
 	
 	/*
 	 * Tests get_mime_for_ss_type() for SiteTree
@@ -137,5 +156,5 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse(StaticSiteMimeProcessor::get_mime_for_ss_type('img'));
 		$this->assertFalse(StaticSiteMimeProcessor::get_mime_for_ss_type('buckrogers'));
 		$this->assertFalse(StaticSiteMimeProcessor::get_mime_for_ss_type('21stcentury'));
-	}	
+	}
 }

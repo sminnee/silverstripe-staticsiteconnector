@@ -1,7 +1,7 @@
 h<?php
 /**
  * @author Science Ninjas <scienceninjas@silverstripe.com>
- * @todo At the moment we're only using the StaticSiteURLProcessor_DropExtensions URL strategy. Add fixtures for the others
+ * @todo fixup buildFileProperties() and commented assertions in testBuildFileProperties()
  */
 class StaticSiteFileTransformerTest extends SapphireTest {
 
@@ -41,6 +41,25 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'application/pdf');
 		$this->assertEquals('assets/Import/Documents/test.pdf', $processFile->Filename);
+		
+		// 'unknown' is what's used as the mime-type for parent URLs that are defined by string manioulation, not actual file-analysis
+		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test', 'unknown');
+		$this->assertFalse($processFile);
+		
+		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png', 'unknown');
+		$this->assertFalse($processFile);	
+		
+//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/png');
+//		$this->assertEquals('assets/Import/Documents/test.png', $processFile->Filename);		 
+//		
+//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/png');
+//		$this->assertEquals('assets/Import/Documents/test.png', $processFile->Filename);
+		
+//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/gif');
+//		$this->assertEquals('assets/Import/Documents/test.gif', $processFile->Filename);		 
+//		
+//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/gif');
+//		$this->assertEquals('assets/Import/Documents/test.gif', $processFile->Filename);		
 		
 		// Cannot easily match between, and therefore convert using application/msword => .doc
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'application/msword');

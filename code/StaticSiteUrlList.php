@@ -505,12 +505,12 @@ class StaticSiteUrlList {
 	 *
 	 * @param array $processedURLData URLData comprising a relative URL and Mime-Type
 	 * @return string | array $processedURLData
+	 * @todo V.difficult at this point to record the parent's mime-type. Imposible perhaps.
 	 */
 	public function parentProcessedURL($processedURLData) {
 		$mime = self::$undefined_mime_type;
 		$processedURL = $processedURLData;
 		if(is_array($processedURLData)) {
-			$mime = $processedURLData['mime'];
 			$processedURL = $processedURLData['url'];
 		}
 

@@ -246,6 +246,16 @@ class StaticSiteMimeProcessor extends Object {
 		}
 		return false;
 	}
+	
+	/*
+	 * Ascertain passed $mime is not something we can do anyhting useful with
+	 * 
+	 * @param string $mime
+	 * @return boolean
+	 */
+	public function isBadMimeType($mime) {
+		return (!$this->isOfFileOrImage($mime) && !$this->isOfHtml($mime));
+	}
 
 	/*
 	 *

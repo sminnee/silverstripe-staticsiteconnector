@@ -47,7 +47,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 
 	/**
-	 *
+	 * Generic function called by \ExternalContentImporter
+	 * 
 	 * @param type $item
 	 * @param type $parentObject
 	 * @param type $duplicateStrategy
@@ -185,7 +186,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 
 	/*
-	 * Build the properties required for a safely saved SS asset and try and fixup bad file-extensions.
+	 * Build the properties required for a safely saved SS asset.
+	 * - Attempts to detect and fixup bad file-extensions based on Mime-Type
 	 *
 	 * @param \File $file
 	 * @param string $url
@@ -231,6 +233,10 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			// If $newExt didn't work, we need to check again if $oldExt is invalid and just dispose of it.
 			if(!$extIsValid) {
 				$this->utils->log("WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
+				return false;
+			}
+			if($this->mimeProcessor->isBadMimeType($mime)) {
+				$this->utils->log("WARNING: Bad mime-type: \"{$mime}\". Unable to assign new file-extension (#3) - DISCARDING.", $url, $mime);
 				return false;
 			}
 			$useExtension = $oldExt;

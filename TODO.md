@@ -36,4 +36,13 @@ Some are already registered as issues on Github, others are more in the "would l
 * Add an onAfterImport() (see external-content module) to StaticSiteImporter and run StaticSiteRewriteLinksTask from it, based on CMS UI user-selection (default is 'yes')
 * Add logic to the crawl that allows images used only as CSS background images in a legacy site, to be crawled
 * If using the "Duplicate" import strategy. The buildFileProperties() method isn't actually invoked
+ * Some "auto-converted" files, are receiving valid mime-types and therefore being converted to .gif's (for example) when they're not files.
+ * Add checks for is_file('http://www.stuff.co.nz/images/not-news.jpg').
+	- See: http://php.net/is_file
+	- Add check for ini_set('allow_url_fopen')
+	- Add urlencode/urldecode for when URLs contain odd chars
 * If using the "Overwrite" import strategy, nothing gets overwritten. A deletion and re-creation needs to happen first
+* Remove "Repeat import each" form-field in CMS UI, if queued jobs module, not installed
+* See: StaticSiteURLList#parentProcessedURL()
+ * "Parents" should only be directories or text/html, however the mime being passed to this method is that of a child and is irrelevant
+ * $mime = ($this->mimeProcessor->IsOfHTML($processedURLData['mime']) ? $processedURLData['mime'] : self::$undefined_mime_type);

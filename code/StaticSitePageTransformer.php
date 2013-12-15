@@ -24,7 +24,8 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	}
 
 	/**
-	 *
+	 * Generic function called by \ExternalContentImporter
+	 * 
 	 * @param type $item
 	 * @param type $parentObject
 	 * @param type $duplicateStrategy
