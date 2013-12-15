@@ -40,6 +40,17 @@ Once that's done, you can use [Composer](http://getcomposer.org) to add the modu
  * Go to the "Crawl" tab and click "Crawl site". Leave it running. It will take some time. 
   * Protip #1: If you reopen the Connector admin in a different browser (so that it has a different session cookie), you can see the current status of the crawling process.
   * Protip #2: If you're using Firebug or Chrome, ensure you have the debugger open before you set the crawl off. Occassionally the crawl will die for unknown reasons, and this will help in debugging.
+  * Protip #3: If the host you're running the module is behind a proxy, enable the following in mysite/_config/config.yml
+
+ StaticSiteContentExtractor:
+  curl_opts_proxy:
+    hostname: 'gateway.cwp.govt.nz'
+    port: 8888
+
+  * Protip #4: Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
+
+ StaticSiteContentExtractor:
+  log_file: /var/tmp/import.log
 
  * Once the crawling is complete (A message will show in the CMS UI), you'll see all the URLs laid out underneath the connector. The URL structure (i.e., where the slashes are) is used to build a hierarchy of URLs.
 
