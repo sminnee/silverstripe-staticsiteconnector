@@ -101,7 +101,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 			return "sitetree";
 		}
 		// Log everything that doesn't fit:
-		singleton('StaticSiteUtils')->log('Schema not configured for URL & Mime: '. $this->ProcessedMIME, $this->AbsoluteURL, $this->ProcessedMIME);
+		singleton('StaticSiteUtils')->log('Schema not configured for Mime & URL: '. $this->ProcessedMIME, $this->AbsoluteURL, $this->ProcessedMIME);
 		return $this->default_content_type;
 	}
 

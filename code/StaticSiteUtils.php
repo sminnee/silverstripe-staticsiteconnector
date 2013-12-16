@@ -22,7 +22,7 @@ class StaticSiteUtils {
 		}
 
 		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-			$message = $message.($filename?$filename:'').($mime?' ('.$mime.')':'');
+			$message = $message.($filename?' '.$filename:'').($mime?' ('.$mime.')':'');
 			error_log($message. PHP_EOL, 3, $logFile);
 		}
 	}

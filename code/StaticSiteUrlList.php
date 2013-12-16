@@ -505,12 +505,13 @@ class StaticSiteUrlList {
 	 *
 	 * @param array $processedURLData URLData comprising a relative URL and Mime-Type
 	 * @return string | array $processedURLData
-	 * @todo V.difficult at this point to record the parent's mime-type. Imposible perhaps.
 	 */
 	public function parentProcessedURL($processedURLData) {
 		$mime = self::$undefined_mime_type;
 		$processedURL = $processedURLData;
 		if(is_array($processedURLData)) {
+			// If $processedURLData['url'] is not HTML, it's unlikely its parent is anything useful (Prob just a directory)
+			$mime = singleton('StaticSiteMimeProcessor')->IsOfHtml($processedURLData['mime']) ? $processedURLData['mime'] : self::$undefined_mime_type;
 			$processedURL = $processedURLData['url'];
 		}
 
@@ -760,7 +761,6 @@ class StaticSiteCrawler extends PHPCrawler {
 		}
 
 		// Continue building our cache
-		//$info->url = preg_replace("#$mossBracketRegex#i", '', $info->url);
 		$this->urlList->addAbsoluteURL($info->url, $info->content_type);
 		
 		// @todo is this needed?
