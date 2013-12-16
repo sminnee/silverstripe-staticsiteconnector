@@ -14,7 +14,7 @@ Some are already registered as issues on Github, others are more in the "would l
  * See: $form->setAttribute('data-pjax-fragment', 'CurrentForm');
 * Add a $description static to `GridField to "Import Schemas".
 * After selecting the the "Crawl site", its label should switch to read "Crawling site..". Maybe show the CMS default "timer" icon too.
-* Change the laxternalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
+* Change the externalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
  * Make that text disappear onfocus if it equals the default text
 * Either remove the "Folder to import into" dropdown from the CMS UI or use its value instead of the "hard-coded" value taken from the cache-dir
 * Some URLs are being crawled and displayed badly encoded as /%2fabout-us%2f.
@@ -32,6 +32,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * tmp files seem to be created for text/html pages when a server error occurs e.g. 400 fix this or write a task that can clean these up
 * Add an onAfterImport() (see external-content module) to StaticSiteImporter and run StaticSiteRewriteLinksTask from it, based on CMS UI user-selection (default is 'yes')
 * Add logic to the crawl that allows images used only as CSS background images in a legacy site, to be crawled
-* If using the "Overwrite" import strategy, nothing gets overwritten. A deletion and re-creation needs to happen first
+* None of the duplication strategies seem to work as expected when importing pages
 * Remove "Repeat import each" form-field in CMS UI, if queued jobs module, not installed
 * See: StaticSiteURLList#parentProcessedURL()
