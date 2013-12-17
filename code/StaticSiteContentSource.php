@@ -85,6 +85,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 		$fields->removeFieldFromTab("Root", "Pages");
 		$fields->removeFieldFromTab("Root", "Files");
+		$fields->removeFieldFromTab("Root", "ShowContentInMenu");
 
 		// Processing Option
 		$processingOptions = array("" => "No pre-processing");
@@ -458,7 +459,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
 		$mimes = new TextareaField('MimeTypes', 'Mime-types');
 		$mimes->setRows(3);
-		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg separated by a newline.');
+		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg, separated by a newline.');
 		$fields->addFieldToTab('Root.Main', $mimes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');

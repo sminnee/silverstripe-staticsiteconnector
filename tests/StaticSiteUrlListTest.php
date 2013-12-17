@@ -21,6 +21,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	public static $url_patterns_for_drop_extensions = array(
 		'/test/contains-double-slash-normal-and-encoded/%2ftest' => '/test/contains-double-slash-normal-and-encoded/test',
 		'/test/contains-double-slash-encoded-and-normal%2f/test' => '/test/contains-double-slash-encoded-and-normal/test',
+		'/test/contains-double-slash-encoded%2f%2ftest' => '/test/contains-double-slash-encoded/test',
 		'/test/contains-single-slash-normal/test' => '/test/contains-single-slash-normal/test',
 		'/test/contains-single-slash-encoded%2ftest' => '/test/contains-single-slash-encoded/test',
 		'/test/contains-slash-encoded-bracket/%28/test' => '/test/contains-slash-encoded-bracket/test',
