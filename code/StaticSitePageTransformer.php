@@ -1,6 +1,6 @@
 <?php
 /**
- * URL transformer specific to SilverStripe's `SiteTree` object for use within the import functionality.
+ * URL transformer specific to SilverStripe's `SiteTree` class for use within the import functionality.
  *
  * @package staticsiteconnector
  * @see {@link StaticSiteFileTransformer}
@@ -88,13 +88,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 
 		// Check if the page is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
-		// Fake it when running tests
-		if(SapphireTest::is_running_test()) {
-			$existingPage = new $pageType(array());
-		}	
-		else {
-			$existingPage = $pageType::get()->filter('StaticSiteURL',$item->getExternalId())->first();
-		}
+		$existingPage = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
 
 		/*
 		 * @todo to "Overwrite" strategy isn't working. To "overwrite" something is to:
@@ -109,6 +103,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			if($existingPage) {
 				$page = $existingPage;
 			}
+			$copy = $page;
+			$page->delete();
+			$copy->write();
+			$page = $copy;
 		}
 		else if($existingPage && $duplicateStrategy === 'Skip') {
 			return false;
@@ -116,10 +114,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		else {
 			// This deals to the "Duplicate" strategy, as well as creating new, non-existing objects
 			$page = new $pageType(array());
-			$page->Title = $contentFields['Title'];
-			$page->MenuTitle = $contentFields['Title'];
-			$page->URLSegment = $contentFields['URLSegment'];
-			$page->Content = $contentFields['Content'];
 		}
 
 		$page->StaticSiteContentSourceID = $source->ID;
@@ -127,6 +121,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$page->ParentID = $parentObject ? $parentObject->ID : 0;
 
 		foreach($contentFields as $k => $v) {
+			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
+			if(!$v['content']) {
+				continue;
+			}			
 			$page->$k = $v['content'];
 		}
 

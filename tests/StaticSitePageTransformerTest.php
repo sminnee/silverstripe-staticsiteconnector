@@ -91,16 +91,15 @@ class StaticSitePageTransformerTest extends SapphireTest {
 	 * @todo the "overwrite" strategy doesn't actually work. Need to talk with implementing dev as to why not
 	 */
 	public function testTransformForURLIsInCacheIsPageStrategyOverwrite() {
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$item = new StaticSiteContentItem($source, '/test-about-the-team');
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML8');
+		$item = new StaticSiteContentItem($source, '/test-i-am-page-5');
 		$item->source = $source;
 		
 		// Pass becuase we do want to perform something on the URL
 		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyOvr = $this->transformer->transform($item, null, 'Overwrite'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting a result
-		// 
-		//$this->assertEquals('test-about-the-team', $pageStrategyOvr->page->URLSegment);
+		$this->assertEquals('test-i-am-page-5', $pageStrategyOvr->page->URLSegment);
 	}
 	
 	/* 

@@ -47,6 +47,11 @@ StaticSiteContentSource_ImportSchema:
     AppliesTo: '.*'
     MimeTypes: 'text/html'
     ImportRules: =>StaticSiteContentSource_ImportRule.Title1,=>StaticSiteContentSource_ImportRule.Content1
+  SchemaSiteTree8:
+    DataType: Page
+    Order: 1
+    AppliesTo: '.*'
+    MimeTypes: 'text/html'
   SchemaFile1:
     DataType: File
     Order: 1
@@ -92,6 +97,12 @@ Page:
     Title: 'Test page 4'
     URLSegment: 'test-about-the-team'
     Content: 'Some test page content'
+    StaticSiteURL: '/test-about-the-team'    
+  testPage5:
+    Title: 'Test page 5'
+    URLSegment: 'test-i-am-page-5'
+    Content: 'Some test page content'
+    StaticSiteURL: '/test-i-am-page-5'
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -130,6 +141,11 @@ StaticSiteContentSource:
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree7
     Pages: =>Page.testPage4
+  MyContentSourceIsHTML8:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaSiteTree8
+    Pages: =>Page.testPage5 
   MyContentSourceIsFile1:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions

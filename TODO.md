@@ -9,6 +9,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Bug when using no "www." prefix in basic setup. URLs appear as t.nz for example, in "urls" cache file
 * BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: tmp files seem to be created for text/html pages when a server error occurs e.g. 400 fix this or write a task that can clean these up
+* BUG: Hide the "Schema" field on each import rule CMS UI, it is not needed.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
@@ -20,8 +21,7 @@ Some are already registered as issues on Github, others are more in the "would l
 
 ## External Content Module Issues:
 
-* BUG: Add necessary PJAX headers to make the CMS UI reload when users click the "Create" button.
-* BUG: Hide the "Schema" field on each import rule CMS UI, it is not needed.
+* BUG: Add necessary PJAX headers to make the CMS UI reload when users click the "Create" button. (See (https://github.com/nyeholt/silverstripe-external-content/issues/15)[Issue 15])
 * BUG: Fix the UI under the "Import" tab to store saved values. Currently you will lose your changes if you move away from the "Import" tab and then go back to it.
 * ENHANCEMENT: Change the externalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
  * Add a 'label' static on ExternalContentSource and subclasses, to show in this menu
