@@ -115,7 +115,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		 * - Delete it
 		 * - Write a new one
 		 */	
-		if($existingFile && $duplicateStrategy === 'Overwrite') {
+		if($existingFile && $duplicateStrategy === ExternalContentTransformer::DS_OVERWRITE) {
 			if(get_class($existingFile) !== $dataType) {
 				$existingFile->ClassName = $dataType;
 				$existingFile->write();
@@ -124,7 +124,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 				$file = $existingFile;
 			}			
 		}
-		else if($existingFile && $duplicateStrategy === 'Skip') {
+		else if($existingFile && $duplicateStrategy === ExternalContentTransformer::DS_SKIP) {
 			return false;
 		}
 		else {

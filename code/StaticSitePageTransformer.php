@@ -95,7 +95,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		 * - Delete it
 		 * - Write a new one
 		 */		
-		if($existingPage && $duplicateStrategy === 'Overwrite') {
+		if($existingPage && $duplicateStrategy === ExternalContentTransformer::DS_OVERWRITE) {
 			if(get_class($existingPage) !== $pageType) {
 				$existingPage->ClassName = $pageType;
 				$existingPage->write();
@@ -108,7 +108,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$copy->write();
 			$page = $copy;
 		}
-		else if($existingPage && $duplicateStrategy === 'Skip') {
+		else if($existingPage && $duplicateStrategy === ExternalContentTransformer::DS_SKIP) {
 			return false;
 		}
 		else {
