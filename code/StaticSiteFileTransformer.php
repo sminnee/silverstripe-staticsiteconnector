@@ -85,8 +85,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$contentFields['Filename'] = array('content' => $item->externalId);
 		}
 
-		$source = $item->getSource();
-
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
 			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
@@ -102,39 +100,36 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 
 		// Check if the file is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
-		// Fake it when running tests
+		$existingFile = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+		
+		/* 
+		 * It's difficult to properly mock situations where there's a pre-existing file in tests becuase SapphireTest invokes
+		 * tearDown() on a per method basis, so we fake it for now
+		 */
 		if(SapphireTest::is_running_test()) {
-			$existingFile = new File();
-		}
-		else {
-			$existingFile = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+			$existingFile = new $dataType(array());
 		}
 		
-		/*
-		 * @todo to "Overwrite" strategy isn't working. To "overwrite" something is to:
-		 * - Delete it
-		 * - Write a new one
-		 */	
+		// Overwrite
 		if($existingFile && $duplicateStrategy === ExternalContentTransformer::DS_OVERWRITE) {
-			if(get_class($existingFile) !== $dataType) {
-				$existingFile->ClassName = $dataType;
-				$existingFile->write();
-			}
-			if($existingFile) {
-				$file = $existingFile;
-			}			
+			$file = $this->cloneFile($dataType, $existingFile, ExternalContentTransformer::DS_OVERWRITE);
 		}
+		// Duplicate (Copy)
+		else if($existingFile && $duplicateStrategy === ExternalContentTransformer::DS_DUPLICATE) {
+			$file = $this->cloneFile($dataType, $existingFile, ExternalContentTransformer::DS_DUPLICATE);
+		}	
+		// Skip
 		else if($existingFile && $duplicateStrategy === ExternalContentTransformer::DS_SKIP) {
 			return false;
-		}
+		}		
+		// New
 		else {
-			// This deals to the "Duplicate" strategy, as well as creating new, non-existing objects
 			$file = new $dataType(array());
 		}
 		
 		if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
 			return false;
-		}		
+		}
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
 		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
@@ -270,5 +265,28 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			}
 		}
 		return $exts;
+	}
+	
+	/*
+	 * @param string $dataType
+	 * @param \File $existingFile
+	 * @param string $method
+	 * @return \File
+	 */
+	protected function cloneFile($dataType, $existingFile, $method) {
+		if(get_class($existingFile) !== $dataType) {
+			$existingFile->ClassName = $dataType;
+			$existingFile->write();
+		}
+		if($existingFile) {
+			$file = $existingFile;
+		}
+		$copy = $file;
+		if($method == 'Overwrite') {
+			$file->deleteDatabaseOnly();
+		}
+		$copy->write();
+		$file = $copy;
+		return $file;
 	}
 }

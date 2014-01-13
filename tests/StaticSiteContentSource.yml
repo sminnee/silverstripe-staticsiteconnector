@@ -70,7 +70,7 @@ StaticSiteContentSource_ImportSchema:
   SchemaImage2:
     DataType: Image
     Order: 2
-    AppliesTo: '/images/.*'
+    AppliesTo: '/assets/.*'
     MimeTypes: 'image/png'
   SchemaImage3:
     DataType: Image
@@ -103,6 +103,17 @@ Page:
     URLSegment: 'test-i-am-page-5'
     Content: 'Some test page content'
     StaticSiteURL: '/test-i-am-page-5'
+    
+File:
+  testFile1:
+    Title: 'Test image 1'
+    StaticSiteURL: '/test-1.png'
+  testFile2:
+    Title: 'Test image 2'
+    StaticSiteURL: '/test-2.png'
+  testFile3:
+    Title: 'Test image 3'
+    StaticSiteURL: '/test-3.png'     
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -151,12 +162,18 @@ StaticSiteContentSource:
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaFile1
   MyContentSourceIsImage1:
-    BaseUrl: 'http://localhost.com'
+    BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage3,=>StaticSiteContentSource_ImportSchema.SchemaImage4
-    Pages: =>Page.testPage3
+    Files: =>File.testFile1
   MyContentSourceIsImage2:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
-    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage2,=>StaticSiteContentSource_ImportSchema.SchemaImage1
+    Files: =>File.testFile2    
     ID: 44
+  MyContentSourceIsImage3:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
+    Files: =>File.testFile3 

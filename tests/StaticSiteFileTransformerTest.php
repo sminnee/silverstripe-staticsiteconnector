@@ -2,6 +2,7 @@ h<?php
 /**
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  * @todo fixup buildFileProperties() and commented assertions in testBuildFileProperties()
+ * @todo Duplicating files during test-runs doesn't work so testTransformForURLIsInCacheIsFileStrategyDuplicate() fails if uncommented
  */
 class StaticSiteFileTransformerTest extends SapphireTest {
 
@@ -112,20 +113,54 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 * 
 	 * @todo employ some proper mocking
 	 */
-	public function testTransformForURLIsInCacheIsFile() {
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage1');
+	public function testTransformForURLIsInCacheIsFileStrategyDuplicate() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage2');
+		$item = new StaticSiteContentItem($source, '/assets/test-2.png');
+		$item->source = $source;
+		
+		// Pass becuase we do want to perform something on the URL
+		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup = $this->transformer->transform($item, null, 'Duplicate'));
+		
+		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
+		// Because we're trying to duplicate (copy), SilverStripe should rename the file with a '-2' suffix
+		//$this->assertEquals('assets/Import/Images/test-2-2.png', $fileStrategyDup->file->Filename);	
+	}	
+	
+	/**
+	 * Test what happens when we define what we want to do when encountering duplicates, and:
+	 * - The URL represents a Mime-Type which does match our transformer
+	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
+	 * 
+	 * @todo employ some proper mocking
+	 */
+	public function testTransformForURLIsInCacheIsFileStrategyOverwrite() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage2');
 		$item = new StaticSiteContentItem($source, '/assets/test-2.png');
 		$item->source = $source;
 		
 		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
+		
 		// Pass becuase we do want to perform something on the URL
-		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup = $this->transformer->transform($item, null, 'Duplicate'));
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyOvr = $this->transformer->transform($item, null, 'Overwrite'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
-		// @todo The first of these two tests should actually assert that a copy exists
-		//$this->assertEquals('assets/Import/Images/test-2-2.png', $fileStrategyDup->file->Filename);
 		$this->assertEquals('assets/Import/Images/test-2.png', $fileStrategyOvr->file->Filename);
+	}	
+	
+	/**
+	 * Test what happens when we define what we want to do when encountering duplicates, and:
+	 * - The URL represents a Mime-Type which does match our transformer
+	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
+	 * 
+	 * @todo employ some proper mocking
+	 */
+	public function testTransformForURLIsInCacheIsFileStrategySkip() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage3');
+		$item = new StaticSiteContentItem($source, '/assets/test-3.png');
+		$item->source = $source;
+		
+		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
+		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
 	}	
 }
