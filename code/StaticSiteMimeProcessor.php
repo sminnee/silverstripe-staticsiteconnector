@@ -248,7 +248,7 @@ class StaticSiteMimeProcessor extends Object {
 	}
 	
 	/*
-	 * Ascertain passed $mime is not something we can do anyhting useful with
+	 * Ascertain passed $mime is not something we can do anything useful with
 	 * 
 	 * @param string $mime
 	 * @return boolean
