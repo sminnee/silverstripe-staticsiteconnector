@@ -7,6 +7,18 @@
 	"authors": [{
 		"name": "Sam Minnee",
 		"email": "sam@silverstripe.com"
+	},
+	{
+		"name": "Russell Michell",
+		"email": "russell@silverstripe.com"
+	},
+	{
+		"name": "Stig Lindqvist",
+		"email": "stig@silverstripe.com"
+	},
+	{
+		"name": "Mike Parkhill",
+		"email": "mike@silverstripe.com"
 	}],
 	"require": {
 		"silverstripe/framework": ">=3.0.0",
