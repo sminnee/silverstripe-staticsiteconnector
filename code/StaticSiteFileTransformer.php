@@ -290,22 +290,22 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		else {
 			$file = new $dataType(array());
 			$file->write();
-			// No point in doing anything further if the file is new
-			return;
 		}	
 		
+		$repeatImport = $file->exists();
+		
 		// Which user-selected duplication strategy?
-		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_OVERWRITE)) {
 			$copy = $file;
 			$file->delete();
 			$copy->write();
 			$file = $copy;
 		}
-		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_DUPLICATE)) {
 			$file = $file->duplicate(true);
 		}		
-		if($strategy === ExternalContentTransformer::DS_SKIP) {
-			return null;
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_SKIP)) {
+			return;
 		}
 		return $file;
 	}	

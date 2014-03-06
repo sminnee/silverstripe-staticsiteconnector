@@ -89,10 +89,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$page = $this->processStrategy($pageType, $strategy)) {
+		if(!$page = $this->processStrategy($pageType, $strategy, $item)) {
 			return false;
 		}
-
+		
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
 		$page->ParentID = $parentObject ? $parentObject->ID : 1; // Default to Home
@@ -100,7 +100,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		foreach($contentFields as $k => $v) {
 			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
 			if($v['content']) {
-				$page->$k = $v['content']; 
+				$page->$k = $v['content'];
 			}			
 		}
 
@@ -142,9 +142,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @todo add tests
 	 */
 	protected function processStrategy($pageType, $strategy, $item) {
+		$this->utils->log(' - Strategy #0: ' .$strategy);
+		
 		// Is the page is already imported?
 		$existing = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
 		if($existing) {
+			$this->utils->log(' - Strategy #1: ' .$strategy);
 			if(get_class($existing) !== $pageType) {
 				$existing->ClassName = $pageType;
 				$existing->write();
@@ -154,24 +157,25 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			}
 		}
 		else {
+			$this->utils->log(' - Strategy #2: ' .$strategy);
 			$page = new $pageType(array());
 			$page->write();
-			// No point in doing anything further if the page is new
-			return;
-		}	
+		}
+		
+		$repeatImport = $page->exists();
 		
 		// Which user-selected duplication strategy?
-		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_OVERWRITE)) {
 			$copy = $page;
 			$page->delete();
 			$copy->write();
 			$page = $copy;
 		}
-		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_DUPLICATE)) {
 			$page = $page->duplicate(true);
 		}		
-		if($strategy === ExternalContentTransformer::DS_SKIP) {
-			return null;
+		if($repeatImport && ($strategy === ExternalContentTransformer::DS_SKIP)) {
+			return;
 		}
 		return $page;
 	}

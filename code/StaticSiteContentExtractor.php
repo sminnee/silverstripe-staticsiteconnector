@@ -249,7 +249,7 @@ class StaticSiteContentExtractor extends Object {
 	 * @todo deal-to defaults when $this->mime isn't matched.
 	 */
 	protected function fetchContent() {
-		$this->utils->log("Fetching {$this->url} ({$this->mime})");
+		$this->utils->log(" - Fetching {$this->url} ({$this->mime})");
 
 		// Set some proxy options for phpCrawler
 		$curlOpts = singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev());
@@ -280,7 +280,7 @@ class StaticSiteContentExtractor extends Object {
 	 */
 	protected function curlRequest($url, $method, $data = null, $headers = null, $curlOptions = array()) {
 
-		$this->utils->log("CURL START: {$this->url} ({$this->mime})");
+		$this->utils->log(" - CURL START: {$this->url} ({$this->mime})");
 
 		$ch        = curl_init();
 		$timeout   = 10;
@@ -352,7 +352,7 @@ class StaticSiteContentExtractor extends Object {
 		curl_close($ch);
 
 		if($curlError !== '' || $statusCode == 0) {
-			$this->utils->log("CURL ERROR: Error: {$curlError} Status: {$statusCode}");
+			$this->utils->log(" - CURL ERROR: Error: {$curlError} Status: {$statusCode}");
 			$statusCode = 500;
 		}
 
@@ -364,7 +364,7 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
-		$this->utils->log("CURL END: {$this->url} ({$this->mime})");
+		$this->utils->log(" - CURL END: {$this->url}. Status: $statusCode. ({$this->mime})");
 		return $response;
 	}
 
