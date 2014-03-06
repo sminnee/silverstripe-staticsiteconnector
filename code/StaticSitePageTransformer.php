@@ -28,11 +28,11 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * 
 	 * @param type $item
 	 * @param type $parentObject
-	 * @param type $duplicateStrategy
+	 * @param string $strategy
 	 * @return boolean|\StaticSiteTransformResult
 	 * @throws Exception
 	 */
-	public function transform($item, $parentObject, $duplicateStrategy) {
+	public function transform($item, $parentObject, $strategy) {
 
 		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
@@ -87,45 +87,51 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			throw new Exception('Pagetype for migration schema is empty!');
 		}
 
-		// Check if the page is already imported and decide what to do depending on the CMS-selected strategy (overwrite/skip etc)
+		// Check if the page is already imported and decide what to do
 		$existingPage = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
 
 		/*
-		 * @todo to "Overwrite" strategy isn't working. To "overwrite" something is to:
-		 * - Delete it
-		 * - Write a new one
+		 * Conditions are:
+		 *	1). existing AND overwrite
+		 *	2). existing AND skip
+		 *	3). existing AND duplicate
+		 *	4). non-existent
 		 */		
-		if($existingPage && $duplicateStrategy === ExternalContentTransformer::DS_OVERWRITE) {
+		if($existingPage) {
 			if(get_class($existingPage) !== $pageType) {
 				$existingPage->ClassName = $pageType;
 				$existingPage->write();
 			}
-			if($existingPage) {
+			if($existingPage && $existingPage->ID) {
 				$page = $existingPage;
 			}
+		}
+		else {
+			$page = new $pageType(array());
+		}
+		
+		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
 			$copy = $page;
 			$page->delete();
 			$copy->write();
 			$page = $copy;
 		}
-		else if($existingPage && $duplicateStrategy === ExternalContentTransformer::DS_SKIP) {
+		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+			$page = $page->duplicate();
+		}		
+		if($strategy === ExternalContentTransformer::DS_SKIP) {
 			return false;
-		}
-		else {
-			// This deals to the "Duplicate" strategy, as well as creating new, non-existing objects
-			$page = new $pageType(array());
 		}
 
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
-		$page->ParentID = $parentObject ? $parentObject->ID : 0;
+		$page->ParentID = $parentObject ? $parentObject->ID : 1; // Default to Home
 
 		foreach($contentFields as $k => $v) {
 			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
-			if(!$v['content']) {
-				continue;
+			if($v['content']) {
+				$page->$k = $v['content']; 
 			}			
-			$page->$k = $v['content'];
 		}
 
 		$page->write();

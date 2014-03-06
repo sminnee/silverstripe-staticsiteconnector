@@ -36,6 +36,8 @@ class StaticSiteUrlList {
 	 * Two element array: contains keys 'inferred' and 'regular':
 	 *  - 'regular' is an array mapping raw URLs to processed URLs
 	 *  - 'inferred' is an array of inferred URLs
+	 * 
+	 * @var array
 	 */
 	protected $urls = null;
 
@@ -66,6 +68,8 @@ class StaticSiteUrlList {
 	
 	/**
 	 * The StaticSiteContentSource object
+	 * 
+	 * @var StaticSiteContentSource
 	 */
 	protected $source;
 
