@@ -99,49 +99,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$this->utils->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
-
-		// Check if file already imported, then decide what to do depending on strategy
-		$existingFile = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
 		
-		/* 
-		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
-		 * becuase SapphireTest invokes tearDown() on a per method basis, so we fake it for now.
-		 * @todo use SapphireTest::clearFixture() ??
-		 */
-		if(SapphireTest::is_running_test()) {
-			$existingFile = new $dataType(array());
-		}
-		
-		/*
-		 * Conditions are:
-		 *	1). existing AND overwrite
-		 *	2). existing AND skip
-		 *	3). existing AND duplicate
-		 *	4). non-existent
-		 */		
-		if($existingFile) {
-			if(get_class($existingFile) !== $dataType) {
-				$existingFile->ClassName = $dataType;
-				$existingFile->write();
-			}
-			if($existingFile && $existingFile->ID) {
-				$file = $existingFile;
-			}
-		}
-		else {
-			$file = new $dataType(array());
-		}
-		
-		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-			$copy = $file;
-			$file->delete(); // Yes. Delete the asset _and_ DB entry
-			$copy->write();
-			$file = $copy;
-		}
-		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
-			$file = $file->duplicate(); // @todo!!
-		}		
-		if($strategy === ExternalContentTransformer::DS_SKIP) {
+		// Process incoming according to user-selected duplication strategy
+		if(!$file = $this->processStrategy($dataType, $strategy, $item)) {
 			return false;
 		}
 		
@@ -295,4 +255,58 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 		return $exts;
 	}
+	
+	/**
+	 * Process incoming content according to CMS, user-inputted duplication strategy.
+	 * 
+	 * @param string $dataType
+	 * @param string $strategy
+	 * @param type $item
+	 * @return boolean | $page File
+	 * @todo add tests
+	 */
+	protected function processStrategy($dataType, $strategy, $item) {
+		// Check if file already imported, then decide what to do depending on strategy
+		$existing = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+		
+		/* 
+		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
+		 * becuase SapphireTest invokes tearDown() on a per method basis, so we fake it for now.
+		 * @todo use SapphireTest::clearFixture() ??
+		 */
+		if(SapphireTest::is_running_test()) {
+			$existing = new $dataType(array());
+		}
+		
+		if($existing) {
+			if(get_class($existing) !== $dataType) {
+				$existing->ClassName = $dataType;
+				$existing->write();
+			}
+			if($existing && $existing->exists()) {
+				$file = $existing;
+			}
+		}
+		else {
+			$file = new $dataType(array());
+			$file->write();
+			// No point in doing anything further if the file is new
+			return;
+		}	
+		
+		// Which user-selected duplication strategy?
+		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+			$copy = $file;
+			$file->delete();
+			$copy->write();
+			$file = $copy;
+		}
+		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+			$file = $file->duplicate(true);
+		}		
+		if($strategy === ExternalContentTransformer::DS_SKIP) {
+			return null;
+		}
+		return $file;
+	}	
 }

@@ -87,40 +87,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$this->utils->log("DataType for migration schema is empty for: ", $item->AbsoluteURL,$item->ProcessedMIME);
 			throw new Exception('Pagetype for migration schema is empty!');
 		}
-
-		// Check if the page is already imported and decide what to do
-		$existingPage = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
-
-		/*
-		 * Conditions are:
-		 *	1). existing AND overwrite
-		 *	2). existing AND skip
-		 *	3). existing AND duplicate
-		 *	4). non-existent
-		 */		
-		if($existingPage) {
-			if(get_class($existingPage) !== $pageType) {
-				$existingPage->ClassName = $pageType;
-				$existingPage->write();
-			}
-			if($existingPage && $existingPage->ID) {
-				$page = $existingPage;
-			}
-		}
-		else {
-			$page = new $pageType(array());
-		}
 		
-		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-			$copy = $page;
-			$page->delete();
-			$copy->write();
-			$page = $copy;
-		}
-		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
-			$page = $page->duplicate();
-		}		
-		if($strategy === ExternalContentTransformer::DS_SKIP) {
+		// Process incoming according to user-selected duplication strategy
+		if(!$page = $this->processStrategy($pageType, $strategy)) {
 			return false;
 		}
 
@@ -161,5 +130,49 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);
 
 		return $contentExtractor->extractMapAndSelectors($importRules, $item);
+	}
+	
+	/**
+	 * Process incoming content according to CMS, user-inputted duplication strategy.
+	 * 
+	 * @param string $pageType
+	 * @param string $strategy
+	 * @param type $item
+	 * @return boolean | $page SiteTree
+	 * @todo add tests
+	 */
+	protected function processStrategy($pageType, $strategy, $item) {
+		// Is the page is already imported?
+		$existing = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
+		if($existing) {
+			if(get_class($existing) !== $pageType) {
+				$existing->ClassName = $pageType;
+				$existing->write();
+			}
+			if($existing && $existing->exists()) {
+				$page = $existing;
+			}
+		}
+		else {
+			$page = new $pageType(array());
+			$page->write();
+			// No point in doing anything further if the page is new
+			return;
+		}	
+		
+		// Which user-selected duplication strategy?
+		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+			$copy = $page;
+			$page->delete();
+			$copy->write();
+			$page = $copy;
+		}
+		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+			$page = $page->duplicate(true);
+		}		
+		if($strategy === ExternalContentTransformer::DS_SKIP) {
+			return null;
+		}
+		return $page;
 	}
 }
