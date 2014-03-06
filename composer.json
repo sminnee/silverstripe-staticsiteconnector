@@ -24,6 +24,5 @@
 		"silverstripe/framework": ">=3.0.0",
 		"silverstripe/external-content": "dev-master",
 		"cuab/phpcrawl": "*"
-	},
-	"minimum-stability": "dev"
+	}
 }
