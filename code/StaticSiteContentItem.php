@@ -1,13 +1,13 @@
 <?php
-/*
+/**
  * Deals-to transforming imported SiteTree and File objects
  */
 class StaticSiteContentItem extends ExternalContentItem {
 
 	/**
-	 * @var array
-	 *
 	 * Stores information about an item whenever it is invoked
+	 * 
+	 * @var array
 	 */
 	public $checkStatus = array(
 		'ok'	=>	true,
@@ -16,6 +16,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 
 	/**
  	 * Default Content type, either 'sitetree', 'file' or false to disable the default
+	 * 
  	 * @var mixed (string | boolean)
  	 */
 	private $default_content_type = 'sitetree';
@@ -33,7 +34,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 */
 	private static $log_file = null;
 
-	/*
+	/**
 	 * @return void
 	 */
 	public function init() {
@@ -86,8 +87,9 @@ class StaticSiteContentItem extends ExternalContentItem {
 		return sizeof($this->source->urlList()->getChildren($this->externalId));
 	}
 
-	/*
-	 * Returns the correct SS base-type based on the curent URL's Mime-Type and directs the module to use the correct StaticSiteXXXTransformer class
+	/**
+	 * Returns the correct SS base class-type based on the curent URL's Mime-Type 
+	 * and directs the module to use the correct StaticSiteXXXTransformer class.
 	 *
 	 * @return mixed string|boolean
 	 * @todo Create a static array somewhere (_config??) comprising all legit mime-types, or fetch directly from IANA..
@@ -105,7 +107,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		return $this->default_content_type;
 	}
 
-	/*
+	/**
 	 * Returns the correct content-object transformation class
 	 *
 	 * @return \ExternalContentTransformer
@@ -120,7 +122,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		}
 	}
 
-	/*
+	/**
 	 * @return \FieldList
 	 */
 	public function getCMSFields() {
@@ -151,7 +153,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		return $fields;
 	}
 
-	/*
+	/**
 	 * Performs some checks on $item. If it is of the wrong type, returns false
 	 *
 	 * @param string $type e.g. 'sitetree'
@@ -160,8 +162,10 @@ class StaticSiteContentItem extends ExternalContentItem {
 	public function runChecks($type) {
 		/*
 		 * Workaround for external-content module:
-		 * - ExternalContentAdmin#migrate()  assumes we're _either_ dealing-to a SiteTree object _or_ a File object
-		 * - @todo Bug report?
+		 * ExternalContentAdmin#migrate() assumes we're _either_ dealing-to a 
+		 * SiteTree object _or_ a File object
+		 * 
+		 * @todo Bug report?
 		 */
 		if(!$type || $this->getType() != strtolower($type)) {
 			$this->checkStatus = array(

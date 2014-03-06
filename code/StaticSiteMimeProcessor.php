@@ -1,6 +1,7 @@
 <?php
 /**
- * Utility class to deal-to all manner of Mime-Type pre/post-processing.
+ * 
+ * Utility class for Mime-Type pre/post-processing.
  *
  * @author Russell Michell 2013 <russell@silverstripe.com>
  */
@@ -12,7 +13,8 @@ class StaticSiteMimeProcessor extends Object {
 	 */
 	public $mimeTypes;
 
-	/*
+	/**
+	 * 
 	 * @return void
 	 */
 	public function __construct() {
@@ -24,9 +26,10 @@ class StaticSiteMimeProcessor extends Object {
 		}
 	}
 
-	/*
+	/**
 	 * Based on one of three SilverStripe core classes, returns an array of suitable mime-types
-	 * from SilverStripe config, used to represent matching content or all associated mimes if no type is passed.
+	 * from SilverStripe config. 
+	 * Used to represent matching content or all associated mimes if no type is passed.
 	 *
 	 * @param $ssType one of: SiteTree, File, Image
 	 * @return array $mimes
@@ -71,7 +74,7 @@ class StaticSiteMimeProcessor extends Object {
 		return $mimes;
 	}
 
-	/*
+	/**
 	 * Return a mapping of SS types (File, SiteTree etc) to suitable file-extensions out of the File class
 	 *
 	 * @param string $SSType
@@ -91,6 +94,7 @@ class StaticSiteMimeProcessor extends Object {
 			array_splice($mimeCategories['doc'],14,2),
 			array_splice($mimeCategories['doc'],0,11)
 		);
+		
 		// Get SilverStripe supported Image-ish mime categories
 		$mimeKeysForImage = $mimeCategories['image'];
 		$map = array(
@@ -98,6 +102,7 @@ class StaticSiteMimeProcessor extends Object {
 			'file'		=> $mimeKeysForFile,
 			'image'		=> $mimeKeysForImage
 		);
+		
 		if($SSType) {	
 			$SSType = strtolower($SSType);
 			// Only support specific classes
@@ -109,17 +114,20 @@ class StaticSiteMimeProcessor extends Object {
 		return $map;
 	}
 
-	/*
-	 * Compares a file-extension with a mime type and returns true if the passed extension matches the passed mime
+	/**
+	 * Compares a file-extension with a mime type. Returns true if the passed extension 
+	 * matches the passed mime.
 	 *
 	 * @param string $ext The file extension to compare e.g. ".doc"
 	 * @param string $mime The Mime-Type to compare e.g. application/msword
-	 * @param boolean $fix whether or not to try and "fix" borked file-extensions coming through from third-parties.
+	 * @param boolean $fix Whether or not to try and "fix" borked file-extensions 
+	 * coming through from third-parties.
+	 * 
 	 * - If true, the matched extension is returned (if found, otherwise false) instead of boolean false
 	 * - This is a pretty sketchy way of doing things and relies on the file-extension string comprising the mime-type
 	 * - e.g. "pdf" can be found in "application/pdf" but "doc" cannot be found in "application/msword"
+	 * 
 	 * @return mixed boolean or string $ext | $coreExt if the $fix param is set to true, no extra processing is required
-	 * @todo this method could really benefit from some tests..
 	 */
 	public static function ext_to_mime_compare($ext, $mime, $fix = false) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
@@ -147,7 +155,7 @@ class StaticSiteMimeProcessor extends Object {
 		return false;
  	}
 
-	/*
+	/**
 	 * Post-proces user-inputted mime-types. Allows space, comma or newline
 	 * delimited mime-types input into a TextareaField
 	 *
@@ -164,7 +172,7 @@ class StaticSiteMimeProcessor extends Object {
 		return $_mimes;
 	}
 
-	/*
+	/**
 	 * Simple cleanup utility
 	 *
 	 * @param string $mimeType
@@ -177,7 +185,7 @@ class StaticSiteMimeProcessor extends Object {
 		return strtolower(trim($mimeType));
 	}
 
-	/*
+	/**
 	 * Takes an array of mime-type strings and simply returns true after the first Image-ish mime-type is found
 	 *
 	 * @param mixed $mimeTypes
@@ -195,7 +203,7 @@ class StaticSiteMimeProcessor extends Object {
 		return false;
 	}
 
-	/*
+	/**
 	 * Takes an array of mime-type strings and simply returns true after the first File-ish mime-type is found
 	 *
 	 * @param mixed $mimeTypes
@@ -213,7 +221,7 @@ class StaticSiteMimeProcessor extends Object {
 		return false;
 	}
 
-	/*
+	/**
 	 * Takes an array of mime-type strings and simply returns true after the first SiteTree-ish mime-type is found
 	 *
 	 * @param mixed $mimeTypes
@@ -231,7 +239,7 @@ class StaticSiteMimeProcessor extends Object {
 		return false;
 	}
 
-	/*
+	/**
 	 * Simple "shortcut" to isOfFile() and isOfImage()
 	 *
 	 * @param mixed $mimeTypes
@@ -247,7 +255,7 @@ class StaticSiteMimeProcessor extends Object {
 		return false;
 	}
 	
-	/*
+	/**
 	 * Ascertain passed $mime is not something we can do anything useful with
 	 * 
 	 * @param string $mime
@@ -264,14 +272,17 @@ class StaticSiteMimeProcessor extends Object {
 	 *
 	 */
 
-	/*
+	/**
+	 * 
 	 * @param array $mimes
+	 * @return void
 	 */
 	public function setMimes($mimeTypes) {
 		$this->mimeTypes = $mimeTypes;
 	}
 
-	/*
+	/**
+	 * 
 	 * @return array
 	 */
 	public function getMimes() {

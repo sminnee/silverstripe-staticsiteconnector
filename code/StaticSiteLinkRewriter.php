@@ -13,7 +13,8 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
 
 class StaticSiteLinkRewriter {
 
-	/*
+	/**
+	 * 
 	 * @var array 
 	 */
 	protected $tagMap = array(
@@ -21,7 +22,8 @@ class StaticSiteLinkRewriter {
 		'img' => 'src',
 	);
 
-	/*
+	/**
+	 * 
 	 * @var Object
 	 */
 	protected $callback;
@@ -85,5 +87,4 @@ class StaticSiteLinkRewriter {
 		$this->rewriteInPQ($pq);
 		return $pq->html();
 	}
-
 }

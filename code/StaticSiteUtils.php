@@ -1,5 +1,6 @@
 <?php
 /**
+ * 
  * Basic class for utility methods unsuited to any other class
  * 
  * @package staticsiteconnector
@@ -27,7 +28,7 @@ class StaticSiteUtils {
 		}
 	}
 
-	/*
+	/**
 	 * Becuase we can have several imported "sub-trees" in the CMS' SiteTree at once and if we run the 
 	 * StaticSiteLinkRewrite task, it will clumsily look for _all_ content with a non-NULL StaticSiteURL.
 	 *
@@ -53,7 +54,7 @@ class StaticSiteUtils {
 		}
 	}
 
-	/*
+	/**
 	 * If operating in a specific environment, set some proxy options for it for passing to curl and to phpCrawler (if set in config)
 	 *
 	 * @param boolean $set e.g. !Director::isDev()
@@ -76,5 +77,4 @@ class StaticSiteUtils {
 		}
 		return array();
 	}
-
 }

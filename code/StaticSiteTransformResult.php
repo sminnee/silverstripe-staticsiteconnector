@@ -10,16 +10,19 @@
 class StaticSiteTransformResult extends TransformResult {
 	
 	/**
+	 * 
 	 * @var File
 	 */
 	public $file;
 	
 	/**
+	 * 
 	 * @var SiteTree
 	 */
 	public $page;
 	
 	/**
+	 * 
 	 * @var array
 	 */
 	public $children;

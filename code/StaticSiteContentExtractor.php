@@ -9,8 +9,8 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  * Given a set of fieldnames and CSS selectors corresponding to them, a map of content
  * fields will be returned.
  *
- * If the URL represents a file-based Mime-Type, a File object is created and the physical file it represents can then be post-processed
- * and saved to the SS DB and F/S.
+ * If the URL represents a file-based Mime-Type, a File object is created and the 
+ * physical file it represents can then be post-processed and saved to the SS DB and F/S.
  */
 class StaticSiteContentExtractor extends Object {
 
@@ -64,10 +64,10 @@ class StaticSiteContentExtractor extends Object {
 	 */
 	protected $mimeProcessor;
 
-	/*
-	 * @var Object
-	 *
+	/**
 	 * Holds the StaticSiteUtils object on construct
+	 *  
+	 * @var Object
 	 */
 	protected $utils;
 
@@ -95,7 +95,7 @@ class StaticSiteContentExtractor extends Object {
 	 *
 	 * @param  array $selectorMap A map of field name => css-selector
 	 * @param  StaticSiteContentItem $item The item to extract
-	 * @return array A map of field name => array('selector' => selector, 'content' => field content)
+	 * @return array Map of field name=>array('selector' => selector, 'content' => field content)
 	 */
 	public function extractMapAndSelectors($selectorMap, $item) {
 
@@ -242,10 +242,11 @@ class StaticSiteContentExtractor extends Object {
 	}
 
 	/**
-	 * Fetch the content and initialise $this->content and $this->phpQuery (the latter only if an appropriate mime-type matches)
+	 * Fetch the content, initialise $this->content and $this->phpQuery .
+	 * Initialise the latter only if an appropriate mime-type matches.
 	 *
 	 * @return void
-	 * @todo deal-to defaults when $this->mime isn't matched..
+	 * @todo deal-to defaults when $this->mime isn't matched.
 	 */
 	protected function fetchContent() {
 		$this->utils->log("Fetching {$this->url} ({$this->mime})");
@@ -319,7 +320,7 @@ class StaticSiteContentExtractor extends Object {
 		// Run request
 		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 		// See: http://forums.devshed.com/php-development-5/curlopt-timeout-option-for-curl-calls-isn-t-being-obeyed-605642.html
-		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);		// The number of seconds to wait while trying to connect.
+		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);		// No. seconds to wait while trying to connect.
 
 		// Deal to files, write to them directly then return
 		if($this->mimeProcessor->isOfFileOrImage($this->mime)) {
@@ -384,7 +385,7 @@ class StaticSiteContentExtractor extends Object {
 		return $this->tmpFileName;
 	}
 
-	/*
+	/**
 	 * SilverStripe -> Mime shortcut methods
 	 */
 	public function isMimeHTML() {

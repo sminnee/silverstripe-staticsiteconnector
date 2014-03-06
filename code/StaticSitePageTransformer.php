@@ -9,14 +9,15 @@
  */
 class StaticSitePageTransformer implements ExternalContentTransformer {
 
-	/*
-	 * @var Object
-	 *
+	/**
 	 * Holds the StaticSiteUtils object on construct
+	 * 
+	 * @var StaticSiteUtils
 	 */
 	protected $utils;
 
 	/**
+	 * 
 	 * @return void
 	 */
 	public function __construct() {
@@ -74,16 +75,16 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$contentFields['Content'] = array('content' => 'dummy');
 		}
 
-		$schema = $source->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
+		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("Couldn't find an import schema for: ", $item->AbsoluteURL,$item->ProcessedMIME);
 			return false;
 		}
 
 		$pageType = $schema->DataType;
 
 		if(!$pageType) {
-			$this->utils->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("DataType for migration schema is empty for: ", $item->AbsoluteURL,$item->ProcessedMIME);
 			throw new Exception('Pagetype for migration schema is empty!');
 		}
 
@@ -145,7 +146,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * Get content from the remote host
 	 *
 	 * @param  StaticSiteeContentItem $item The item to extract
-	 * @return null | array A map of field name => array('selector' => selector, 'content' => field content)
+	 * @return null | array Map of field name=>array('selector' => selector, 'content' => field content)
 	 */
 	public function getContentFieldsAndSelectors($item) {
 		// Get the import rules from the content source

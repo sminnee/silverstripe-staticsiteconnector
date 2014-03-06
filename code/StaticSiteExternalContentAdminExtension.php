@@ -13,7 +13,8 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	/**
 	 * 
 	 * @param type $request
-	 * @return type
+	 * @throws Exception
+	 * @return SS_HTTPResponse
 	 */
 	public function crawlsite($request) {
 		$selected = isset($request['ID']) ? $request['ID'] : 0;

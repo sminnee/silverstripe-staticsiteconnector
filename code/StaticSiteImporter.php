@@ -1,10 +1,12 @@
 <?php
 /**
+ * 
  * @see \ExternalContentImporter
  */
 class StaticSiteImporter extends ExternalContentImporter {
 	
 	/**
+	 * 
 	 * @return false
 	 */
 	public function __construct() {

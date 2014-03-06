@@ -3,6 +3,7 @@
 class StaticSiteDataExtension extends DataExtension {
 	
 	/**
+	 * 
 	 * @var array
 	 */
 	static $has_one = array(
@@ -10,6 +11,7 @@ class StaticSiteDataExtension extends DataExtension {
 	);
 	
 	/**
+	 * 
 	 * @var array
 	 */	
 	static $db = array(

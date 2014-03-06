@@ -45,15 +45,23 @@ interface StaticSiteUrlProcessor {
  */
 class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	
+	/**
+	 * 
+	 * @return string
+	 */
 	public function getName() {
 		return "Simple clean-up (recommended)";
 	}
 
+	/**
+	 * 
+	 * @return string
+	 */
 	public function getDescription() {
 		return "Drop file extensions and trailing slashes on URLs but otherwise leave them the same";
 	}
 
-	/*
+	/**
 	 * @todo:
 	 * - Find out the reason for the replacement of a trailing slash in URLs
 	 * - These are needed if child-nodes are to be discovered and imported later
@@ -83,14 +91,14 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		}
 	}
 	
-	/*
+	/**
 	 * Post-processes urls for common issues like encoded brackets and slashes that we wish to apply to all URL
 	 * Processors.
 	 * 
 	 * @param string $url
 	 * @return string
 	 * @todo Instead of testing for arbitrary URL irregularities, 
-	 * can we not just clean-out chars that not adhere to HTTP1.1 or the appropriate RFC?
+	 * can we not just clean-out chars that don't adhere to HTTP1.1 or the appropriate RFC?
 	 */
 	private function postProcessUrl($url) {
 		// Replace all encoded slashes with non-encoded versions
@@ -101,6 +109,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		return preg_replace("#/{2,}#", '/', $noBrackets);
 	}
 }
+
 /**
  * Processor for MOSS URLs
  */

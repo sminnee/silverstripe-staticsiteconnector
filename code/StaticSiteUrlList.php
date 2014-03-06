@@ -136,7 +136,7 @@ class StaticSiteUrlList {
 
 	/**
 	 * Set an array of regular expression patterns that should be excluded from
-	 * being added to the url list
+	 * being added to the url list.
 	 *
 	 * @param array $excludePatterns
 	 * @return void
@@ -147,7 +147,7 @@ class StaticSiteUrlList {
 
 	/**
 	 * Get an array of regular expression patterns that should not be added to
-	 * the url list
+	 * the url list.
 	 *
 	 * @return array
 	 */
@@ -226,6 +226,7 @@ class StaticSiteUrlList {
 
 	/**
 	 * Return a map of URLs crawled, with raw URLs as keys and processed URLs as values
+	 * 
 	 * @return array
 	 */
 	public function getProcessedURLs() {
@@ -514,8 +515,12 @@ class StaticSiteUrlList {
 		$mime = self::$undefined_mime_type;
 		$processedURL = $processedURLData;
 		if(is_array($processedURLData)) {
-			// If $processedURLData['url'] is not HTML, it's unlikely its parent is anything useful (Prob just a directory)
-			$mime = singleton('StaticSiteMimeProcessor')->IsOfHtml($processedURLData['mime']) ? $processedURLData['mime'] : self::$undefined_mime_type;
+			/*
+			 * If $processedURLData['url'] is not HTML, it's unlikely its parent 
+			 * is anything useful (Prob just a directory)
+			 */
+			$sng = singleton('StaticSiteMimeProcessor');
+			$mime = $sng->IsOfHtml($processedURLData['mime']) ? $processedURLData['mime'] : self::$undefined_mime_type;
 			$processedURL = $processedURLData['url'];
 		}
 
@@ -655,7 +660,7 @@ class StaticSiteUrlList {
 		return array_values($children);
 	}
 	
-	/*
+	/**
 	 * Simple property getter. Used in unit-testing.
 	 * 
 	 * @param string $prop
@@ -667,7 +672,7 @@ class StaticSiteUrlList {
 		}
 	}
 	
-	/*
+	/**
 	 * Get the serialized cache content and return the unserialized string
 	 * 
 	 * @todo implement to replace x3 refs to unserialize(file_get_contents($this->cacheDir . 'urls'));
@@ -698,14 +703,14 @@ class StaticSiteCrawler extends PHPCrawler {
 
 	/**
 	 *
-	 * @var bool
+	 * @var boolean
 	 */
 	protected $verbose = false;
 
 	/*
-	 * @var Object
-	 *
 	 * Holds the StaticSiteUtils object on construct
+	 * 
+	 * @var Object
 	 */
 	protected $utils;
 
@@ -722,7 +727,14 @@ class StaticSiteCrawler extends PHPCrawler {
 	 */
 	private static $log_file = null;
 
-	public function __construct(StaticSiteUrlList $urlList, $limit=false, $verbose=false) {
+	/**
+	 * 
+	 * @param StaticSiteUrlList $urlList
+	 * @param number $limit
+	 * @param boolean $verbose
+	 * @return void
+	 */
+	public function __construct(StaticSiteUrlList $urlList, $limit = false, $verbose = false) {
 		parent::__construct();
 		$this->urlList = $urlList;
 		$this->verbose = $verbose;
@@ -732,7 +744,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		$this->utils = singleton('StaticSiteUtils');
 	}
 
-	/*
+	/**
 	 * After checking raw status codes out of PHPCrawler we continue to save each URL to our cache file
 	 *
 	 * @param \PHPCrawlerDocumentInfo $info
@@ -742,7 +754,6 @@ class StaticSiteCrawler extends PHPCrawler {
 	 *	- Pass the preg_replace() call for "fixing" $mossBracketRegex into StaticSiteUrlProcessor#postProcessUrl()
 	 */
 	public function handleDocumentInfo(PHPCrawlerDocumentInfo $info) {
-
 		/*
 		 * MOSS has many URLs with brackets, e.g. http://www.stuff.co.nz/news/cat-stuck-up-tree/(/
 		 * These result in a 404 returned from curl requests for it, and won't filter down to our caching or URL Processor logic.
@@ -775,6 +786,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	}
 
 	/**
+	 * 
 	 * @return void
 	 * @throws \InvalidArgumentException
 	 */

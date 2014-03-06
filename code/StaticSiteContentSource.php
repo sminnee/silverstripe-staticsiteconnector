@@ -1,5 +1,5 @@
 <?php
-/*
+/**
  * Define the overarching content-source:
  * - Schemas
  * - Pages
@@ -46,7 +46,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */	
 	public $absoluteURL = null;
 
-	/*
+	/**
 	 * Where do we store our items for caching?
 	 * Also used by calling logic
 	 *
@@ -54,10 +54,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public $staticSiteCacheDir = null;
 
-	/*
-	 * @var StaticSiteUtils $utils
-	 *
+	/**
 	 * Holds the StaticSiteUtils object on construct
+	 * 
+	 * @var StaticSiteUtils $utils
 	 */
 	protected $utils;
 
@@ -229,7 +229,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return $this->urlList()->crawl($limit, $verbose);
 	}
 
-	/*
+	/**
 	 * Fetch an appropriate schema for a given URL and/or Mime-Type. If no matches are found, boolean false is returned
 	 *
 	 * @param string $absoluteURL
@@ -256,7 +256,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return false;
 	}
 
-	/*
+	/**
 	 * Performs a match on the Schema->AppliedTo field with reference to the URL
 	 * of the current iteration
 	 *
@@ -308,8 +308,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		return $this->getObject('/');
 	}
 
-	/*
-	 * Signals external-content module that we wish to operate on `SiteTree` and `File` objects
+	/**
+	 * Signals external-content module that we wish to operate on `SiteTree` and `File` objects.
 	 *
 	 * @return array
 	 */
@@ -321,7 +321,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	}
 
 	/**
-	 * Return the root node
+	 * Return the root node.
 	 * 
 	 * @param boolean $showAll
 	 * @return ArrayList A list containing the root node
@@ -390,6 +390,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	public static $default_applies_to = '.*';
 
 	/**
+	 * 
 	 * @var array
 	 */
 	public static $db = array(
@@ -400,6 +401,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	);
 	
 	/**
+	 * 
 	 * @var array
 	 */	
 	public static $summary_fields = array(
@@ -409,6 +411,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	);
 	
 	/**
+	 * 
 	 * @var array
 	 */	
 	public static $field_labels = array(
@@ -419,11 +422,13 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	);
 
 	/**
+	 * 
 	 * @var string
 	 */	
 	public static $default_sort = "Order";
 
 	/**
+	 * 
 	 * @var array
 	 */	
 	public static $has_one = array(
@@ -431,6 +436,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	);
 
 	/**
+	 * 
 	 * @var array
 	 */	
 	public static $has_many = array(
@@ -544,7 +550,8 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		return $result;
 	}
 
-	/*
+	/**
+	 * 
 	 * Validate user-inputted mime-types until we use some sort of multi-select list in the CMS to select from (@todo).
 	 * If we don't validate, then we can be haflway through an import and Upload#oad() wil throw a validation error "Extension is not allowed"
 	 *
@@ -556,16 +563,20 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		if(!$dt) {
 			return true; // probably just creating
 		}
-		// This is v.sketchy as it relies on the name of the user-entered DataType having the string we want to match on in its classname = bad
-		// prolly just replace this wih a regex..
+		
+		/*
+		 * This is v.sketch. It relies on the name of user-entered DataTypes containing
+		 * the string we want to match on in its classname = bad
+		 * @todo prolly just replace this wih a regex..
+		 */
 		switch($dt) {
-			case stristr($dt,'image') !== false:
+			case stristr($dt, 'image') !== false:
 				$type = 'image';
 				break;
-			case stristr($dt,'file') !== false:
+			case stristr($dt, 'file') !== false:
 				$type = 'file';
 				break;
-			case stristr($dt,'page') !== false:
+			case stristr($dt, 'page') !== false:
 			default:
 				$type = 'sitetree';
 				break;

@@ -12,9 +12,9 @@
 class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 	/**
-	 * @var \StaticSiteUtils
-	 *
 	 * Holds the StaticSiteUtils object on construct
+	 * 
+	 * @var \StaticSiteUtils
 	 */
 	protected $utils;
 
@@ -32,13 +32,14 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	private static $log_file = null;
 
 	/**
-	 * @var Object
+	 * @var StaticSiteMimeProcessor
 	 *
 	 * $mimeTypeProcessor
 	 */
 	public $mimeProcessor;
 
 	/**
+	 * 
 	 * @return void
 	 */
 	public function __construct() {
