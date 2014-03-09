@@ -62,7 +62,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - '.$item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -70,7 +71,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		// Cleanup StaticSiteURLs
 		$cleanupStaticSiteUrls = false;
-		if ($cleanupStaticSiteUrls) {
+		if($cleanupStaticSiteUrls) {
 			$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
 		}
 
@@ -88,7 +89,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->utils->log("Couldn't find an import schema for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log(" - Couldn't find an import schema for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -96,21 +98,24 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$dataType = $schema->DataType;
 
 		if(!$dataType) {
-			$this->utils->log("DataType for migration schema is empty for: ",$item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
 		
 		// Process incoming according to user-selected duplication strategy
 		if(!$file = $this->processStrategy($dataType, $strategy, $item)) {
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 		
 		if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
-		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($file, $item->stageChildren());
 	}
@@ -174,7 +179,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
 		$parentFolder = Folder::find_or_make($path);
 		if(!file_exists(ASSETS_PATH . DIRECTORY_SEPARATOR . $path)) {
-			$this->utils->log("WARNING: File-import directory wasn't created.", $url, $mime);
+			$this->utils->log(" - WARNING: File-import directory wasn't created.", $url, $mime);
 			return false;
 		}
 
@@ -197,23 +202,23 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		// Only attempt to define and append a new filename ($newExt) if $oldExt is invalid
 		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
-			$this->utils->log("WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
+			$this->utils->log(" - WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
 			return false;
 		}
 		else if($newExt) {
 			$useExtension = $newExt;
 			$logMessagePt1 = "NOTICE: Bad file-extension: \"{$oldExt}\". Assigned new file-extension: \"{$newExt}\" based on MimeType.";
 			$logMessagePt2 = PHP_EOL."\t - FROM: \"{$url}\"".PHP_EOL."\t - TO: \"{$origFilename}.{$newExt}\"";
-			$this->utils->log($logMessagePt1.$logMessagePt2, '', $mime);
+			$this->utils->log(' - '.$logMessagePt1.$logMessagePt2, '', $mime);
 		}
 		else {
 			// If $newExt didn't work, check again if $oldExt is invalid and just lose it.
 			if(!$extIsValid) {
-				$this->utils->log("WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
+				$this->utils->log(" - WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
 				return false;
 			}
 			if($this->mimeProcessor->isBadMimeType($mime)) {
-				$this->utils->log("WARNING: Bad mime-type: \"{$mime}\". Unable to assign new file-extension (#3) - DISCARDING.", $url, $mime);
+				$this->utils->log(" - WARNING: Bad mime-type: \"{$mime}\". Unable to assign new file-extension (#3) - DISCARDING.", $url, $mime);
 				return false;
 			}
 			$useExtension = $oldExt;
@@ -234,7 +239,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$file->setFilename($definitiveFilename);
 		$file->setParentID($parentFolder->ID);
 		
-		$this->utils->log("NOTICE: \"File-properties built successfully for: ", $url, $mime);
+		$this->utils->log(" - NOTICE: \"File-properties built successfully for: ", $url, $mime);
 		
 		return $file;
 	}
@@ -290,21 +295,18 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		else {
 			$file = new $dataType(array());
 			$file->write();
-		}	
-		
-		$repeatImport = $file->exists();
+		}
 		
 		// Which user-selected duplication strategy?
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_OVERWRITE)) {
-			$copy = $file;
+		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+			$clone = clone $file;
 			$file->delete();
-			$copy->write();
-			$file = $copy;
+			$file = $clone;
 		}
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_DUPLICATE)) {
+		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
 			$file = $file->duplicate(true);
 		}		
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_SKIP)) {
+		if($strategy === ExternalContentTransformer::DS_SKIP) {
 			return;
 		}
 		return $file;

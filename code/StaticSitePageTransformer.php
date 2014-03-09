@@ -35,11 +35,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
-		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("START transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		$item->runChecks('sitetree');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log($item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - '.$item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -47,7 +48,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		// Cleanup StaticSiteURLs
 		$cleanupStaticSiteUrls = false;
-		if ($cleanupStaticSiteUrls) {
+		if($cleanupStaticSiteUrls) {
 			$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'SiteTree');
 		}
 
@@ -77,19 +78,22 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->utils->log("Couldn't find an import schema for: ", $item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$pageType = $schema->DataType;
 
 		if(!$pageType) {
-			$this->utils->log("DataType for migration schema is empty for: ", $item->AbsoluteURL,$item->ProcessedMIME);
-			throw new Exception('Pagetype for migration schema is empty!');
+			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			throw new Exception('DataType for migration schema is empty!');
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$page = $this->processStrategy($pageType, $strategy, $item)) {
+		if(!$page = $this->processStrategy($pageType, $strategy, $item, $source->BaseUrl)) {
+			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 		
@@ -104,9 +108,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			}			
 		}
 
-		$page->write();
+		$page->writeToStage('Stage');
+		$page->publish('Stage', 'Live');
 
-		$this->utils->log("END transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($page, $item->stageChildren());
 	}
@@ -134,48 +139,32 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	
 	/**
 	 * Process incoming content according to CMS, user-inputted duplication strategy.
+	 * Performs no writes.
 	 * 
 	 * @param string $pageType
 	 * @param string $strategy
 	 * @param type $item
+	 * @param string $baseUrl
 	 * @return boolean | $page SiteTree
 	 * @todo add tests
 	 */
-	protected function processStrategy($pageType, $strategy, $item) {
-		$this->utils->log(' - Strategy #0: ' .$strategy);
-		
-		// Is the page is already imported?
-		$existing = $pageType::get()->filter('StaticSiteURL', $item->getExternalId())->first();
+	protected function processStrategy($pageType, $strategy, $item, $baseUrl) {
+		// Is the page already imported?
+		$existing = $pageType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
+		$page = new $pageType(array());
 		if($existing) {
-			$this->utils->log(' - Strategy #1: ' .$strategy);
-			if(get_class($existing) !== $pageType) {
-				$existing->ClassName = $pageType;
-				$existing->write();
+			// Which user-selected duplication strategy?
+			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+				$clone = clone $existing;
+				$existing->delete();
+				$page = $clone;				
 			}
-			if($existing && $existing->exists()) {
-				$page = $existing;
+			if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+				$page = $existing->duplicate(false);
 			}
-		}
-		else {
-			$this->utils->log(' - Strategy #2: ' .$strategy);
-			$page = new $pageType(array());
-			$page->write();
-		}
-		
-		$repeatImport = $page->exists();
-		
-		// Which user-selected duplication strategy?
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_OVERWRITE)) {
-			$copy = $page;
-			$page->delete();
-			$copy->write();
-			$page = $copy;
-		}
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_DUPLICATE)) {
-			$page = $page->duplicate(true);
-		}		
-		if($repeatImport && ($strategy === ExternalContentTransformer::DS_SKIP)) {
-			return;
+			if($strategy === ExternalContentTransformer::DS_SKIP) {
+				return;
+			}	
 		}
 		return $page;
 	}
