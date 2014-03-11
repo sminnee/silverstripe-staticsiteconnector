@@ -262,17 +262,20 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 	
 	/**
-	 * Process incoming content according to CMS, user-inputted duplication strategy.
+	 * Process incoming content according to CMS user-inputted duplication strategy.
 	 * 
-	 * @param string $dataType
+	 * @param string $pageType
 	 * @param string $strategy
-	 * @param type $item
-	 * @return boolean | $page File
-	 * @todo add tests
+	 * @param StaticSiteContentItem $item
+	 * @param string $baseUrl
+	 * @param SiteTree $parentObject
+	 * @return boolean | $page SiteTree
+	 * @todo Add tests
 	 */
-	protected function processStrategy($dataType, $strategy, $item) {
-		// Check if file already imported, then decide what to do depending on strategy
-		$existing = File::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+	protected function processStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
+		// Is the file already imported?
+		$baseUrl = rtrim($baseUrl, '/');
+		$existing = $dataType::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
 		
 		/* 
 		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
@@ -282,32 +285,23 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		if(SapphireTest::is_running_test()) {
 			$existing = new $dataType(array());
 		}
-		
 		if($existing) {
-			if(get_class($existing) !== $dataType) {
-				$existing->ClassName = $dataType;
-				$existing->write();
-			}
-			if($existing && $existing->exists()) {
+			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
+				// "Overwrite" == Update
 				$file = $existing;
+				$file->ParentID = $existing->ParentID;
+			}
+			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+				$file = $existing->duplicate(false);
+				$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
+			}
+			else {
+				return false;
 			}
 		}
 		else {
 			$file = new $dataType(array());
-			$file->write();
-		}
-		
-		// Which user-selected duplication strategy?
-		if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-			$clone = clone $file;
-			$file->delete();
-			$file = $clone;
-		}
-		if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
-			$file = $file->duplicate(true);
-		}		
-		if($strategy === ExternalContentTransformer::DS_SKIP) {
-			return;
+			$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $file;
 	}	

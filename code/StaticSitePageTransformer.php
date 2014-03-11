@@ -150,9 +150,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @param string $strategy
 	 * @param StaticSiteContentItem $item
 	 * @param string $baseUrl
+	 * @param SiteTree $parentObject
 	 * @return boolean | $page SiteTree
-	 * @todo 
-	 * - add tests
+	 * @todo Add tests
 	 */
 	protected function processStrategy($pageType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the page already imported?
