@@ -104,9 +104,7 @@ class StaticSiteContentExtractor extends Object {
 		}
 
 		$output = array();
-
 		foreach($selectorMap as $fieldName => $extractionRules) {
-
 			if(!is_array($extractionRules)) {
 				$extractionRules = array($extractionRules);
 			}
@@ -143,7 +141,7 @@ class StaticSiteContentExtractor extends Object {
 
 				// We found a match, select that one and ignore any other selectors
 				$output[$fieldName] = $extractionRule;
-				$output[$fieldName]['content'] = $content;
+				$output[$fieldName]['content'] = $content;				
 				break;
 			}
 		}

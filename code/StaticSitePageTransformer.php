@@ -28,7 +28,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * Generic function called by \ExternalContentImporter
 	 * 
 	 * @param type $item
-	 * @param type $parentObject
+	 * @param SiteTree $parentObject
 	 * @param string $strategy
 	 * @return boolean|\StaticSiteTransformResult
 	 * @throws Exception
@@ -53,7 +53,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 
 		// Sleep for 100ms to reduce load on the remote server
-		usleep(100*1000);
+		usleep(100*1000);		
 
 		// Extract content from the page
 		$contentFields = $this->getContentFieldsAndSelectors($item);
@@ -86,7 +86,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$pageType = $schema->DataType;
 
 		if(!$pageType) {
-			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
@@ -100,14 +100,14 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
 		$page->ParentID = $parentObject ? $parentObject->ID : 1; // Default to Home
-
-		foreach($contentFields as $k => $v) {
+		
+		foreach($contentFields as $property => $map) {
 			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
-			if($v['content']) {
-				$page->$k = $v['content'];
-			}			
+			if(!empty($map['content'])) {
+				$page->$property = $map['content'];
+			}
 		}
-
+		
 		$page->writeToStage('Stage');
 		$page->publish('Stage', 'Live');
 
@@ -132,14 +132,13 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$importRules = $importSchema->getImportRules();
 
  		// Extract from the remote page based on those rules
-		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);
+		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);			
 
 		return $contentExtractor->extractMapAndSelectors($importRules, $item);
 	}
 	
 	/**
-	 * Process incoming content according to CMS, user-inputted duplication strategy.
-	 * Performs no writes.
+	 * Process incoming content according to CMS user-inputted duplication strategy.
 	 * 
 	 * @param string $pageType
 	 * @param string $strategy
@@ -150,21 +149,22 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	protected function processStrategy($pageType, $strategy, $item, $baseUrl) {
 		// Is the page already imported?
+		$baseUrl = rtrim($baseUrl, '/');
 		$existing = $pageType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
-		$page = new $pageType(array());
 		if($existing) {
-			// Which user-selected duplication strategy?
 			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-				$clone = clone $existing;
-				$existing->delete();
-				$page = $clone;				
+				// Overwrite == "Update"
+				$page = $existing;
 			}
-			if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
+			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
 				$page = $existing->duplicate(false);
 			}
-			if($strategy === ExternalContentTransformer::DS_SKIP) {
-				return;
-			}	
+			else {
+				return false;
+			}
+		}
+		else {
+			$page = new $pageType(array());
 		}
 		return $page;
 	}
