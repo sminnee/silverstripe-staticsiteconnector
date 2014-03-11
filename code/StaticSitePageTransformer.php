@@ -153,7 +153,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @return boolean | $page SiteTree
 	 * @todo 
 	 * - add tests
-	 * - If "overwrite" is used after "duplicate", parent ID's get confused
 	 */
 	protected function processStrategy($pageType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the page already imported?
