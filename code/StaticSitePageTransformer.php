@@ -162,7 +162,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
 				// "Overwrite" == Update
 				$page = $existing;
-				$page->ParentID = isset($existing->ParentID) ? $existing->ParentID : ($parentObject ? $parentObject->ID : self::$parent_id);
+				$page->ParentID = $existing->ParentID;
 			}
 			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
 				$page = $existing->duplicate(false);
