@@ -8,6 +8,12 @@
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSitePageTransformer implements ExternalContentTransformer {
+	
+	/**
+	 *
+	 * @var number
+	 */
+	protected static $parent_id = 1; // Default to home
 
 	/**
 	 * Holds the StaticSiteUtils object on construct
@@ -63,7 +69,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$contentFields['Title'] = array('content' => $item->Name);
 		}
 
-		// Default value for URL segment
+		// Default value for URLSegment
 		if(empty($contentFields['URLSegment'])) {
 			$urlSegment = str_replace('/','', $item->Name);
 			$urlSegment = preg_replace('/\.[^.]*$/','',$urlSegment);
@@ -76,6 +82,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$contentFields['Content'] = array('content' => 'dummy');
 		}
 
+		// Get a user-defined schema suited to this URL and Mime
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
 			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL,$item->ProcessedMIME);
@@ -92,14 +99,13 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$page = $this->processStrategy($pageType, $strategy, $item, $source->BaseUrl)) {
+		if(!$page = $this->processStrategy($pageType, $strategy, $item, $source->BaseUrl, $parentObject)) {
 			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 		
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
-		$page->ParentID = $parentObject ? $parentObject->ID : 1; // Default to Home
 		
 		foreach($contentFields as $property => $map) {
 			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
@@ -142,22 +148,26 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * 
 	 * @param string $pageType
 	 * @param string $strategy
-	 * @param type $item
+	 * @param StaticSiteContentItem $item
 	 * @param string $baseUrl
 	 * @return boolean | $page SiteTree
-	 * @todo add tests
+	 * @todo 
+	 * - add tests
+	 * - If "overwrite" is used after "duplicate", parent ID's get confused
 	 */
-	protected function processStrategy($pageType, $strategy, $item, $baseUrl) {
+	protected function processStrategy($pageType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the page already imported?
 		$baseUrl = rtrim($baseUrl, '/');
 		$existing = $pageType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
 		if($existing) {
 			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-				// Overwrite == "Update"
+				// "Overwrite" == Update
 				$page = $existing;
+				$page->ParentID = isset($existing->ParentID) ? $existing->ParentID : ($parentObject ? $parentObject->ID : self::$parent_id);
 			}
 			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
 				$page = $existing->duplicate(false);
+				$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 			}
 			else {
 				return false;
@@ -165,6 +175,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 		else {
 			$page = new $pageType(array());
+			$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $page;
 	}
