@@ -7,7 +7,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 	
 	/**
 	 * 
-	 * @return false
+	 * @return void
 	 */
 	public function __construct() {
 		$this->contentTransforms['sitetree'] = new StaticSitePageTransformer();
@@ -16,7 +16,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 
 	/**
 	 * 
-	 * @param type $item
+	 * @param StaticSiteContentItem $item
 	 * @return string
 	 */
 	public function getExternalType($item) {

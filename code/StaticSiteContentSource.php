@@ -230,7 +230,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 	}
 
 	/**
-	 * Fetch an appropriate schema for a given URL and/or Mime-Type. If no matches are found, boolean false is returned
+	 * Fetch an appropriate schema for a given URL and/or Mime-Type. 
+	 * If no matches are found, boolean false is returned.
 	 *
 	 * @param string $absoluteURL
 	 * @param string $mimeType (Optional)
@@ -239,7 +240,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	public function getSchemaForURL($absoluteURL, $mimeType = null) {
 		$mimeType = StaticSiteMimeProcessor::cleanse($mimeType);
 		// Ensure the "Priority" setting is respected
-		$schemas = $this->Schemas()->sort('Order','ASC');
+		$schemas = $this->Schemas()->sort('Order');
 		foreach($schemas as $i => $schema) {
 			$schemaCanParseURL = $this->schemaCanParseURL($schema, $absoluteURL);
 			$schemaMimeTypes = StaticSiteMimeProcessor::get_mimetypes_from_text($schema->MimeTypes);

@@ -169,6 +169,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 				$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 			}
 			else {
+				// Deals-to "skip" and no selection
 				return false;
 			}
 		}

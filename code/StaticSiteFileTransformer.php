@@ -17,6 +17,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 * @var \StaticSiteUtils
 	 */
 	protected $utils;
+	
+	/**
+	 *
+	 * @var number
+	 */
+	protected static $parent_id = 0;
 
 	/**
 	 * Set this by using the yml config system
@@ -104,7 +110,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$file = $this->processStrategy($dataType, $strategy, $item)) {
+		if(!$file = $this->processStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
 			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
@@ -275,7 +281,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	protected function processStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the file already imported?
 		$baseUrl = rtrim($baseUrl, '/');
-		$existing = $dataType::get()->filter('StaticSiteURL', $item->AbsoluteURL)->first();
+		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
 		
 		/* 
 		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
@@ -285,6 +291,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		if(SapphireTest::is_running_test()) {
 			$existing = new $dataType(array());
 		}
+		
 		if($existing) {
 			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
 				// "Overwrite" == Update
@@ -296,6 +303,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 				$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 			}
 			else {
+				// Deals-to "skip" and no selection
 				return false;
 			}
 		}
