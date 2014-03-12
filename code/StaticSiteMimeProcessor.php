@@ -32,9 +32,9 @@ class StaticSiteMimeProcessor extends Object {
 	 * Used to represent matching content or all associated mimes if no type is passed.
 	 *
 	 * @param $ssType one of: SiteTree, File, Image
-	 * @return array $mimes
+	 * @return boolean | array $mimes
 	 */
-	public static function get_mime_for_ss_type($SSType=null) {
+	public static function get_mime_for_ss_type($SSType = null) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
 		$ssTypeMimeMap = self::ss_type_to_suffix_map();
 
@@ -51,15 +51,17 @@ class StaticSiteMimeProcessor extends Object {
 
 		foreach($httpMimeTypes as $mimeKey => $mimeType) {
 			// SiteTree
-			if(in_array($mimeKey,$ssTypeMimeMap['sitetree'])) {
+			if(in_array($mimeKey, $ssTypeMimeMap['sitetree'])) {
 				$mimes['sitetree'][] = $mimeType;
 			}
 			// File
-			if(in_array($mimeKey,$ssTypeMimeMap['file'])) {
+			if(in_array($mimeKey, $ssTypeMimeMap['file'])) {
+				// Separate treatment for csv which can either be text/plain (official) or text/csv
+				$mimeType = ($mimeKey == 'csv' ? 'text/csv' : $mimeType);
 				$mimes['file'][] = $mimeType;
 			}
 			// Image
-			if(in_array($mimeKey,$ssTypeMimeMap['image'])) {
+			if(in_array($mimeKey, $ssTypeMimeMap['image'])) {
 				$mimes['image'][] = $mimeType;
 			}
 		}
@@ -75,24 +77,29 @@ class StaticSiteMimeProcessor extends Object {
 	}
 
 	/**
-	 * Return a mapping of SS types (File, SiteTree etc) to suitable file-extensions out of the File class
+	 * Return a mapping of SS types (File, SiteTree etc) to suitable file-extensions 
+	 * out of the File class.
 	 *
 	 * @param string $SSType
 	 * @return array
 	 */
 	public static function ss_type_to_suffix_map($SSType = null) {
 		$mimeCategories = singleton('File')->config()->app_categories;
+		
 		/*
-		 * Imported files and images are going to passed through to Upload#load() and checked aginst File::$app_categories so use this method to
-		 * filter in calls to DataObject#validate()
+		 * Imported files and images are going to be passed through to Upload#load() 
+		 * and checked aginst File::$app_categories so use this method to
+		 * filter calls to DataObject#validate()
 		 */
+		
 		// Get SilverStripe supported SiteTree-ish mime categories
-		$mimeKeysForSiteTree = array('html','htm','xhtml');
+		$mimeKeysForSiteTree = array('html', 'htm', 'xhtml');
+		
 		// Get SilverStripe supported File-ish mime categories
 		// File contains values of $mimeKeysForSiteTree which we don't want
 		$mimeKeysForFile = array_merge(
-			array_splice($mimeCategories['doc'],14,2),
-			array_splice($mimeCategories['doc'],0,11)
+			array_splice($mimeCategories['doc'], 14, 2),
+			array_splice($mimeCategories['doc'], 0, 11)
 		);
 		
 		// Get SilverStripe supported Image-ish mime categories
@@ -106,7 +113,7 @@ class StaticSiteMimeProcessor extends Object {
 		if($SSType) {	
 			$SSType = strtolower($SSType);
 			// Only support specific classes
-			if(!in_array(strtolower($SSType), array_keys($mimes))) {
+			if(!in_array(strtolower($SSType), array_keys($mimeCategories))) {
 				return false;
 			}			
 			return $map[$key];
@@ -132,7 +139,7 @@ class StaticSiteMimeProcessor extends Object {
 	public static function ext_to_mime_compare($ext, $mime, $fix = false) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
 		$mimeCategories = singleton('File')->config()->app_categories;
-		list($ext,$mime) = array(strtolower($ext),strtolower($mime));
+		list($ext, $mime) = array(strtolower($ext), strtolower($mime));
 		$notAuthoratative = !isset($httpMimeTypes[$ext]);					// We've found ourselves a weird extension
 		$notMatch = (!$notAuthoratative && $httpMimeTypes[$ext] !== $mime);	// No match found for passed extension in our ext=>mime mapping from config
 		if($notAuthoratative || $notMatch) {
@@ -143,8 +150,8 @@ class StaticSiteMimeProcessor extends Object {
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
 			foreach($coreExts as $coreExt) {
 				// Make sure we check the correct category so we don't find a match for ms-excel in the image \File category (.cel) !!
-				$isFile = in_array($coreExt,$mimeCategories['doc']) && singleton(__CLASS__)->isOfFile($mime);		// dirty
-				$isImge = in_array($coreExt,$mimeCategories['image']) && singleton(__CLASS__)->isOfImage($mime);	// more dirt
+				$isFile = in_array($coreExt, $mimeCategories['doc']) && singleton(__CLASS__)->isOfFile($mime);		// dirty
+				$isImge = in_array($coreExt, $mimeCategories['image']) && singleton(__CLASS__)->isOfImage($mime);	// more dirt
 				if(($isFile || $isImge) && stristr($mime,$coreExt) !== false) {
 					// "Manually" force "jpg" as the file-suffix to be returned
 					return $coreExt == 'jpeg' ? 'jpg' : $coreExt;
@@ -163,7 +170,7 @@ class StaticSiteMimeProcessor extends Object {
 	 * @return array - returns an array of mimetypes
 	 */
 	public static function get_mimetypes_from_text($mimeTypes) {
-		$mimes = preg_split("#[\r\n\s,]+#",trim($mimeTypes));
+		$mimes = preg_split("#[\r\n\s,]+#", trim($mimeTypes));
 		$_mimes = array();
 		foreach($mimes as $mimeType) {
 			// clean 'em up a little
@@ -196,7 +203,7 @@ class StaticSiteMimeProcessor extends Object {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime,self::get_mime_for_ss_type('image'))) {
+			if(in_array($mime, self::get_mime_for_ss_type('image'))) {
 				return true;
 			}
 		}
@@ -214,7 +221,7 @@ class StaticSiteMimeProcessor extends Object {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime,self::get_mime_for_ss_type('file'))) {
+			if(in_array($mime, self::get_mime_for_ss_type('file'))) {
 				return true;
 			}
 		}
@@ -232,7 +239,7 @@ class StaticSiteMimeProcessor extends Object {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime,self::get_mime_for_ss_type('sitetree'))) {
+			if(in_array($mime, self::get_mime_for_ss_type('sitetree'))) {
 				return true;
 			}
 		}

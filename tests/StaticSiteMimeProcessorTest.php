@@ -126,6 +126,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 	public function testGetMimeForSSTypeFile() {
 		$this->assertContains('text/plain', StaticSiteMimeProcessor::get_mime_for_ss_type('File'));
 		$this->assertContains('text/plain', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
+		$this->assertContains('text/csv', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
 		$this->assertContains('application/pdf', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
 		$this->assertContains('application/msword', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
 		$this->assertNotContains('text/html', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
