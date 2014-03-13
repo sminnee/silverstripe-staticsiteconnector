@@ -74,6 +74,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var StaticSiteContentSource
 	 */
 	protected $contentSource = null;
+	
+	/**
+	 * Holds the StaticSiteUtils object on construct
+	 * 
+	 * @var StaticSiteUtils
+	 */
+	protected $utils;	
 
 	/**
 	 * Starts the task
@@ -82,8 +89,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return null | void
 	 */
 	public function run($request) {
-		// Load the logging file name from configuration settings in mysite/_config/config.yml
-		self::$log_file = Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file');
+		
+		$this->utils = singleton('StaticSiteUtils');
 
 		// Get the StaticSiteContentSource ID from the request parameters
 		$this->contentSourceID = $request->getVar('ID');
@@ -184,10 +191,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			// Log the progress
 			if ($task->verbose) {
-				$task->printMessage("# rewriting: \"{$urlInput}\"");
-				if ($fragment != '') $task->printMessage(" - fragment: \"{$fragment}\"");
-				$task->printMessage(" - page-key: \"{$pageMapKey}\"");
-				$task->printMessage(" - file-key: \"{$fileMapKey}\"");
+				$task->printMessage("# rewriting: \"$urlInput\"");
+				if ($fragment != '') {
+					$task->printMessage(" - fragment: \"$fragment\"");
+				}
+				$task->printMessage(" - page-key: \"$pageMapKey\"");
+				$task->printMessage(" - file-key: \"$fileMapKey\"");
 			}
 
 			// Rewrite SiteTree links by replacing the phpQuery processed Page-URL with a SiteTree shortcode
@@ -287,7 +296,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 
 	/**
-	 * Prints notices and warnings and aggregates them into two lists for later analysis, depending on $level and whether you're using the CLI or a browser
+	 * Prints notices and warnings and aggregates them into two lists for later analysis, 
+	 * depending on $level and whether you're using the CLI or a browser to run the task.
 	 *
 	 * @param string $message The message to log
 	 * @param string $level The log level, e.g. NOTICE or WARNING
@@ -295,9 +305,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printMessage($message, $level=null, $url=null) {
-		if ($url) $url = '(' . $url . ')';
-		if ($level) $level = '[' . $level .']';
-		if (Director::is_cli()) {
+		if($url) {
+			$url = '(' . $url . ')';
+		}
+		if($level) {
+			$level = '[' . $level .']';
+		}
+		if(Director::is_cli()) {
 			echo "{$level} {$message} {$url}" . PHP_EOL;
 		}
 		else {
@@ -305,7 +319,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		}
 /*
  * Commented logic allowed comprehensive and detailed information to be logged for quality debugging.
- * It is commented for now, as it is simple way too slow for imports comprising 1000s of URLs
+ * It is commented for now, as it is way too slow for imports comprising 1000s of URLs
  */
 		
 // @todo find a more intelligent way of matching the $page->field (See WARNING below)
@@ -340,32 +354,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function writeFailedRewrites() {
-		if ($this->isLoggingEnabled()) {
-			$logFail = implode(PHP_EOL,$this->listFailedRewrites);
-			$header = 'Failures: ('.date('d/m/Y H:i:s').')'.PHP_EOL.PHP_EOL;
-			foreach ($this->countFailureTypes() as $label => $count) {
-				$header .= FormField::name_to_label($label).': '.$count.PHP_EOL;
-			}
-			$logData = $header.PHP_EOL.$logFail.PHP_EOL;
-			file_put_contents(self::$log_file, $logData);
+		$logFail = implode(PHP_EOL, $this->listFailedRewrites);
+		$header = 'Failures: (' . date('d/m/Y H:i:s') . ')' . PHP_EOL . PHP_EOL;
+		
+		foreach ($this->countFailureTypes() as $label => $count) {
+			$header .= FormField::name_to_label($label) . ': '. $count . PHP_EOL;
 		}
-	}
-
-	/**
-	 * Check if the log filename is set and the file is writable by the webserver user
-	 *
-	 * @param boolean $showErrors Show an error message if the check fails, true by defualt
-	 * @return boolean true The log filename is valid and writable
-	 */
-	public function isLoggingEnabled($showErrors = true) {
-		if (!self::$log_file|| !is_writable(self::$log_file)) {
-			if ($showErrors) {
-				echo PHP_EOL;
-				$this->printMessage(__CLASS__.' - $log_file is not defined or not writeable.');
-			}
-			return false;
-		}	
-		return true;
+		
+		$logData = $header . PHP_EOL . $logFail . PHP_EOL;
+		$this->utils->log($logData);
 	}
 
 	/**
@@ -474,20 +471,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printTaskInfo() {
-		$this->printMessage("Please choose a Content Source ID, e.g. ?ID=(number)",'WARNING');
+		$msgFragment = Director::is_cli() ? 'ID=(number)' : '?ID=(number)';
+		$this->printMessage("Please choose a Content Source ID e.g. $msgFragment", 'WARNING');
+		$newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
 		// List the content sources to prompt user for selection
 		if ($contentSources = StaticSiteContentSource::get()) {
 			foreach ($contentSources as $i => $contentSource) {
 				$this->printMessage('dev/tasks/'.__CLASS__.' ID=' . $contentSource->ID, 'ID: '. $contentSource->ID . ' | ' . $contentSource->Name);
 			}
-			print PHP_EOL;
+			echo $newLine;
 			$this->printMessage('Command Line Options: ');
-			$this->printMessage('SHOW=pages - show the contents of the pages map');
-			$this->printMessage('SHOW=files - show the contents of the files map');
-			$this->printMessage('DIE=1 - stop processing after showing map contents');
-			$this->printMessage('VERBOSE=1 - show debug information while processing');
-			print PHP_EOL;
+			$this->printMessage('SHOW=pages - show the contents of the pages map.');
+			$this->printMessage('SHOW=files - show the contents of the files map.');
+			$this->printMessage('DIE=1 - stop processing after showing map contents.');
+			$this->printMessage('VERBOSE=1 - show debug information while processing.');
+			echo $newLine;
 		}
 	}
 }

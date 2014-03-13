@@ -57,10 +57,10 @@ class BadImportsReport extends SS_Report {
 		if(!$logFile || !file_exists($logFile)) {
 			return false;
 		}
-		return explode(PHP_EOL,file_get_contents($logFile));
+		return explode(PHP_EOL, file_get_contents($logFile));
 	}
 
-	/*
+	/**
 	 * Format the data as we'd like to see it in the presentational GridField
 	 * 
 	 * @return \ArrayList
@@ -88,8 +88,10 @@ class BadImportsReport extends SS_Report {
 			if(!isset($linkCount[$processed['ID']])) {
 				$linkCount[$processed['ID']] = 0;
 			}
+			
 			$linkCount[$processed['ID']] += 1;
 			$foundIn->Total = 1;
+			
 			if(!$list->find('ID', $processed['ID'])) {
 				$list->push($foundIn);
 			}
@@ -101,7 +103,7 @@ class BadImportsReport extends SS_Report {
 		return $list;
 	}
 
-	/*
+	/**
 	 * Post-process the text-based report - if available - line-by-line.
 	 * 
 	 * @param string $line
@@ -113,7 +115,7 @@ class BadImportsReport extends SS_Report {
 		$prefix = "Couldn't rewrite: ";
 		if(stristr($line, $prefix) !== false) {
 			$line = str_replace($prefix, '', $line);
-			if(preg_match("#($badSchemes)#i",$line)) {
+			if(preg_match("#($badSchemes)#i", $line)) {
 				return false;
 			}
 			$matches = array();
