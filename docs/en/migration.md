@@ -15,7 +15,7 @@
 
 	StaticSiteContentExtractor:
 	  curl_opts_proxy:
-	    hostname: 'gateway.cwp.govt.nz'
+	    hostname: 'my-gateway.co.nz'
 	    port: 8888
 
   * Protip #4: Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
