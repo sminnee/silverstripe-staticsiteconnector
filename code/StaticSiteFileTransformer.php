@@ -144,7 +144,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			return false;
 		}
 
-		rename($tmpPath, BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename);
+		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
+		rename($tmpPath, $filePath);
+		// Remove garbage tmp files if/when left lying around
+		if(file_exists($tmpPath)) {
+			unlink($tmpPath);
+		}
 	}
 
 	/**
@@ -171,7 +176,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 	/**
 	 * Build the properties required for a safely saved SS asset.
-	 * - Attempts to detect and fixup bad file-extensions based on Mime-Type
+	 * Attempts to detect and fixup bad file-extensions based on Mime-Type.
 	 *
 	 * @param \File $file
 	 * @param string $url
@@ -194,7 +199,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		 * '.zzz' not in framework/_config/mimetypes.yml and unlikely ever to be found in File, so fails gracefully.
 		 */
 		$dummy = 'unknown.zzz';
-		$origFilename = pathinfo($url,PATHINFO_FILENAME);
+		$origFilename = pathinfo($url, PATHINFO_FILENAME);
 		$origFilename = (mb_strlen($origFilename)>0 ? $origFilename : $dummy);
 
 		/*
@@ -207,7 +212,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		// Only attempt to define and append a new filename ($newExt) if $oldExt is invalid
 		$newExt = null;
-		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt,$mime,true)) {
+		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt, $mime, true)) {
 			$this->utils->log(" - WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
 			return false;
 		}
@@ -237,8 +242,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		 * FileNameFilter only removes leading dots, so pre-convert these.
 		 * @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
 		 */
-		$definitiveName = str_replace(".","-",$origFilename).'.'.$useExtension;
-		$definitiveFilename = str_replace(".","-",$fileName).'.'.$useExtension;
+		$definitiveName = str_replace(".", "-", $origFilename).'.'.$useExtension;
+		$definitiveFilename = str_replace(".", "-", $fileName).'.'.$useExtension;
 
 		// Complete construction of $file.
 		$file->setName($definitiveName);
