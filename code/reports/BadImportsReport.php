@@ -12,7 +12,7 @@ class BadImportsReport extends SS_Report {
 	 * @return string
 	 */
 	public function title() {
-		return "Pages with links to unimported URLs";
+		return "Unimported URLs Report";
 	}
 
 	/*
@@ -31,11 +31,11 @@ class BadImportsReport extends SS_Report {
 	public function columns() {
 		return array(
 			'Title' => array(
-				'title' => 'Title',
+				'title' => 'Imported page title',
 				'formatting' => '<a href=\"/admin/pages/edit/show/".$ID."\" title=\"See the page\">$Title</a>'
 			),
 			'ID' => array(
-				'title' => 'Page ID',
+				'title' => 'Imported page ID',
 				'formatting' => '".$ID."'
 			),
 			'Total' => array(
@@ -43,7 +43,7 @@ class BadImportsReport extends SS_Report {
 				'formatting' => '".$Total."'
 			),			
 			'Created' => array(
-				'title' => 'Import date',
+				'title' => 'Date imported',
 				'casting' => 'SS_Datetime->Full'
 			)		
 		);
@@ -130,5 +130,16 @@ class BadImportsReport extends SS_Report {
 			);
 		}
 		return false;
+	}
+	
+	/**
+	 * Only show the report in the CMS Reports admin, if there's a source file of data.
+	 * 
+	 * @param Member $member
+	 * @return boolean
+	 */
+	public function canView($member = null) {
+		$data = $this->getBadImportData();
+		return ($data && count($data) >1);
 	}
 }

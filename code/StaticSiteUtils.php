@@ -14,10 +14,11 @@ class StaticSiteUtils {
 	 * @param string $message
 	 * @param string $filename
 	 * @param string $mime
+	 * @param string $class Optional. The class passed to Config to find the value for $log_file.
 	 * @return null | void
 	 */
-	public function log($message, $filename=null, $mime=null) {
-		$logFile = Config::inst()->get('StaticSiteContentExtractor', 'log_file');
+	public function log($message, $filename=null, $mime=null, $class = 'StaticSiteContentExtractor') {
+		$logFile = Config::inst()->get($class, 'log_file');
 		if(!$logFile) {
 			return;
 		}

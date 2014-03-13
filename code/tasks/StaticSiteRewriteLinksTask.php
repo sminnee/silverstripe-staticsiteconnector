@@ -1,38 +1,46 @@
 <?php
 /**
- * Rewrite all links in content imported via staticsiteimporter.
- * All rewrite failures are written to a logfile (@see $log_file)
- * This log is used as the data source for the CMS report \BadImportsReport. This is because it's only after attempting to rewrite links that we're
- * able to anaylse why some failed. Often we find the reason is that the URL being re-written hasn't actually made it through the import process.
+ * Rewrite all links in content imported via StaticSiteImporter.
+ * 
+ * All rewrite failures are written to a logfile (@see $log_file).
+ * This log is used as the data source for the CMS report {@link BadImportsReport}.
+ * This is because it's only after attempting to rewrite links that we're
+ * able to analyse why some failed. Often we find the reason is that the URL being re-written 
+ * hasn't actually made it 100% through the import process.
  *
  * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
- *
  * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
- * @todo add a link in the CMS UI that users can select to run this task @see https://github.com/phptek/silverstripe-staticsiteconnector/tree/feature/link-rewrite-ui
+ * @todo See ExternalContentImporter::importChildren() for the call to $this->extend('onAfterImport')
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
 	/**
-	 * Where the log file is cached
+	 * Set this by using the yml config system
 	 *
-	 * The $log_file is loaded from config settings, see: mysite/_config/config.yml, e.g.
-  	 *   StaticSiteRewriteLinksTask
-  	 *    log_file: '/var/tmp/rewrite_links.log'
-	 *
-	 * Note: you need to manually create the log file and make sure the webservice can write to it, e.g. (via cli)
-	 *   touch /var/tmp/rewrite_links.log && chmod 766 /var/tmp/rewrite_links.log
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
 	 *
 	 * @var string
 	 */
-	public static $log_file = null;
+	private static $log_file = null;
 
 	/**
-	 * An inexhaustive list of non http(s) URI schemes which we don't want to try and convert/normalise
+	 * An inexhaustive list of non http(s) URI schemes which we don't want to try to normalise.
 	 *
 	 * @see http://en.wikipedia.org/wiki/URI_scheme
 	 * @var array
 	 */
-	public static $non_http_uri_schemes = array('mailto','tel','ftp','res','skype','ssh');
+	public static $non_http_uri_schemes = array(
+		'mailto',
+		'tel',
+		'ftp',
+		'res',
+		'skype',
+		'ssh'
+	);
 
 	/**
 	 * Set to true to enable verbose output of the rewriting progress, false by default
@@ -80,7 +88,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * 
 	 * @var StaticSiteUtils
 	 */
-	protected $utils;	
+	protected $utils;
+	
+	/**
+	 * 
+	 * @var string
+	 */
+	protected $newLine = '';
 
 	/**
 	 * Starts the task
@@ -91,6 +105,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function run($request) {
 		
 		$this->utils = singleton('StaticSiteUtils');
+		$this->newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
 		// Get the StaticSiteContentSource ID from the request parameters
 		$this->contentSourceID = $request->getVar('ID');
@@ -101,7 +116,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 		// Load the content source using the ID number
 		if(!$this->contentSource = StaticSiteContentSource::get()->byID($this->contentSourceID)) {
-			$this->printMessage("No StaticSiteContentSource found via ID: ".$this->contentSourceID,'WARNING');
+			$this->printMessage("No StaticSiteContentSource found via ID: ".$this->contentSourceID, 'WARNING');
 			return;
 		}
 
@@ -155,9 +170,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			$urlInput = $url;
 			$fragment = "";
-			if (strpos($url,'#') !== false) {
-				list($url,$fragment) = explode('#', $url, 2);
-				$fragment = '#'.$fragment;
+			if(strpos($url,'#') !== false) {
+				list($url, $fragment) = explode('#', $url, 2);
+				$fragment = 'ID='.$fragment;
 			}
 
 			/*
@@ -203,9 +218,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			// @todo replace with $pageLookup->each(function() {}) ...faster??
 			// @todo put into own method
 			$pageLookup = $pageLookup->toArray();
-			if (isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
+			if(isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
 				$output = '[sitetree_link,id='.$siteTreeID.']' . $fragment;
-				if ($task->verbose) {
+				if($task->verbose) {
 					$task->printMessage("+ found: SiteTree ID#".$siteTreeID, null, $output);
 				}
 				return $output;
@@ -215,10 +230,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			//@todo replace with $fileLookup->each(function() {}) ...faster??
 			//@todo put into own method
 			$fileLookup = $fileLookup->toArray();
-			if (isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
-				if ($file = DataObject::get_by_id('File', $fileID)) {
+			if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
+				if($file = DataObject::get_by_id('File', $fileID)) {
 					$output = $file->RelativeLink();
-					if ($task->verbose) {
+					if($task->verbose) {
 						$task->printMessage("+ found: File ID#{$file->ID}", null, $output);
 					}
 					return $output;
@@ -228,10 +243,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 
-			$task->printMessage('Rewriter failed', 'WARNING', $urlInput);
+			$task->printMessage('Rewriter failed ', 'WARNING', $urlInput);
 
 			// log the failed rewrite
-			array_push($task->listFailedRewrites, "Couldn't rewrite: " . $urlInput . " Found in Page: " . $task->currentPageTitle . " [ID#" . $task->currentPageID . "]");
+			$segment01 = "Couldn't rewrite: " . $urlInput;
+			$segment02 = " Found in Page: " . $task->currentPageTitle;
+			$segment03 = " [ID#" . $task->currentPageID . "]";
+			array_push($task->listFailedRewrites, $segment01 . $segment02 . $segment03);
 
 			// return the url unchanged
 			return $urlInput;
@@ -240,18 +258,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Perform rewriting
 		$changedFields = 0;
 		foreach ($pages as $i => $page) {
-			// Set these so the rewriter task can log some page context for the urls that could not be rewriten
+			// Set these so the rewriter task can log some page context for the urls that could not be re-writen
 			$this->currentPageTitle = $page->Title;
 			$this->currentPageID = $page->ID;
 
 			$url = $page->StaticSiteURL;
 			$modified = false;
-			if ($this->verbose) {
+			if($this->verbose) {
 				$this->printMessage('------------------------------------------------');
 				$this->printMessage($page->URLSegment, $i);
 			}
+			
 			// Get the schema that matches the page's url
-			if ($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
+			if($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
 				// Get fields to process
 				$fields = array();
 				foreach($schema->ImportRules() as $rule) {
@@ -265,13 +284,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$this->printMessage("No schema found for {$page->URLSegment}",'WARNING');
 				continue;
 			}
-			foreach ($fields as $field) {
+			
+			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
+				
 				// if rewrite succeeded the content returned differs from the input
 				if($newContent != $page->$field) {
-					$newContent = str_replace(array('%5B','%5D'),array('[',']'),$newContent);
+					$newContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
 					$changedFields++;
-					$this->printMessage("Changed {$field} on \"{$page->Title}\" (#{$page->ID})",'NOTICE');
+					$this->printMessage("Changed $field on \"{$page->Title}\" (#{$page->ID})", 'NOTICE');
 					$page->$field = $newContent;
 					$modified = true;
 				}
@@ -282,7 +303,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * Default is to just write the page with its changes, but not publish.
 			 * If the 'PUBLISH' flag is passed, then publish it. (Beats a CMS batch update for 100s of pages)
 			 */
-			if ($modified) {
+			if($modified) {
 				if($request->getVar('PUBLISH')) {
 					$page->doPublish();
 				}
@@ -291,7 +312,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 		}
-		$this->printMessage("Amended {$changedFields} content fields.",'NOTICE');
+		
+		$newLine = $this->newLine;
+		$this->printMessage("{$newLine}Complete.");
+		$this->printMessage("Amended $changedFields content fields.");
+		$msgNextSteps = " - 100% of links won't get fixed. It's recommended to run a 3rd party link-checker over your imported content.";
+		$msgSeeReport = " - Check the CMS \"".singleton('BadImportsReport')->title()."\" for a detailed rundown of what links failed and why.";
+		$this->printMessage("Tips:");
+		$this->printMessage("{$newLine}$msgNextSteps");
+		$this->printMessage($msgSeeReport);
+		
 		$this->writeFailedRewrites();
 	}
 
@@ -304,18 +334,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $url The url which was being re-written
 	 * @return void
 	 */
-	public function printMessage($message, $level=null, $url=null) {
-		if($url) {
-			$url = '(' . $url . ')';
-		}
-		if($level) {
-			$level = '[' . $level .']';
-		}
+	public function printMessage($message, $level = null, $url = null) {
+		$url = ($url ? '(' . $url . ') ' : '');
+		$level = ($level ? '[' . $level .'] ' : '');
 		if(Director::is_cli()) {
-			echo "{$level} {$message} {$url}" . PHP_EOL;
+			echo "$level$message$url" . PHP_EOL;
 		}
 		else {
-			echo "<p>{$level} {$message} {$url}</p>" . PHP_EOL;
+			echo "<p>$level$message$url</p>" . PHP_EOL;
 		}
 /*
  * Commented logic allowed comprehensive and detailed information to be logged for quality debugging.
@@ -349,20 +375,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 
 	/**
-	 * Write failed rewrites to a logfile for later analysis
+	 * Write failed rewrites to a logfile for later analysis.
+	 * Note: There is a CMS report generated from this data.
 	 *
+	 * @see {@link BadImportsReport}
 	 * @return void
 	 */
 	public function writeFailedRewrites() {
 		$logFail = implode(PHP_EOL, $this->listFailedRewrites);
-		$header = 'Failures: (' . date('d/m/Y H:i:s') . ')' . PHP_EOL . PHP_EOL;
+		$header = 'Imported link failure log: (' . date('d/m/Y H:i:s') . ')' . PHP_EOL . PHP_EOL;
 		
-		foreach ($this->countFailureTypes() as $label => $count) {
+		foreach($this->countFailureTypes() as $label => $count) {
 			$header .= FormField::name_to_label($label) . ': '. $count . PHP_EOL;
 		}
 		
 		$logData = $header . PHP_EOL . $logFail . PHP_EOL;
-		$this->utils->log($logData);
+		$this->utils->log($logData, null, null, __CLASS__);
 	}
 
 	/**
@@ -406,15 +434,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 
 	/**
-	 * Returns true if a URL is either:
-	 * i. an empty string
-	 * ii. a non-http scheme like an email link see: $non_http_uri_schemes
-	 * iii. a cms sitetree shortcode or and file/image asset path, e.g. [sitetree, 123] or assets/Images/logo.gif
-	 * iv. an absolute url, i.e. anything that beings with 'http'
- 	 *
- 	 * Note: $url originates from Imported content post-processed by phpQuery
-	 *
-	 * Example: $url = "/Style%20Library/MOT/Images/MoTivate_198-pixels.png"
+	 * Whether or not to ingore a URL. Returns true if a URL is either:
+	 * 
+	 *	- An empty string
+	 *	- A non-HTTP scheme like an email link see: $non_http_uri_schemes
+	 *	- A CMS sitetree shortcode or file/image asset path, e.g. [sitetree, 123] or assets/Images/logo.gif
+	 *	- An absolute url, i.e. anything that beings with 'http'
 	 *
 	 * @param string $url A URL
 	 * @return boolean True is the url can be ignored
@@ -422,34 +447,41 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function ignoreUrl($url) {
 		$url = trim($url);
 
-		// empty string
-		if (!strlen($url) > 0) {
-			if ($this->verbose) $this->printMessage("+ ignoring empty URL");
+		// Empty string
+		if(!strlen($url) >0) {
+			if($this->verbose) {
+				$this->printMessage("+ ignoring empty URL");
+			}
 			return true;
 		}
 
-		// not a http protocol
+		// Not an HTTP protocol
 		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
-		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#",$url));
-		if ($nonHTTPSchemes) {
-			if ($this->verbose) $this->printMessage("+ ignoring Non-HTTP URL: {$url}");
+		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#", $url));
+		if($nonHTTPSchemes) {
+			if($this->verbose) {
+				$this->printMessage("+ ignoring Non-HTTP URL: $url");
+			}
 			return true;
 		}
 
-		// has already been processed
-		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#",$url));
-		if ($alreadyRewritten) {
-			if ($this->verbose) $this->printMessage("+ ignoring CMS link: {$url}");
+		// Has already been processed
+		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#", $url));
+		if($alreadyRewritten) {
+			if ($this->verbose) {
+				$this->printMessage("+ ignoring CMS link: $url");
+			}
 			return true;
 		}
 
-		// is external or absolute url
-		$externalUrl = (substr($url,0,4) == 'http');
-		if ($externalUrl) {
-			if ($this->verbose) $this->printMessage("+ ignoring external url: {$url}");
+		// Is external or absolute url
+		$externalUrl = (substr($url, 0, 4) == 'http');
+		if($externalUrl) {
+			if($this->verbose) {
+				$this->printMessage("+ ignoring external url: {$url}");
+			}
 			return true;
 		}
-
 		return false;
 	}
 
@@ -473,19 +505,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function printTaskInfo() {
 		$msgFragment = Director::is_cli() ? 'ID=(number)' : '?ID=(number)';
 		$this->printMessage("Please choose a Content Source ID e.g. $msgFragment", 'WARNING');
-		$newLine = Director::is_cli() ? PHP_EOL : '<br/>';
+		$newLine = $this->newLine;
 
 		// List the content sources to prompt user for selection
-		if ($contentSources = StaticSiteContentSource::get()) {
-			foreach ($contentSources as $i => $contentSource) {
-				$this->printMessage('dev/tasks/'.__CLASS__.' ID=' . $contentSource->ID, 'ID: '. $contentSource->ID . ' | ' . $contentSource->Name);
+		if($contentSources = StaticSiteContentSource::get()) {
+			foreach($contentSources as $i => $contentSource) {
+				$this->printMessage($newLine.'Available content-sources:'.$newLine);
+				$this->printMessage("\tdev/tasks/".__CLASS__.' ID=' . $contentSource->ID);
 			}
 			echo $newLine;
-			$this->printMessage('Command Line Options: ');
-			$this->printMessage('SHOW=pages - show the contents of the pages map.');
-			$this->printMessage('SHOW=files - show the contents of the files map.');
-			$this->printMessage('DIE=1 - stop processing after showing map contents.');
-			$this->printMessage('VERBOSE=1 - show debug information while processing.');
+			if(Director::is_cli()) {
+				$this->printMessage('Available command line options: '.$newLine);
+				$this->printMessage("\tSHOW=pages \tPrint the contents of the pages map.");
+				$this->printMessage("\tSHOW=files \tPrint the contents of the files map.");
+				$this->printMessage("\tDIE=1 \t\tStop processing after showing map contents.");
+				$this->printMessage("\tVERBOSE=1 \tShow debug information while processing.");
+			}
 			echo $newLine;
 		}
 	}

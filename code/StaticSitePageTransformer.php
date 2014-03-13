@@ -21,6 +21,19 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @var StaticSiteUtils
 	 */
 	protected $utils;
+	
+	/**
+	 * Set this by using the yml config system
+	 *
+	 * Example:
+	 * <code>
+	 * StaticSiteContentExtractor:
+     *    log_file:  ../logs/import-log.txt
+	 * </code>
+	 *
+	 * @var string
+	 */
+	private static $log_file = null;	
 
 	/**
 	 * 

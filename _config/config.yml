@@ -1,0 +1,6 @@
+---
+Name: staticsiteconnectorconfig
+After: 'framework/*','cms/*'
+---
+StaticSiteRewriteLinksTask:
+  log_file: '/var/tmp/badlinks.log'
