@@ -5,10 +5,8 @@ Some are already registered as issues on Github, others are more in the "would l
 
 ## StaticSiteConnector Module Issues
 
-* BUG: The "Duplicate" duplication strategy doesn't work as expected (asset isn't renamed 'blah-2.png') when importing pages and files
 * BUG: Bug when using no "www." prefix in basic setup, URLs appear as t.nz for example in "urls" cache file
 * BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
-* BUG: tmp files seem to be created for text/html pages when a server error occurs e.g. 400 fix this or write a task that can clean these up
 * BUG: Hide the "Schema" field on each import rule CMS UI, it is not needed.
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
