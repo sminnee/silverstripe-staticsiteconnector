@@ -85,8 +85,8 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		// Default value for URLSegment
 		if(empty($contentFields['URLSegment'])) {
 			$urlSegment = str_replace('/', '', $item->Name);
-			$urlSegment = preg_replace('/\.[^.]*$/', '', $urlSegment);
-			$urlSegment = str_replace('.', '-', $item->Name);
+			$urlSegment = preg_replace('#\.[^.]*$#', '', $urlSegment);
+			$urlSegment = str_replace('.', '-', $urlSegment);
 			$contentFields['URLSegment'] = array('content' => $urlSegment);		
 		}
 		
@@ -98,7 +98,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		// Get a user-defined schema suited to this URL and Mime
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL,$item->ProcessedMIME);
+			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
@@ -128,7 +128,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 		
 		$page->writeToStage('Stage');
-		$page->publish('Stage', 'Live');
+		$page->doPublish();
 
 		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 

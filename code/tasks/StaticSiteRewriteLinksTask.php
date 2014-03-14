@@ -397,8 +397,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$logFail = implode(PHP_EOL, $this->listFailedRewrites);
 		$header = 'Imported link failure log: (' . date('d/m/Y H:i:s') . ')' . PHP_EOL . PHP_EOL;
 		
-		foreach($this->countFailureTypes() as $label => $count) {
-			$header .= FormField::name_to_label($label) . ': '. $count . PHP_EOL;
+		foreach($this->countFailureTypes() as $label => $payload) {
+			$desc = $payload['desc'] ? " ({$payload['desc']})" : '';
+			$header .= FormField::name_to_label($label) . ': '. $payload['count'] . $desc . PHP_EOL;
 		}
 		
 		$logData = $header . PHP_EOL . $logFail . PHP_EOL;
@@ -416,20 +417,20 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function countFailureTypes() {
 		$rawData = $this->listFailedRewrites;
-		$nonHTTPSchemes = implode('|',self::$non_http_uri_schemes);
+		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
 		$countNotBase = 0;
 		$countNotSchm = 0;
 		$countNoImprt = 0;
 		$countJunkUrl = 0;
 		foreach($rawData as $url) {
-			$url = trim(str_replace("Couldn't rewrite: ",'',$url));
+			$url = trim(str_replace("Couldn't rewrite: ", '', $url));
 			if(stristr($url,'http')) {
 				++$countNotBase;
 			}
-			else if(preg_match("#($nonHTTPSchemes):#",$url)) {
+			else if(preg_match("#($nonHTTPSchemes):#", $url)) {
 				++$countNotSchm;
 			}
-			else if(preg_match("#^/#",$url)) {
+			else if(preg_match("#^/#", $url)) {
 				++$countNoImprt;
 			}
 			else {
@@ -437,11 +438,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 		}
 		return array(
-			'Total failures'	=> count($rawData),
-			'ThirdParty'		=> $countNotBase,
-			'BadScheme'			=> $countNotSchm,
-			'BadImport'			=> $countNoImprt,
-			'Junk'				=> $countJunkUrl
+			'Total failures'	=> array('count' => count($rawData), 'desc' => ''),
+			'ThirdParty'		=> array('count' => $countNotBase, 'desc' => 'Links to external websites'),
+			'BadScheme'			=> array('count' => $countNotSchm, 'desc' => 'Links with bad scheme'),
+			'BadImport'			=> array('count' => $countNoImprt, 'desc' => 'Links to pages that were not imported'),
+			'Junk'				=> array('count' => $countJunkUrl, 'desc' => 'Junk links')
 		);
 	}
 
