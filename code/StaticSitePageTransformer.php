@@ -46,10 +46,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	/**
 	 * Generic function called by \ExternalContentImporter
 	 * 
-	 * @param type $item
+	 * @param ExternalContentItem $item
 	 * @param SiteTree $parentObject
 	 * @param string $strategy
-	 * @return boolean|\StaticSiteTransformResult
+	 * @return boolean | StaticSiteTransformResult
 	 * @throws Exception
 	 */
 	public function transform($item, $parentObject, $strategy) {
@@ -84,10 +84,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		// Default value for URLSegment
 		if(empty($contentFields['URLSegment'])) {
-			$urlSegment = str_replace('/', '', $item->Name);
-			$urlSegment = preg_replace('#\.[^.]*$#', '', $urlSegment);
-			$urlSegment = str_replace('.', '-', $urlSegment);
-			$contentFields['URLSegment'] = array('content' => $urlSegment);		
+			// $item->Name comes from StaticSiteContentItem::init() and is a URL
+			$name = ($item->Name == '/' ? 'import-home' : $item->Name);
+			$urlSegment = preg_replace('#\.[^.]*$#', '', $name); // Lose file-extensions e.g .html
+			$contentFields['URLSegment'] = array('content' => $urlSegment);	
 		}
 		
 		// Default value for Content (Useful for during unit-testing)
