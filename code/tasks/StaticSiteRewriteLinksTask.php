@@ -9,7 +9,6 @@
  * hasn't actually made it 100% through the import process.
  *
  * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
- * @todo Add ORM StaticSiteURL field NULL update to import process @see \StaticSiteUtils#resetStaticSiteURLs()
  * @todo See ExternalContentImporter::importChildren() for the call to $this->extend('onAfterImport')
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
@@ -170,7 +169,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$urlProcessor = singleton($this->contentSource->UrlProcessor);
 		}
 
-		// Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, passed through the variable: $callback($url)
+		/*
+		 * Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, 
+		 * passed through the variable: $callback($url)
+		 */
 		$rewriter = new StaticSiteLinkRewriter(function($url) use(
 				$pageLookup, $fileLookup, $baseURL, $task, $urlProcessor, $request) {
 
@@ -184,7 +186,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			/*
 			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import
 			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
-			 * The "mime" key is an expected argument but it's not actually used within this task but defaults to the page mime type
+			 * The "mime" key is an expected argument but it's not actually used within this task.
+			 * It defaults to the page mime type.
 			 */
 			if($urlProcessor) {
 				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
@@ -221,7 +224,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			// Rewrite SiteTree links by replacing the phpQuery processed Page-URL with a SiteTree shortcode
-			// @todo replace with $pageLookup->each(function() {}) ...faster??
 			// @todo put into own method
 			$pageLookup = $pageLookup->toArray();
 			if(isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
@@ -233,7 +235,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			// Rewrite Asset links by replacing phpQuery processed Asset-URLs with the appropriate asset-filename
-			//@todo replace with $fileLookup->each(function() {}) ...faster??
 			//@todo put into own method
 			$fileLookup = $fileLookup->toArray();
 			if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
@@ -264,12 +265,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Perform rewriting
 		$changedFields = 0;
 		foreach($pages as $i => $page) {
-			// Set these so the rewriter task can log some page context for the urls that could not be re-writen
+			/*
+			 * Set these so the rewriter task can log some page context 
+			 * for the urls that could not be re-writen.
+			 */
 			$this->currentPageTitle = $page->Title;
 			$this->currentPageID = $page->ID;
 
 			$url = $page->StaticSiteURL;
-			$modified = false;
 			if($this->verbose) {
 				$this->printMessage('------------------------------------------------');
 				$this->printMessage($page->URLSegment, $i);
@@ -291,14 +294,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				continue;
 			}
 			
-			
+			$modified = false;
 			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
 				// square-brackets are converted somewhere upstream..
 				$newContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
 				
-				// if rewrite succeeded the content returned differs from the input
-				if($newContent !=$page->$field) {
+				// if rewrite succeeded, then the content returned differs from the input
+				if($newContent != $page->$field) {
 					$changedFields++;
 					$this->printMessage("Changed field: '$field' on page: \"{$page->Title}\" (ID: {$page->ID})", 'NOTICE');
 					$page->$field = $newContent;

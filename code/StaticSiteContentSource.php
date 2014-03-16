@@ -115,15 +115,12 @@ class StaticSiteContentSource extends ExternalContentSource {
 			case "Not started":
 				$crawlButtonText = _t('StaticSiteContentSource.CRAWL_SITE', 'Crawl site');
 				break;
-
 			case "Partial":
 				$crawlButtonText = _t('StaticSiteContentSource.RESUME_CRAWLING', 'Resume crawling');
 				break;
-
 			case "Complete":
 				$crawlButtonText = _t('StaticSiteContentSource.RECRAWL_SITE', 'Re-crawl site');
 				break;
-
 			default:
 				throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
 		}
