@@ -4,8 +4,9 @@
  * Helper class for rewriting links using phpQuery.
  * 
  * @package staticsiteconnector
- * @see {@link StaticSiteFileTransformer}
+ * @see {@link StaticSiteRewriteLinksTask}
  * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 
 // We need phpQuery
@@ -14,6 +15,7 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
 class StaticSiteLinkRewriter {
 
 	/**
+	 * Simple map of tags to count as "linkable"
 	 * 
 	 * @var array 
 	 */
@@ -23,6 +25,7 @@ class StaticSiteLinkRewriter {
 	);
 
 	/**
+	 * The callback function to run over each link.
 	 * 
 	 * @var Object
 	 */

@@ -9,6 +9,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: Hide the "Schema" field on each import rule CMS UI, it is not needed.
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered.
+* TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
@@ -17,7 +18,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * ENHANCEMENT: Add a default to "Select how duplicate items should be handled" radio buttons field
 * ENHANCEMENT: Add a schema export function for use in between similar sites hosted on multi/subsite CMS systems like SilverStripe and eZPublish for example.
 * ENHANCEMENT: Add an onAfterImport() (see external-content module) to StaticSiteImporter and run StaticSiteRewriteLinksTask from it, based on CMS UI user-selection (default is 'yes')
-* ENHANCEMENT: Add CMS UI to allow fine-grained control of the sleep time between server hits. See usleep() in StaticSite*Transformer#transform()
+* ENHANCEMENT: Add CMS UI to allow fine-grained control of the sleep time between server hits. See usleep() in StaticSite#Transformer#transform()
 
 ## External Content Module Issues:
 

@@ -17,38 +17,40 @@ class StaticSiteUtils {
 	 * @param string $class Optional. The class passed to Config to find the value for $log_file.
 	 * @return null | void
 	 */
-	public function log($message, $filename=null, $mime=null, $class = 'StaticSiteContentExtractor') {
+	public function log($message, $filename = null, $mime = null, $class = 'StaticSiteContentExtractor') {
 		$logFile = Config::inst()->get($class, 'log_file');
 		if(!$logFile) {
 			return;
 		}
 
 		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-			$message = $message.($filename?' '.$filename:'').($mime?' ('.$mime.')':'');
+			$message = $message . ($filename ? ' ' . $filename : '') . ($mime ? ' (' . $mime . ')' : '');
 			error_log($message. PHP_EOL, 3, $logFile);
 		}
 	}
 
 	/**
-	 * It is possible for there to be several imported "sub-trees" in the CMS' SiteTree at the same time.
-	 * If we run the StaticSiteLinkRewrite task, it will clumsily look for _all_ imported content with a non-NULL 
-	 * SiteTree.StaticSiteURL field value.
-	 *
-	 * Reset the SiteTree.StaticSiteURL field to NULL of _all_ matching imported-content _before_ 
-	 * running the link-rewrite task to ensure it's unique to the current import.
+	 * Resets all items' StaticSiteURL fields to NULL, If there are multiple imported sub-trees, 
+	 * this will clear the first-import's StaticSiteURL's, so the rewrite task will only attempt
+	 * to rewrite links to content with a StaticSiteURL value of NOT NULL.
+	 * 
 	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content 
-	 * to link-to, when multiple imports have been made.
+	 * to look in for content to link-to, when multiple imports have been made. In this case it will clumsily 
+	 * look for _all_ imported content with a non-NULL SiteTree.StaticSiteURL field value.
 	 *
 	 * @param string $url
 	 * @param number $sourceID
-	 * @param string $SSType SiteTree, File, Image
+	 * @param string $class SiteTree, File or Image
+	 * @todo Figure out how to ensure these updates happen for the correct item, not _all_ items..
+	 * @todo this is only useful when there are multiple subtrees. Detect if there are, and only run if there are >=2.
+	 * @todo The match may be failing becuase StaticSiteURLs contain http(s)?://(www\.)?.
 	 * @return void
 	 */
-	public function resetStaticSiteURLs($url, $sourceID, $SSType) {
+	public function resetStaticSiteURLs($url, $sourceID, $class) {
 		$url = trim($url);
-		$resetItems = DataObject::get($SSType)->filter(array(
-			'StaticSiteURL' => $url,
-			'StaticSiteContentSourceID' => $sourceID
+		$resetItems = DataObject::get($class)->filter(array(
+			'StaticSiteContentSourceID' => $sourceID,
+			'StaticSiteURL' => $url
 		));
 		
 		foreach($resetItems as $item) {

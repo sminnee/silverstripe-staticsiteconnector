@@ -645,7 +645,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	 * @return string
 	 */
 	public function getTitle() {
-		return ($this->FieldName)?$this->FieldName:$this->ID;
+		return ($this->FieldName) ? $this->FieldName : $this->ID;
 	}
 
 	/**
@@ -653,7 +653,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	 * @return string
 	 */	
 	public function getAbsoluteURL() {
-		return ($this->URLSegment)?$this->URLSegment:$this->Filename;
+		return ($this->URLSegment) ? $this->URLSegment : $this->Filename;
 	}
 
 	/**

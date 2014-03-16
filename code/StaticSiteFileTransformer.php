@@ -76,7 +76,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$source = $item->getSource();
 
 		// Cleanup StaticSiteURLs to prevent StaticSiteRewriteLinksTask getting confused
-		$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
+		// $this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
 
 		// Sleep for 10ms to reduce load on the remote server
 		usleep(10*1000);
@@ -239,8 +239,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		 * FileNameFilter only removes leading dots, so pre-convert these.
 		 * @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
 		 */
-		$definitiveName = str_replace(".", "-", $origFilename).'.'.$useExtension;
-		$definitiveFilename = str_replace(".", "-", $fileName).'.'.$useExtension;
+		$definitiveName = str_replace(".", "-", $origFilename) . '.' . $useExtension;
+		$definitiveFilename = str_replace(".", "-", $fileName). '.' . $useExtension;
 
 		// Complete construction of $file.
 		$file->setName($definitiveName);
@@ -283,7 +283,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	protected function processStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the file already imported?
 		$baseUrl = rtrim($baseUrl, '/');
-		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
+		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl . $item->getExternalId())->first();
 		
 		/* 
 		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
