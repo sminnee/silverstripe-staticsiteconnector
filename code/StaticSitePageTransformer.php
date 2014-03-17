@@ -14,6 +14,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @var number
 	 */
 	protected static $parent_id = 1; // Default to home
+	
+	/**
+	 * 
+	 * @var string
+	 */
+	public static $import_root = 'import-home';
 
 	/**
 	 * Holds the StaticSiteUtils object on construct
@@ -82,7 +88,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		// Default value for URLSegment
 		if(empty($contentFields['URLSegment'])) {
 			// $item->Name comes from StaticSiteContentItem::init() and is a URL
-			$name = ($item->Name == '/' ? 'import-home' : $item->Name);
+			$name = ($item->Name == '/' ? self::$import_root : $item->Name);
 			$urlSegment = preg_replace('#\.[^.]*$#', '', $name); // Lose file-extensions e.g .html
 			$contentFields['URLSegment'] = array('content' => $urlSegment);	
 		}

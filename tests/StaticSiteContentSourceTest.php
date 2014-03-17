@@ -1,5 +1,8 @@
 <?php
 /**
+ * 
+ * @author Russell Michell <russell@silverstripe.com>
+ * @package staticsiteconnector
  * @todo add test for SchemaCanParseUrl()
  */
 class StaticSiteContentSourceTest extends SapphireTest {

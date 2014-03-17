@@ -1,22 +1,26 @@
-h<?php
+<?php
 /**
- * @author Science Ninjas <scienceninjas@silverstripe.com>
- * @todo fixup buildFileProperties() and commented assertions in testBuildFileProperties()
+ * 
+ * @author Russell Michell <russell@silverstripe.com>
+ * @package staticsiteconnector
+ * @todo fixup buildFileProperties() and comment assertions in testBuildFileProperties()
  * @todo Duplicating files during test-runs doesn't work so testTransformForURLIsInCacheIsFileStrategyDuplicate() fails if uncommented
  */
 class StaticSiteFileTransformerTest extends SapphireTest {
 
-	/*
+	/**
+	 * 
 	 * @var \StaticSiteFileTransformer
 	 */
 	protected $transformer;
 	
-	/*
+	/**
+	 * 
 	 * @var string
 	 */
 	public static $fixture_file = 'StaticSiteContentSource.yml';
 	
-	/*
+	/**
 	 * Setup
 	 * 
 	 * @return void
@@ -123,7 +127,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
 		// Because we're trying to duplicate (copy), SilverStripe should rename the file with a '-2' suffix
-		//$this->assertEquals('assets/Import/Images/test-2-2.png', $fileStrategyDup->file->Filename);	
+		$this->assertEquals('assets/Import/Images/test-2-2.png', $fileStrategyDup->file->Filename);	
 	}	
 	
 	/**

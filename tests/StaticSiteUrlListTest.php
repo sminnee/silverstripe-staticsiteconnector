@@ -1,5 +1,7 @@
 <?php
 /**
+ * 
+ * @author Russell Michell <russell@silverstripe.com>
  * @package staticsiteconnector
  */
 
@@ -16,7 +18,6 @@ class StaticSiteUrlListTest extends SapphireTest {
 	/**
 	 * @var array
 	 * Array of URL tests designed for exercising the StaticSiteURLProcessor_DropExtensions URL Processor
-	 * @todo put these in the fixture file
 	 */
 	public static $url_patterns_for_drop_extensions = array(
 		'/test/contains-double-slash-normal-and-encoded/%2ftest' => '/test/contains-double-slash-normal-and-encoded/test',
@@ -82,7 +83,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	/*
 	 * Perhaps the most key method in the whole class: handleDocumentInfo() extends the default functionality of
 	 * PHPCrawler and decides what gets parsed and what doesn't, according to the file info returned by the host webserver.
-	 * handleDocumentInfo then goes on to called StaticSiteUrlList#saveURLs(), addURL(), addAbsoluteURL() etc which all have
+	 * handleDocumentInfo() then calls StaticSiteUrlList#saveURLs(), addURL(), addAbsoluteURL() etc which all have
 	 * a URL processing function. 	
 	 */
 	
@@ -96,7 +97,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 		$urlList->setUrlProcessor(new StaticSiteURLProcessor_DropExtensions());
 		$crawler = new StaticSiteCrawler($urlList);
 		
-		foreach(self::$url_patterns_for_drop_extensions as $urlFromServer=>$expected) {
+		foreach(self::$url_patterns_for_drop_extensions as $urlFromServer => $expected) {
 			$urlFromServer = 'http://localhost'.$urlFromServer;
 			foreach(self::$server_codes_bad as $code) {
 				// Fake a server response into a PHPCrawlerDocumentInfo object

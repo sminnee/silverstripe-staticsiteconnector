@@ -1,7 +1,8 @@
 <?php
 /**
- * @author Science Ninjas <scienceninjas@silverstripe.com>
- * @todo At the moment we're only using the StaticSiteURLProcessor_DropExtensions URL strategy. Add fixtures for the others
+ * 
+ * @author Russell Michell <russell@silverstripe.com>
+ * @package staticsiteconnector
  */
 class StaticSitePageTransformerTest extends SapphireTest {
 
@@ -22,13 +23,12 @@ class StaticSitePageTransformerTest extends SapphireTest {
 	 */
 	public function setUp() {
 		$this->transformer = singleton('StaticSitePageTransformer');
-		parent::setUp();	
+		parent::setUp();
 	}
 	
 	/**
 	 * Test what happens when we define what we want to do when encountering duplicates, but:
 	 * - The URL isn't found in the cache
-	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
 	 * 
 	 * @todo employ some proper mocking
 	 */
@@ -46,7 +46,6 @@ class StaticSitePageTransformerTest extends SapphireTest {
 	/**
 	 * Test what happens when we define what we want to do when encountering duplicates, but:
 	 * - The URL represents a Mime-Type which doesn't match our transformer
-	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
 	 * 
 	 * @todo employ some proper mocking
 	 */
@@ -65,27 +64,27 @@ class StaticSitePageTransformerTest extends SapphireTest {
 	 * Test what happens when we define what we want to do when encountering duplicates, and:
 	 * - The URL represents a Mime-Type which does match our transformer
 	 * - We don't want to overwrite duplicates, we want to duplicate (!!)
-	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
 	 * 
 	 * @todo employ some proper mocking
 	 */
-	public function testTransformForURLIsInCacheIsPageStrategyDuplicate() {
+	public function testTransformForURLIsInCacheIsPageStrategyDuplicate() {		
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
 		$item = new StaticSiteContentItem($source, '/test-about-the-team');
 		$item->source = $source;
 		
 		// Pass becuase we do want to perform something on the URL
-		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyDup = $this->transformer->transform($item, null, 'Duplicate'));
+		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyDup1 = $this->transformer->transform($item, null, 'Duplicate'));
+		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyDup2 = $this->transformer->transform($item, null, 'Duplicate'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting a result
-		$this->assertEquals('test-about-the-team-2', $pageStrategyDup->page->URLSegment);
+		$this->assertEquals('test-about-the-team', $pageStrategyDup1->page->URLSegment);
+		$this->assertEquals('test-about-the-team-2', $pageStrategyDup2->page->URLSegment);
 	}
 	
 	/**
 	 * Test what happens when we define what we want to do when encountering duplicates, and:
 	 * - The URL represents a Mime-Type which does match our transformer
 	 * - We want to overwrite duplicates
-	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
 	 * 
 	 * @todo employ some proper mocking
 	 * @todo the "overwrite" strategy doesn't actually work. Need to talk with implementing dev as to why not
@@ -96,17 +95,18 @@ class StaticSitePageTransformerTest extends SapphireTest {
 		$item->source = $source;
 		
 		// Pass becuase we do want to perform something on the URL
-		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyOvr = $this->transformer->transform($item, null, 'Overwrite'));
+		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyOvr1 = $this->transformer->transform($item, null, 'Overwrite'));
+		$this->assertInstanceOf('StaticSiteTransformResult', $pageStrategyOvr2 = $this->transformer->transform($item, null, 'Overwrite'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting a result
-		$this->assertEquals('test-i-am-page-5', $pageStrategyOvr->page->URLSegment);
+		$this->assertEquals('test-i-am-page-5', $pageStrategyOvr1->page->URLSegment);
+		$this->assertEquals('test-i-am-page-5', $pageStrategyOvr2->page->URLSegment);
 	}
 	
 	/* 
 	 * Test what happens when we define what we want to do when encountering duplicates, and:
 	 * - The URL represents a Mime-Type which does match our transformer
 	 * - We don't want to do anything with duplicates, just skip them
-	 * - "We" in this case is this test which is basically "pretending" to be PHPCrawler
 	 * 
 	 * @todo employ some proper mocking
 	 */
@@ -115,7 +115,8 @@ class StaticSitePageTransformerTest extends SapphireTest {
 		$item = new StaticSiteContentItem($source, '/test-about-the-team');
 		$item->source = $source;
 		
-		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
+		// Pass becuase we do want to perform something on the URL
+		$this->assertInstanceOf('StaticSiteTransformResult', $this->transformer->transform($item, null, 'Skip'));
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
 	}	
 }

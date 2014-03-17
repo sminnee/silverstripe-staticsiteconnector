@@ -97,7 +97,7 @@ Page:
     Title: 'Test page 4'
     URLSegment: 'test-about-the-team'
     Content: 'Some test page content'
-    StaticSiteURL: '/test-about-the-team'    
+    StaticSiteURL: '/test-about-the-team'
   testPage5:
     Title: 'Test page 5'
     URLSegment: 'test-i-am-page-5'

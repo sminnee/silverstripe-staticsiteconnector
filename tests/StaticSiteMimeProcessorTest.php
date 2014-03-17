@@ -1,8 +1,9 @@
 <?php
 /**
  * Tests aspects of Mime-Type pre/post-processing.
- *
- * @author Russell Michell 2013 <russell@silverstripe.com>
+ * 
+ * @author Russell Michell <russell@silverstripe.com>
+ * @package staticsiteconnector
  */
 class StaticSiteMimeProcessorTest extends SapphireTest {
 	
