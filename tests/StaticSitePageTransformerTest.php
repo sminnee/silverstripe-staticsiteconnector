@@ -54,7 +54,7 @@ class StaticSitePageTransformerTest extends SapphireTest {
 		$item = new StaticSiteContentItem($source, '/images/test.png');
 		$item->source = $source;
 		
-		// Fail becuase we're using a StaticSitePageTransformer on a Mime-Type of image/png
+		// Fail becuase we're using a SiteTree/Page transformer on an image
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
 		$this->assertFalse($this->transformer->transform($item, null, 'Duplicate'));
 		$this->assertFalse($this->transformer->transform($item, null, 'Overwrite'));
@@ -63,7 +63,7 @@ class StaticSitePageTransformerTest extends SapphireTest {
 	/**
 	 * Test what happens when we define what we want to do when encountering duplicates, and:
 	 * - The URL represents a Mime-Type which does match our transformer
-	 * - We don't want to overwrite duplicates, we want to duplicate (!!)
+	 * - We don't want to overwrite duplicates, we want to duplicate them.
 	 * 
 	 * @todo employ some proper mocking
 	 */

@@ -124,7 +124,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 
 	/**
-	 *
+	 * Write the file to the DB and Filesystem, skipping \Upload.
+	 * Will fix any stale tmp images lying around.
+	 * 
 	 * @param File $file
 	 * @param StaticSiteContentItem $item
 	 * @param StaticSiteContentSource $source
@@ -136,17 +138,19 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$file->StaticSiteURL = $item->AbsoluteURL;
 
 		if(!$file->write()) {
-			$uploadedFileMsg = "!! {$item->AbsoluteURL} not imported";
-			$this->utils->log($uploadedFileMsg , $file->Filename, $item->ProcessedMIME);
+			$this->utils->log(" - Not imported: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
+		
+		// Move the file to new location in assets
 		rename($tmpPath, $filePath);
+		
 		// Remove garbage tmp files if/when left lying around
 		if(file_exists($tmpPath)) {
 			unlink($tmpPath);
-		}
+		}		
 	}
 
 	/**
@@ -283,18 +287,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	protected function processStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
 		// Is the file already imported?
 		$baseUrl = rtrim($baseUrl, '/');
-		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl . $item->getExternalId())->first();
-		
-		/* 
-		 * It's difficult to properly mock situations where there's a pre-existing file in tests. 
-		 * becuase SapphireTest invokes tearDown() on a per method basis, so we fake it for now.
-		 * @todo use SapphireTest::clearFixture() ??
-		 */
-		if(SapphireTest::is_running_test()) {
-			$existing = new $dataType(array());
-		}
-		
-		if($existing) {
+		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
+		if($existing) {		
 			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
 				// "Overwrite" == Update
 				$file = $existing;
