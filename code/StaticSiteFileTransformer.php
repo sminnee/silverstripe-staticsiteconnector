@@ -36,6 +36,18 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 * @var string
 	 */
 	private static $log_file = null;
+	
+	/**
+	 * The name to use for the folder beneath assets/Import to cache imported images.
+	 * @var static
+	 */
+	public static $file_import_dir_image = 'Images';
+	
+	/**
+	 * The name to use for the folder beneath assets/Import to cache imported documents.
+	 * @var static
+	 */
+	public static $file_import_dir_file = 'Documents';	
 
 	/**
 	 * @var StaticSiteMimeProcessor
@@ -76,7 +88,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$source = $item->getSource();
 
 		// Cleanup StaticSiteURLs to prevent StaticSiteRewriteLinksTask getting confused
-		// $this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
+		//$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
 
 		// Sleep for 10ms to reduce load on the remote server
 		usleep(10*1000);
@@ -176,19 +188,19 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	}
 
 	/**
-	 * Build the properties required for a safely saved SS asset.
-	 * Attempts to detect and fixup bad file-extensions based on Mime-Type.
+	 * Build the properties required for a safely saved SilverStripe asset.
+	 * Attempts to detect and fix bad file-extensions based on the available Mime-Type.
 	 *
 	 * @param \File $file
 	 * @param string $url
 	 * @param string $mime	Used to fixup bad-file extensions or filenames with no 
-	 *						extension but which _do_ have a Mime-Type
+	 *						extension but which _do_ have a Mime-Type.
 	 * @return mixed (boolean | \File)
 	 */
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
-		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage?'Images':'Documents');
+		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
 		$parentFolder = Folder::find_or_make($path);
 		if(!file_exists(ASSETS_PATH . DIRECTORY_SEPARATOR . $path)) {
 			$this->utils->log(" - WARNING: File-import directory wasn't created.", $url, $mime);
@@ -206,31 +218,31 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		/*
 		 * Some assets come through with no file-extension, which confuses SS's File logic
 		 * and throws errors causing the import to stop dead.
-		 * Check for these and add (guess) an appropriate file-extension if possible.
+		 * Check for this and guess an appropriate file-extension, if possible.
 		 */
-		$oldExt = pathinfo($url,PATHINFO_EXTENSION);
+		$oldExt = pathinfo($url, PATHINFO_EXTENSION);
 		$extIsValid = in_array($oldExt, $this->getSSExtensions());
 
 		// Only attempt to define and append a new filename ($newExt) if $oldExt is invalid
 		$newExt = null;
 		if(!$extIsValid && !$newExt = $this->mimeProcessor->ext_to_mime_compare($oldExt, $mime, true)) {
-			$this->utils->log(" - WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
+			$this->utils->log(" - WARNING: Bad file-extension: \"$oldExt\". Unable to assign new file-extension (#1) - DISCARDING.", $url, $mime);
 			return false;
 		}
 		else if($newExt) {
 			$useExtension = $newExt;
-			$logMessagePt1 = "NOTICE: Bad file-extension: \"{$oldExt}\". Assigned new file-extension: \"{$newExt}\" based on MimeType.";
-			$logMessagePt2 = PHP_EOL."\t - FROM: \"{$url}\"".PHP_EOL."\t - TO: \"{$origFilename}.{$newExt}\"";
-			$this->utils->log(' - '.$logMessagePt1.$logMessagePt2, '', $mime);
+			$logMessagePt1 = "NOTICE: Bad file-extension: \"$oldExt\". Assigned new file-extension: \"$newExt\" based on MimeType.";
+			$logMessagePt2 = PHP_EOL."\t - FROM: \"$url\"".PHP_EOL."\t - TO: \"$origFilename.$newExt\"";
+			$this->utils->log(' - ' . $logMessagePt1 . $logMessagePt2, '', $mime);
 		}
 		else {
 			// If $newExt didn't work, check again if $oldExt is invalid and just lose it.
 			if(!$extIsValid) {
-				$this->utils->log(" - WARNING: Bad file-extension: \"{$oldExt}\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
+				$this->utils->log(" - WARNING: Bad file-extension: \"$oldExt\". Unable to assign new file-extension (#2) - DISCARDING.", $url, $mime);
 				return false;
 			}
 			if($this->mimeProcessor->isBadMimeType($mime)) {
-				$this->utils->log(" - WARNING: Bad mime-type: \"{$mime}\". Unable to assign new file-extension (#3) - DISCARDING.", $url, $mime);
+				$this->utils->log(" - WARNING: Bad mime-type: \"$mime\". Unable to assign new file-extension (#3) - DISCARDING.", $url, $mime);
 				return false;
 			}
 			$useExtension = $oldExt;

@@ -179,8 +179,9 @@ class StaticSiteContentExtractor extends Object {
 			// Get the full html for this element
 			if($outerHTML) {
 				$result .= $this->getOuterHTML($element);
-			// Get the value of a attribute
-			} elseif($attribute && trim($element->getAttribute($attribute))) {
+			} 
+			// Get the value of an attribute
+			elseif($attribute && trim($element->getAttribute($attribute))) {
 				$result .= ($element->getAttribute($attribute)).PHP_EOL;
 			}
 		}

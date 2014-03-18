@@ -61,22 +61,11 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'image/fake');
 		$this->assertFalse($processFile);
 		
-		/*
-		 * @todo (See issues.md)
-		 * Some files can come through with apparently multiple suffixes. buildFileProperties() will not currently auto-fix these
-		 */
+		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/gif');
+		$this->assertEquals('assets/Import/Images/test-png.gif', $processFile->Filename);	 
 		
-//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/png');
-//		$this->assertEquals('assets/Import/Documents/test.png', $processFile->Filename);		 
-//		
-//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/png');
-//		$this->assertEquals('assets/Import/Documents/test.png', $processFile->Filename);
-		
-//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/gif');
-//		$this->assertEquals('assets/Import/Documents/test.gif', $processFile->Filename);		 
-//		
-//		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/gif');
-//		$this->assertEquals('assets/Import/Documents/test.gif', $processFile->Filename);			
+		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/png');
+		$this->assertEquals('assets/Import/Images/test-gif.png', $processFile->Filename);		
 	}
 	
 	/**

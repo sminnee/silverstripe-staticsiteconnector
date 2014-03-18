@@ -1,7 +1,6 @@
 <?php
 /**
- * 
- * Basic class for utility methods unsuited to any other class
+ * Basic class for utility methods unsuited to any other class.
  * 
  * @package staticsiteconnector
  * @author Russell Michell <russell@silverstripe.com>
@@ -30,32 +29,37 @@ class StaticSiteUtils {
 	}
 
 	/**
-	 * Resets all items' StaticSiteURL fields to NULL, If there are multiple imported sub-trees, 
-	 * this will clear the first-import's StaticSiteURL's, so the rewrite task will only attempt
-	 * to rewrite links to content with a StaticSiteURL value of NOT NULL.
+	 * Should be called prior to import. It resets all items' StaticSiteURL fields to NULL. 
+	 * If there are multiple imported sub-trees, this will clear the first-import's StaticSiteURL 
+	 * so the rewrite task only rewrites links to content with a StaticSiteURL value that is NOT NULL.
 	 * 
-	 * If this isn't done, it isn't clear to the RewriteLinks BuildTask, which tree of imported content 
-	 * to look in for content to link-to, when multiple imports have been made. In this case it will clumsily 
-	 * look for _all_ imported content with a non-NULL SiteTree.StaticSiteURL field value.
+	 * If this isn't done, it isn't clear to the RewriteLinks task, which tree of imported content 
+	 * to look in for content to link-to when multiple imports from the same legacy site have been made. 
+	 * In this case it will clumsily look for _all_ imported content with a matching SiteTree.StaticSiteURL.
 	 *
-	 * @param string $url
-	 * @param number $sourceID
-	 * @param string $class SiteTree, File or Image
+	 * @param string $absoluteURL The Absolute URL as it looked when scraped from the legacy site.
+	 * @param number $sourceID The ID of the relevant StaticSiteContentSource
+	 * @param string $class 'SiteTree', 'File' or 'Image'
 	 * @todo Figure out how to ensure these updates happen for the correct item, not _all_ items..
 	 * @todo this is only useful when there are multiple subtrees. Detect if there are, and only run if there are >=2.
 	 * @todo The match may be failing becuase StaticSiteURLs contain http(s)?://(www\.)?.
 	 * @return void
 	 */
-	public function resetStaticSiteURLs($url, $sourceID, $class) {
-		$url = trim($url);
+	public function resetStaticSiteURLs($absoluteURL, $sourceID, $class) {
 		$resetItems = DataObject::get($class)->filter(array(
 			'StaticSiteContentSourceID' => $sourceID,
-			'StaticSiteURL' => $url
+			'StaticSiteURL' => $absoluteURL
 		));
 		
 		foreach($resetItems as $item) {
 			$item->StaticSiteURL = NULL;
-			$item->write();
+			if($class == 'SiteTree') {
+				$item->writeToStage('Stage');
+				$item->doPublish();
+			}
+			else {
+				$item->write();
+			}	
 		}
 	}
 

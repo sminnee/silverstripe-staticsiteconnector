@@ -55,7 +55,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse(StaticSiteMimeProcessor::ext_to_mime_compare('.png', 'unknown', false));		
 	}
 	
-	/*
+	/**
 	 * Tests isOfImage() with string mime-types
 	 */
 	public function testIsOfImageString() {
@@ -66,7 +66,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse($this->mimeProcessor->isOfImage('application/msword'));
 	}
 	
-	/*
+	/**
 	 * Tests isOfImage() with an array of mime-types
 	 */
 	public function testIsOfImageArray() {
@@ -74,7 +74,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse($this->mimeProcessor->isOfImage(self::$mime_types_document));
 	}	
 	
-	/*
+	/**
 	 * Tests isOfFile() with string mime-types
 	 */
 	public function testIsOfFileString() {
@@ -85,7 +85,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse($this->mimeProcessor->isOfFile('image/gif'));
 	}	
 	
-	/*
+	/**
 	 * Tests isOfFile() with array mime-types
 	 */
 	public function testIsOfFileArray() {
@@ -93,7 +93,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertTrue($this->mimeProcessor->isOfFile(self::$mime_types_document));
 	}
 	
-	/*
+	/**
 	 * Tests isOfHTML() with string mime-type
 	 */
 	public function testIsOfHTMLString() {
@@ -102,7 +102,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse($this->mimeProcessor->isOfHTML('image/png'));
 	}
 	
-	/*
+	/**
 	 * Test for bad mime-types
 	 */
 	public function testIsBadMime() {
@@ -117,7 +117,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertFalse($this->mimeProcessor->isBadMimeType('image/png'));
 	}	
 	
-	/*
+	/**
 	 * Tests get_mime_for_ss_type() for SiteTree
 	 */
 	public function testGetMimeForSSTypeSiteTree() {
@@ -128,7 +128,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertNotContains('image/jpeg', StaticSiteMimeProcessor::get_mime_for_ss_type('sitetree'));
 	}
 	
-	/*
+	/**
 	 * Tests get_mime_for_ss_type() for File
 	 */
 	public function testGetMimeForSSTypeFile() {
@@ -141,7 +141,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertNotContains('image/png', StaticSiteMimeProcessor::get_mime_for_ss_type('file'));
 	}	
 	
-	/*
+	/**
 	 * Tests get_mime_for_ss_type() for Image
 	 */
 	public function testGetMimeForSSTypeImage() {
@@ -154,7 +154,7 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		$this->assertContains('image/png', StaticSiteMimeProcessor::get_mime_for_ss_type('image'));
 	}	
 	
-	/*
+	/**
 	 * Tests get_mime_for_ss_type() for Unsupported SilverStripe core-classes
 	 */
 	public function testGetMimeForSSTypeUnsupported() {
