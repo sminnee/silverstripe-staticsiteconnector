@@ -11,6 +11,10 @@
  * .aspx extensions.  We don't want to include these in the content heirarchy.
  *
  * More sophisticated processing might be done to facilitate importing of less
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 interface StaticSiteUrlProcessor {
 

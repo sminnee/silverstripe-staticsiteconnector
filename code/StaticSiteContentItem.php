@@ -1,6 +1,10 @@
 <?php
 /**
  * Deals-to transforming imported SiteTree and File objects
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteContentItem extends ExternalContentItem {
 

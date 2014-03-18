@@ -2,8 +2,8 @@
 /**
  * URL transformer specific to SilverStripe's `SiteTree` class for use within the import functionality.
  *
- * @package staticsiteconnector
  * @see {@link StaticSiteFileTransformer}
+ * @package staticsiteconnector
  * @author Sam Minee <sam@silverstripe.com>
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  */

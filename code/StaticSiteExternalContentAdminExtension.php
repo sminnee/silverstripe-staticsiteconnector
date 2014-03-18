@@ -1,5 +1,9 @@
 <?php
-
+/**
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
+ */
 class StaticSiteExternalContentAdminExtension extends Extension {
 	
 	/**

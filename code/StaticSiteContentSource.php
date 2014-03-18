@@ -4,8 +4,14 @@
  * - Schemas
  * - Pages
  * - Files
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteContentSource extends ExternalContentSource {
+	
+	public $terseName = 'test';
 
 	/**
 	 *

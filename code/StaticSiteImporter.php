@@ -1,6 +1,9 @@
 <?php
 /**
  * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  * @see \ExternalContentImporter
  */
 class StaticSiteImporter extends ExternalContentImporter {

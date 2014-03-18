@@ -11,6 +11,10 @@ require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php"
  *
  * If the URL represents a file-based Mime-Type, a File object is created and the 
  * physical file it represents can then be post-processed and saved to the SS DB and F/S.
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteContentExtractor extends Object {
 

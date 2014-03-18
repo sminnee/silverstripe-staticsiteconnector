@@ -4,8 +4,8 @@
  * It subclasses TransformResult to allow dealing-to File objects also
  *
  * @package staticsiteconnector
- * @see {@link TransformResult}
  * @author Russell Michell <russell@silverstripe.com>
+ * @see {@link TransformResult}
  */
 class StaticSiteTransformResult extends TransformResult {
 	

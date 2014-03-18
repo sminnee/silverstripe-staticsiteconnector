@@ -4,6 +4,7 @@
  * 
  * @package staticsiteconnector
  * @author Russell Michell <russell@silverstripe.com>
+ * @todo Should these methods all be statics?
  */
 class StaticSiteUtils {
 
