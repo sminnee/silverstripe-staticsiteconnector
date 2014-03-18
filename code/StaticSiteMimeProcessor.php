@@ -1,11 +1,12 @@
 <?php
 /**
  * 
- * Utility class for Mime-Type pre/post-processing.
+ * Utility class for Mime-Type processing.
  *
- * @author Russell Michell 2013 <russell@silverstripe.com>
+ * @author Russell Michell <russell@silverstripe.com>
+ * @package staticsiteconnector
  */
-class StaticSiteMimeProcessor extends Object {
+class StaticSiteMimeProcessor {
 
 	/**
 	 *
@@ -18,7 +19,6 @@ class StaticSiteMimeProcessor extends Object {
 	 * @return void
 	 */
 	public function __construct() {
-		parent::__construct();
 		$args = func_get_args();
 		if(isset($args[0])) {
 			$mimeTypes = $args[0];

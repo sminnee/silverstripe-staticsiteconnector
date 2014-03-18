@@ -73,22 +73,22 @@ class StaticSiteContentSourceTest extends SapphireTest {
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsFile1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.pdf';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.pdf';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'application/pdf');
 		$this->assertInstanceOf('StaticSiteContentSource_ImportSchema', $schema);
-		$this->assertEquals('/assets/.*', $schema->AppliesTo);
+		$this->assertEquals('/graphics/.*', $schema->AppliesTo);
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		// But we "try it on" with a suffix of .jpg but a Mime-Type of application/pdf
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsFile1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.jpg';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.jpg';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'application/pdf');
 		$this->assertInstanceOf('StaticSiteContentSource_ImportSchema', $schema);
-		$this->assertEquals('/assets/.*', $schema->AppliesTo);		
+		$this->assertEquals('/graphics/.*', $schema->AppliesTo);		
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsFile1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.pdf';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.pdf';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'application/pdf');
 		$this->assertInstanceOf('StaticSiteContentSource_ImportSchema', $schema);
 		$this->assertEquals('1', $schema->Order);		
@@ -114,28 +114,28 @@ class StaticSiteContentSourceTest extends SapphireTest {
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsImage1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.png';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.png';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'image/png');
 		$this->assertInstanceOf('StaticSiteContentSource_ImportSchema', $schema);
-		$this->assertEquals('/assets/.*', $schema->AppliesTo);
+		$this->assertEquals('/graphics/.*', $schema->AppliesTo);
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		// But we "try it on" with a .jpg suffix and an image/png Mime-Type
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsImage1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.jpg';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.jpg';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'image/png');
 		$this->assertInstanceOf('StaticSiteContentSource_ImportSchema', $schema);
-		$this->assertEquals('/assets/.*', $schema->AppliesTo);		
+		$this->assertEquals('/graphics/.*', $schema->AppliesTo);		
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsImage1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.png';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.png';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'application/pdf');
 		$this->assertFalse($schema);
 		
 		// Correct schema is returned via URL matching anything - as defined by AppliesTo = ".*"
 		$this->source = $this->objFromFixture("StaticSiteContentSource", 'MyContentSourceIsImage1');
-		$absoluteURL = $this->source->BaseUrl.'/assets/some-file-or-other.png';
+		$absoluteURL = $this->source->BaseUrl.'/graphics/some-file-or-other.png';
 		$schema = $this->source->getSchemaForURL($absoluteURL, 'text/html');
 		$this->assertFalse($schema);			
 		

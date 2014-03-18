@@ -7,12 +7,14 @@
  */
 class StaticSiteMimeProcessorTest extends SapphireTest {
 	
-	/*
-	 * @var
+	/**
+	 * 
+	 * @var Object
 	 */
 	protected $mimeProcessor;
 	
-	/*
+	/**
+	 * 
 	 * @var array
 	 */
 	private static $mime_types_image = array(
@@ -21,7 +23,8 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		'image/gif'
 	);
 	
-	/*
+	/**
+	 * 
 	 * @var array
 	 */
 	private static $mime_types_document = array(
@@ -30,12 +33,16 @@ class StaticSiteMimeProcessorTest extends SapphireTest {
 		'text/plain'
 	);	
 	
+	/**
+	 * @return void
+	 */
 	public function setUp() {
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
+		parent::setUp();
 	}	
 	
-	/*
-	 * Tests that the correct file-extension is matched with the given mime and suffix and returns a "fixed" file suffix
+	/**
+	 * Tests that the correct file-extension is matched for the given mime and suffix and returns a "fixed" file suffix
 	 * Tests known working suffixes+mimes
 	 */
 	public function testExtToMimeCompareMatchFoundFix() {
