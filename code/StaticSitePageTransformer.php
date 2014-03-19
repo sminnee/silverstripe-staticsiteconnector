@@ -120,8 +120,10 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			return false;
 		}
 		
+		Versioned::reading_stage('Stage');
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
+		$page->Status = 'Published';
 		
 		foreach($contentFields as $property => $map) {
 			// Don't write anything new, if we have nothing new to write (useful during unit-testing)
@@ -130,8 +132,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			}
 		}
 		
-		$page->writeToStage('Stage');
-		$page->doPublish();
+		$page->write();
+		$page->publish('Stage', 'Live');
+		DB::alteration_message('Page imported via StaticSiteConnector Module', 'created');
 
 		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
