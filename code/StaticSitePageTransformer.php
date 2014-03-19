@@ -190,7 +190,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			}
 		}
 		else {
-			$page = new $pageType(array());
+			$page = new $pageType();
 			$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $page;

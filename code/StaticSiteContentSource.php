@@ -10,8 +10,6 @@
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteContentSource extends ExternalContentSource {
-	
-	public $terseName = 'test';
 
 	/**
 	 *

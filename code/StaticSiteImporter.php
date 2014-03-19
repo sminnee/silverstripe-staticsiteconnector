@@ -25,4 +25,15 @@ class StaticSiteImporter extends ExternalContentImporter {
 	public function getExternalType($item) {
 		return $item->getType();
 	}
+	
+	/**
+	 * Runs the RewriteLinks BuildTask according to user selection
+	 * 
+	 * @return void
+	 */
+	public function onAfterImport() {
+//		$taskRunner = TaskRunner::create();
+//		$taskRequest = new SS_HTTPRequest;
+//		$taskRunner->runTask($request);
+	}
 }

@@ -9,7 +9,6 @@
  * hasn't actually made it 100% through the import process.
  *
  * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
- * @todo See ExternalContentImporter::importChildren() for the call to $this->extend('onAfterImport')
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
