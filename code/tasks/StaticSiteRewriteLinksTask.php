@@ -78,6 +78,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var int
 	 */
 	protected $contentSourceID;
+	
+	/**
+	 * The import identifier
+	 *
+	 * @var int
+	 */
+	protected $contentImportID;	
 
 	/**
 	 * The StaticSiteContentSource which has the links to be rewritten
@@ -110,21 +117,25 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->utils = singleton('StaticSiteUtils');
 		$this->newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
-		// Get the StaticSiteContentSource ID from the request parameters
-		$this->contentSourceID = $request->getVar('ID');
-		if(!$this->contentSourceID || !is_numeric($this->contentSourceID)) {
+		// Get the StaticSiteContentSource and Import ID from the request parameters
+		$this->contentSourceID = $request->getVar('SID');
+		$this->contentImportID = $request->getVar('IID');
+		$hasSid = ($this->contentSourceID && is_numeric($this->contentSourceID));
+		$hasIid = ($this->contentImportID && is_numeric($this->contentImportID));
+		if(!$hasSid || !$hasIid) {
 			$this->printTaskInfo();
 			return;
 		}
 
-		// Load the content source using the ID number
+		// Load the content source using the passed content-source ID and Import ID
 		if(!$this->contentSource = StaticSiteContentSource::get()->byID($this->contentSourceID)) {
 			$this->printMessage("No StaticSiteContentSource found via ID: ".$this->contentSourceID, 'WARNING');
 			return;
 		}
 
-		// Load pages and files imported by the content source
-		$pages = $this->contentSource->Pages();
+		// Load page and file objects imported
+		// @todo filter these at this point depending on the passed IID
+		$pages = $this->contentSource->Pages();		
 		$files = $this->contentSource->Files();
 
 		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files",'NOTICE');
@@ -327,7 +338,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->printMessage("{$newLine}Complete.");
 		$this->printMessage("Amended $changedFields content fields.");
 		
-		$msgNextSteps = " - 100% of links won't get fixed. It's recommended to also run a 3rd party link-checker over your imported content.";
+		$msgNextSteps = " - Not all links will get fixed. It's recommended to also run a 3rd party link-checker over your imported content.";
 		$msgSeeReport = " - Check the CMS \"".singleton('BadImportsReport')->title()."\" for a summary of failed link-rewrites.";
 		$msgSeeLogged = " - Check ".Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file')." for more detail on failed link-rewrites.";
 		
@@ -458,7 +469,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 *
 	 * @param string $url A URL
 	 * @return boolean True is the url can be ignored
-	 * @todo What if the legacy site is a SilverStripe site? asset and sitetree URLs will be ignored!
+	 * @todo What if the remote site is a SilverStripe site? asset+sitetree URLs will be ignored!
 	 */
 	public function ignoreUrl($url) {
 		$url = trim($url);		
@@ -502,7 +513,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		return false;
 	}
 
-
 	/**
 	 * Set the ID number of the StaticSiteContentSource
 	 *
@@ -520,15 +530,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printTaskInfo() {
-		$msgFragment = Director::is_cli() ? 'ID=(number)' : '?ID=(number)';
-		$this->printMessage("Please choose a Content Source ID e.g. $msgFragment", 'WARNING');
+		$msgFragment = (Director::is_cli() ? '' : '?').'SID=(number) IID=(number)';
+		$this->printMessage("Choose a Content Source ID (SID) and an Import ID (IID) e.g. $msgFragment", 'WARNING');
+		$this->printMessage("Choose an Import ID (IID) e.g. $msgFragment", 'WARNING');
 		$newLine = $this->newLine;
 
 		// List the content sources to prompt user for selection
 		if($contentSources = StaticSiteContentSource::get()) {
 			foreach($contentSources as $i => $contentSource) {
 				$this->printMessage($newLine.'Available content-sources:'.$newLine);
-				$this->printMessage("\tdev/tasks/".__CLASS__.' ID=' . $contentSource->ID);
+				$this->printMessage("\tdev/tasks/".__CLASS__.' SID=' . $contentSource->ID);
 			}
 			echo $newLine;
 			if(Director::is_cli()) {

@@ -72,7 +72,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$source = $item->getSource();
 
 		// Cleanup StaticSiteURLs to prevent StaticSiteRewriteLinksTask getting confused
-		//$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'SiteTree');
+		$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'SiteTree');
 
 		// Sleep for 100ms to reduce load on the remote server
 		usleep(100*1000);		
@@ -120,7 +120,6 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			return false;
 		}
 		
-		Versioned::reading_stage('Stage');
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
 		$page->Status = 'Published';
@@ -132,9 +131,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			}
 		}
 		
+		Versioned::reading_stage('Stage');
 		$page->write();
 		$page->publish('Stage', 'Live');
-		DB::alteration_message('Page imported via StaticSiteConnector Module', 'created');
 
 		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 

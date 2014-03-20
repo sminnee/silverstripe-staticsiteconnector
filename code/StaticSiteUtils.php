@@ -54,9 +54,10 @@ class StaticSiteUtils {
 		
 		foreach($resetItems as $item) {
 			$item->StaticSiteURL = NULL;
-			if($class == 'SiteTree') {
-				$item->writeToStage('Stage');
-				$item->doPublish();
+			if($item->ClassName == 'SiteTree') {
+				Versioned::reading_stage('Stage');
+				$item->write();
+				$item->publish('Stage', 'Live');
 			}
 			else {
 				$item->write();

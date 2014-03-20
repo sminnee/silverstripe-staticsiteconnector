@@ -547,7 +547,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$result = new ValidationResult;
 		$mime = $this->validateMimes();
 		if(!is_bool($mime)) {
-			$result->error('Invalid Mime-type "'.$mime.'" for DataType "'.$this->DataType.'"');
+			$result->error('Invalid Mime-type "' . $mime . '" for DataType "' . $this->DataType . '"');
 		}
 		return $result;
 	}
