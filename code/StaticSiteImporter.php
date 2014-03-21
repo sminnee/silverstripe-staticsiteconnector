@@ -68,11 +68,17 @@ class StaticSiteImporter extends ExternalContentImporter {
 	/**
 	 * Get the most recently started/run import.
 	 * 
+	 * @param $member Member
 	 * @return null | DataList
 	 */
-	public function getCurrent() {
-		if($metaCache = StaticSiteImporterMetaCache::get()->sort('ImportStartDate')->last()) {
-			return $metaCache;
+	public function getCurrent($member = null) {
+		if(!$member) {
+			$member = Member::currentUser();
 		}
+		
+		return StaticSiteImporterMetaCache::get()
+				->filter('UserID', $member->ID)
+				->sort('ImportStartDate')
+				->last();
 	}
 }
