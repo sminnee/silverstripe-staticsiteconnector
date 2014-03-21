@@ -148,6 +148,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public function write(File $file, $item, $source, $tmpPath) {
 		$file->StaticSiteContentSourceID = $source->ID;
 		$file->StaticSiteURL = $item->AbsoluteURL;
+		$file->StaticSiteImportID = $this->getCurrentImportID();
 
 		if(!$file->write()) {
 			$this->utils->log(" - Not imported: ", $item->AbsoluteURL, $item->ProcessedMIME);
@@ -320,5 +321,18 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $file;
-	}	
+	}
+	
+	/**
+	 * Get the ID of the current StaticSiteContentImporter which will start and write to 
+	 * a StaticSiteImportData object on construct.
+	 * 
+	 * @return number
+	 */
+	protected function getCurrentImportID() {
+		if($currentImport = $this->importer->getCurrent()) {
+			return $currentImport->ID;
+		}
+		return 0;
+	}
 }

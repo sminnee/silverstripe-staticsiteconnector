@@ -47,6 +47,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
+		$this->importer = singleton('StaticSiteImporter');
 	}
 
 	/**
@@ -122,6 +123,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
+		$page->StaticSiteImportID = $this->getCurrentImportID();
 		$page->Status = 'Published';
 		
 		foreach($contentFields as $property => $map) {
@@ -196,5 +198,18 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $page;
+	}
+	
+	/**
+	 * Get the ID of the current StaticSiteContentImporter which will start and write to 
+	 * a StaticSiteImportData object on construct.
+	 * 
+	 * @return number
+	 */
+	protected function getCurrentImportID() {
+		if($currentImport = $this->importer->getCurrent()) {
+			return $currentImport->ID;
+		}
+		return 0;
 	}
 }

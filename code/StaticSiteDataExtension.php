@@ -19,10 +19,12 @@ class StaticSiteDataExtension extends DataExtension {
 	 * @var array
 	 */	
 	static $db = array(
-		"StaticSiteURL" => "Varchar(255)"
+		"StaticSiteURL" => "Varchar(255)",
+		"StaticSiteImportID" => "Int"
 	);
 
 	/**
+	 * Show readonly fields of Import "Meta data"
 	 * 
 	 * @param FieldList $fields
 	 * @return void
@@ -30,6 +32,7 @@ class StaticSiteDataExtension extends DataExtension {
 	public function updateCMSFields(FieldList $fields) {
 		if($this->owner->StaticSiteContentSourceID && $this->owner->StaticSiteURL) {
 			$fields->addFieldToTab('Root.Main', new ReadonlyField('StaticSiteURL', 'Imported URL'), 'MenuTitle');
+			$fields->addFieldToTab('Root.Main', new ReadonlyField('StaticSiteImportID', 'Import ID'), 'MenuTitle');
 		}
 	}
 }

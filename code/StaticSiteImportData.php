@@ -32,7 +32,7 @@ class StaticSiteImporterMetaCache extends DataObject {
 	public function start() {
 		$this->User = Member::currentUser();
 		$this->ImportStartDate = DBField::create_field('Datetime', time());
-		$this->write();			
+		$this->write();
 	}
 	
 	/**
@@ -42,7 +42,7 @@ class StaticSiteImporterMetaCache extends DataObject {
 	 */	
 	public function end() {
 		$this->ImportEndDate = DBField::create_field('Datetime', time());
-		$this->write();			
+		$this->write();
 	}	
 	
 }

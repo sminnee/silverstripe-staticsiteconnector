@@ -118,8 +118,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
 		// Get the StaticSiteContentSource and Import ID from the request parameters
-		$this->contentSourceID = $request->getVar('SID');
-		$this->contentImportID = $request->getVar('IID');
+		$this->contentSourceID = trim($request->getVar('SID'));
+		$this->contentImportID = trim($request->getVar('IID'));
 		$hasSid = ($this->contentSourceID && is_numeric($this->contentSourceID));
 		$hasIid = ($this->contentImportID && is_numeric($this->contentImportID));
 		if(!$hasSid || !$hasIid) {
@@ -133,10 +133,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			return;
 		}
 
-		// Load page and file objects imported
-		// @todo filter these at this point depending on the passed IID
-		$pages = $this->contentSource->Pages();		
-		$files = $this->contentSource->Files();
+		/*
+		 * Load imported page + file objects and filter on passed ImportID so we know which
+		 * links to rewrite.
+		 */
+		$pages = $this->contentSource->Pages()->filter('StaticSiteImportID', $this->contentImportID);
+		$files = $this->contentSource->Files()->filter('StaticSiteImportID', $this->contentImportID);
 
 		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files",'NOTICE');
 

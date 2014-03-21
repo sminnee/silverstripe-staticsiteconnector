@@ -15,7 +15,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 */
 	public function __construct() {
 		// Write some metadata about this import for later use
-		$this->startImport();
+		$this->startRecording();
 		$this->contentTransforms['sitetree'] = new StaticSitePageTransformer();
 		$this->contentTransforms['file'] = new StaticSiteFileTransformer();
 	}
@@ -39,7 +39,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 //		$taskRunner = TaskRunner::create();
 //		$taskRequest = new SS_HTTPRequest;
 //		$taskRunner->runTask($request);
-		$this->endImport();
+		$this->endRecording();
 	}
 	
 	/**
@@ -48,9 +48,8 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * 
 	 * @return void
 	 */
-	public function startImport() {
-		$metaCache = StaticSiteImporterMetaCache::create();
-		$metaCache->start();	
+	public function startRecording() {
+		StaticSiteImporterMetaCache::create()->start();
 	}
 	
 	/*
@@ -59,9 +58,21 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * 
 	 * @return void
 	 */
-	public function endImport() {
-		// Get most recent import metadata record
-		$metaCache = StaticSiteImporterMetaCache::get()->sort('ImportStartDate')->last();
-		$metaCache->end();	
+	public function endRecording() {
+		// Get most recent/up-to-date import metadata record
+		if($metaCache = $this->getCurrent()) {
+			$metaCache->end();		
+		}
 	}	
+	
+	/**
+	 * Get the most recently started/run import.
+	 * 
+	 * @return null | DataList
+	 */
+	public function getCurrent() {
+		if($metaCache = StaticSiteImporterMetaCache::get()->sort('ImportStartDate')->last()) {
+			return $metaCache;
+		}
+	}
 }
