@@ -29,6 +29,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	protected $utils;
 	
 	/**
+	 * 
+	 * @var number
+	 */
+	public $importID = 0;
+	
+	/**
 	 * Set this by using the yml config system
 	 *
 	 * Example:
@@ -47,7 +53,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
-		$this->importer = singleton('StaticSiteImporter');
+		$this->importID = $this->getCurrentImportID();
 	}
 
 	/**
@@ -123,7 +129,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		
 		$page->StaticSiteContentSourceID = $source->ID;
 		$page->StaticSiteURL = $item->AbsoluteURL;
-		$page->StaticSiteImportID = $this->getCurrentImportID();
+		$page->StaticSiteImportID = $this->$importID;
 		$page->Status = 'Published';
 		
 		foreach($contentFields as $property => $map) {
@@ -207,7 +213,8 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * @return number
 	 */
 	protected function getCurrentImportID() {
-		if($currentImport = $this->importer->getCurrent()) {
+		$importer = singleton('StaticSiteImporter');
+		if($currentImport = $importer->getCurrent()) {
 			return $currentImport->ID;
 		}
 		return 0;
