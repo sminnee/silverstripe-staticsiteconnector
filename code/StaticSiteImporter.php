@@ -15,7 +15,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 */
 	public function __construct() {
 		// Write some metadata about this import for later use
-		//$this->startRecording();
+		$this->startRecording();
 		$this->contentTransforms['sitetree'] = new StaticSitePageTransformer();
 		$this->contentTransforms['file'] = new StaticSiteFileTransformer();
 	}
