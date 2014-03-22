@@ -344,7 +344,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @param $target
 	 * @return \StaticSiteImporter
 	 */
-	public function getContentImporter($target=null) {
+	public function getContentImporter($target = null) {
 		return new StaticSiteImporter();
 	}
 

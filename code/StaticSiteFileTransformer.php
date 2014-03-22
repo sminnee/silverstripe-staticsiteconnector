@@ -94,9 +94,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$source = $item->getSource();
 
-		// Cleanup StaticSiteURLs to prevent StaticSiteRewriteLinksTask getting confused
-		//$this->utils->resetStaticSiteURLs($item->AbsoluteURL, $source->ID, 'File');
-
 		// Sleep for 10ms to reduce load on the remote server
 		usleep(10*1000);
 
