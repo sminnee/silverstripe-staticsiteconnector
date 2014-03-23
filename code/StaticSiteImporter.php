@@ -14,8 +14,6 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * @return void
 	 */
 	public function __construct() {
-		// Write some metadata about this import for later use
-		$this->startRecording();
 		$this->contentTransforms['sitetree'] = new StaticSitePageTransformer();
 		$this->contentTransforms['file'] = new StaticSiteFileTransformer();
 	}
@@ -30,55 +28,19 @@ class StaticSiteImporter extends ExternalContentImporter {
 	}
 	
 	/**
-	 * Runs the RewriteLinks BuildTask according to user selection and updates
-	 * the import cache.
+	 * Run prior to the entire import process starting.
 	 * 
-	 * @return void
+	 * Creates an import shadow record for hooking into later with the link-processing logic.
 	 */
-	public function onAfterImport() {
-//		$taskRunner = TaskRunner::create();
-//		$taskRequest = new SS_HTTPRequest;
-//		$taskRunner->runTask($request);
-		$this->endRecording();
+	public function onImportStart() {
+		ImportShadow::create()->start();
 	}
 	
 	/**
-	 * Writes a DataObject of this import. Its data is used by the StaticSIteRewriteLinksTask
-	 * to allow it to identify which imported item(s) should have their links re-written.
+	 * Run right when the import process ends.
 	 * 
-	 * @return void
 	 */
-	public function startRecording() {
-		StaticSiteImporterMetaCache::create()->start();
-	}
-	
-	/*
-	 * Writes a DataObject of this import. Its data is used by the StaticSIteRewriteLinksTask
-	 * to allow it to identify which imported item(s) should have their links re-written.
-	 * 
-	 * @return void
-	 */
-	public function endRecording() {
-		// Get most recent/up-to-date import metadata record
-		if($metaCache = $this->getCurrent()) {
-			$metaCache->end();		
-		}
+	public function onImportEnd() {
+		ImportShadow::current()->end();
 	}	
-	
-	/**
-	 * Get the most recently started/run import.
-	 * 
-	 * @param $member Member
-	 * @return null | DataList
-	 */
-	public function getCurrent($member = null) {
-		if(!$member) {
-			$member = Member::currentUser();
-		}
-		
-		return StaticSiteImporterMetaCache::get()
-				->filter('UserID', $member->ID)
-				->sort('Created')
-				->last();
-	}
 }
