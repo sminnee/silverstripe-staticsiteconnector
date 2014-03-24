@@ -7,7 +7,7 @@
  * @package staticsiteconnector
  * @see ExternalContentImporter
  */
-class ImportShadow extends DataObject {
+class StaticSiteImportDataObject extends DataObject {
 	
 	/**
 	 *
@@ -28,21 +28,23 @@ class ImportShadow extends DataObject {
 	/**
 	 * Called at the start of an import.
 	 * 
-	 * @return void
+	 * @return StaticSiteImportDataObject
 	 */
 	public function start() {
 		$this->UserID = Member::currentUserID();
 		$this->write();
+		return $this;
 	}
 	
 	/**
 	 * Called at the end of an import.
 	 * 
-	 * @return void
+	 * @return StaticSiteImportDataObject
 	 */	
 	public function end() {
 		$this->Ended = SS_Datetime::now()->getValue();
 		$this->write();
+		return $this;
 	}	
 	
 	/**
@@ -56,7 +58,7 @@ class ImportShadow extends DataObject {
 			$member = Member::currentUser();
 		}
 		
-		return ImportShadow::get()
+		return StaticSiteImportDataObject::get()
 				->filter('UserID', $member->ID)
 				->sort('Created')
 				->last();

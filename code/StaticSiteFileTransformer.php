@@ -19,12 +19,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	protected $utils;
 	
 	/**
-	 * 
-	 * @var number
-	 */
-	public $importID = 0;	
-	
-	/**
 	 *
 	 * @var number
 	 */
@@ -69,7 +63,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public function __construct() {
 		$this->utils = singleton('StaticSiteUtils');
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
-		$this->importID = (ImportShadow::current() ? ImportShadow::current()->ID : 0);
 	}
 
 	/**
@@ -152,7 +145,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public function write(File $file, $item, $source, $tmpPath) {
 		$file->StaticSiteContentSourceID = $source->ID;
 		$file->StaticSiteURL = $item->AbsoluteURL;
-		$file->StaticSiteImportID = $this->importID;
+		$file->StaticSiteImportID = $this->getCurrentImportID();
 
 		if(!$file->write()) {
 			$this->utils->log(" - Not imported: ", $item->AbsoluteURL, $item->ProcessedMIME);
@@ -325,5 +318,17 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
 		}
 		return $file;
+	}
+	
+	/**
+	 * Get current import ID. If none can be found, start one and return that.
+	 * 
+	 * @return number
+	 */
+	public function getCurrentImportID() {
+		if(!$import = StaticSiteImportDataObject::current()) {
+			return 1;
+		}
+		return $import->ID;	
 	}
 }
