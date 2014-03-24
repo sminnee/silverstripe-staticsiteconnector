@@ -32,7 +32,8 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * 
 	 * Creates an import shadow record for hooking into later with the link-processing logic.
 	 */
-	public function onImportStart() {
+	public function runOnImportStart() {
+		parent::runOnImportStart();
 		ImportShadow::create()->start();
 	}
 	
@@ -40,7 +41,8 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * Run right when the import process ends.
 	 * 
 	 */
-	public function onImportEnd() {
+	public function runOnImportEnd() {
+		parent::runOnImportEnd();
 		ImportShadow::current()->end();
 	}	
 }
