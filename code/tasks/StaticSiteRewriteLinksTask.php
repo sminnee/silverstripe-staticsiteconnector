@@ -1,13 +1,15 @@
 <?php
 /**
- * Rewrite all links in content imported via StaticSiteImporter.
+ * Rewrites content-links found in <img> element "src" HTML attributes and <a> element "href"
+ * HTML attributes, originally imported via {@link StaticSiteImporter}.
  * 
  * All rewrite failures are written to a logfile (@see $log_file).
  * This log is used as the data source for the CMS report {@link BadImportsReport}.
  * This is because it's only after attempting to rewrite links that we're
  * able to analyse why some failed. Often we find the reason is that the URL being re-written 
  * hasn't actually made it 100% through the import process.
- *
+ * 
+ * @author Sam Minnee <sam@silverstripe.com>
  * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
  */
 class StaticSiteRewriteLinksTask extends BuildTask {

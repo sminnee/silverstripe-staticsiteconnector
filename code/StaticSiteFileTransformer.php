@@ -6,8 +6,8 @@
  * copy of the file itself on the local filesystem.
  *
  * @package staticsiteconnector
- * @see {@link StaticSitePageTransformer}
  * @author Science Ninjas <scienceninjas@silverstripe.com>
+ * @see {@link StaticSitePageTransformer}
  */
 class StaticSiteFileTransformer implements ExternalContentTransformer {
 

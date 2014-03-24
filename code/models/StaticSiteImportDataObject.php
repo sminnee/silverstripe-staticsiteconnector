@@ -1,11 +1,10 @@
 <?php
 /**
- * Caches some metadata for each import, "shadowing" the import and "allowing" imports
- * to have DataObject-like functionality.
+ * Caches some metadata for each import. Allows imports to have some DataObject-like functionality.
  * 
  * @author Russell Michell <russell@silverstripe.com>
  * @package staticsiteconnector
- * @see ExternalContentImporter
+ * @see {@link StaticSiteImporter}
  */
 class StaticSiteImportDataObject extends DataObject {
 	
@@ -26,28 +25,6 @@ class StaticSiteImportDataObject extends DataObject {
 	);
 	
 	/**
-	 * Called at the start of an import.
-	 * 
-	 * @return StaticSiteImportDataObject
-	 */
-	public function start() {
-		$this->UserID = Member::currentUserID();
-		$this->write();
-		return $this;
-	}
-	
-	/**
-	 * Called at the end of an import.
-	 * 
-	 * @return StaticSiteImportDataObject
-	 */	
-	public function end() {
-		$this->Ended = SS_Datetime::now()->getValue();
-		$this->write();
-		return $this;
-	}	
-	
-	/**
 	 * Get the most recently started/run import.
 	 * 
 	 * @param $member Member
@@ -62,6 +39,28 @@ class StaticSiteImportDataObject extends DataObject {
 				->filter('UserID', $member->ID)
 				->sort('Created')
 				->last();
+	}	
+	
+	/**
+	 * To be called at the start of an import.
+	 * 
+	 * @return StaticSiteImportDataObject
+	 */
+	public function start() {
+		$this->UserID = Member::currentUserID();
+		$this->write();
+		return $this;
+	}
+	
+	/**
+	 * To be called at the end of an import.
+	 * 
+	 * @return StaticSiteImportDataObject
+	 */	
+	public function end() {
+		$this->Ended = SS_Datetime::now()->getValue();
+		$this->write();
+		return $this;
 	}
 	
 }

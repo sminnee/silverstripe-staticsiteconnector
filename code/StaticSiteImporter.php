@@ -1,11 +1,13 @@
 <?php
 /**
+ * Physically brings content into SilverStripe as defined by URLs fetched 
+ * at the crawl stage, and utilises StaticSitePageTransformer and StaticSiteFileTransformer.
  * 
  * @package staticsiteconnector
  * @author Sam Minee <sam@silverstripe.com>
  * @author Russell Michell <russell@silverstripe.com>
- * @see \ExternalContentImporter
- * @see \StaticSiteImporterMetaCache
+ * @see {@link ExternalContentImporter}
+ * @see {@link StaticSiteImportDataObject}
  */
 class StaticSiteImporter extends ExternalContentImporter {
 	
