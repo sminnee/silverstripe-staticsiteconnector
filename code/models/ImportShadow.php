@@ -41,7 +41,7 @@ class ImportShadow extends DataObject {
 	 * @return void
 	 */	
 	public function end() {
-		$this->Ended = SS_Datetime::now();
+		$this->Ended = SS_Datetime::now()->getValue();
 		$this->write();
 	}	
 	
