@@ -120,24 +120,31 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
 		// Get the StaticSiteContentSource and Import ID from the request parameters
-		$this->contentSourceID = trim($request->getVar('SID'));
-		$this->contentImportID = trim($request->getVar('IID'));
+		$this->contentSourceID = trim($request->getVar('SourceID'));
+		$this->contentImportID = trim($request->getVar('ImportID'));
 		$hasSid = ($this->contentSourceID && is_numeric($this->contentSourceID));
 		$hasIid = ($this->contentImportID && is_numeric($this->contentImportID));
+		
 		if(!$hasSid || !$hasIid) {
 			$this->printTaskInfo();
 			return;
 		}
 
 		// Load the content source using the passed content-source ID and Import ID
-		if(!$this->contentSource = StaticSiteContentSource::get()->byID($this->contentSourceID)) {
-			$this->printMessage("No StaticSiteContentSource found via ID: ".$this->contentSourceID, 'WARNING');
+		$this->contentSource = (StaticSiteContentSource::get()->byID($this->contentSourceID));
+		$contentImport = (StaticSiteImportDataObject::get()->byID($this->contentImportID));
+		if(!$this->contentSource) {
+			$this->printMessage("No content-source found via SourceID: ".$this->contentSourceID, 'WARNING');
 			return;
 		}
+		if(!$contentImport) {
+			$this->printMessage("No content-import found via ImportID: ".$this->contentImportID, 'WARNING');
+			return;
+		}	
 
 		/*
-		 * Load imported page + file objects and filter on passed ImportID so we know which
-		 * links to rewrite.
+		 * Load imported page + file objects and filter the results on the passed ImportID,
+		 * so the task knows in which imported content links should be re-written.
 		 */
 		$pages = $this->contentSource->Pages()->filter('StaticSiteImportID', $this->contentImportID);
 		$files = $this->contentSource->Files()->filter('StaticSiteImportID', $this->contentImportID);
@@ -153,9 +160,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($verbose && $verbose == 1) {
 			$this->verbose = true;
 		}
-
-		$show = $request->getVar('SHOW');
-		if($show) {
+		
+		if($show = $request->getVar('SHOW')) {
 			if($show == 'pages') {
 				$this->printMessage('Page Map');
 				foreach($pageLookup as $url => $id) {
@@ -177,7 +183,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$baseURL = $this->contentSource->BaseUrl;
 		$task = $this;
 		
-		// If no URL Processor is set in external-content CMS UI, check for it or calls to singleton() will fail
+		/*
+		 * If no URL Processor is set in the external-content CMS UI, check for it
+		 * or calls to singleton() will fail.
+		 */
 		$urlProcessor = null;
 		if($this->contentSource->UrlProcessor) {
 			$urlProcessor = singleton($this->contentSource->UrlProcessor);
@@ -188,28 +197,27 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		 * passed through the variable: $callback($url)
 		 */
 		$rewriter = new StaticSiteLinkRewriter(function($url) use(
-				$pageLookup, $fileLookup, $baseURL, $task, $urlProcessor, $request) {
+				$pageLookup, $fileLookup, $baseURL, $task, $urlProcessor) {
 
-			$urlInput = $url;
-			$fragment = "";
+			$origUrl = $url;
+			$anchor = '';
 			if(strpos($url, '#') !== false) {
-				list($url, $fragment) = explode('#', $url, 2);
-				$fragment = 'ID=' . $fragment;
+				list($url, $anchor) = explode('#', $url, 2);
 			}
 
 			/*
-			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import
-			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it
+			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import.
+			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it.
 			 * The "mime" key is an expected argument but it's not actually used within this task.
-			 * It defaults to the page mime type.
+			 * It defaults to the page's mime type.
 			 */
 			if($urlProcessor) {
 				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
-				// processURL returns and array, get the url from it
+				// processURL returns an array. Get the url from it
 				$url = $processedURL['url'];				
 			}
 
-			// Return now if the url is empty, not an http scheme or already processed into a SS shortcode
+			// Return now if the url is empty, or is not an http scheme or is already processed into a SS shortcode
 			if($task->ignoreUrl($url)) {
 				return;
 			}
@@ -219,43 +227,57 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$url = rtrim($url, '/');
 			}
 
-			// Strip the host and protocol from the url to ensure the url is relative before creating
-			// the pageMapKey as an absolute url, so it will match the keys in the page map
+			/*
+			 * Strip the host and protocol from the url to ensure the url is relative before creating
+			 * the pageMapKey as an absolute url, so it matches the keys in $pageLookup.
+			 */
 			$pageMapKey = Controller::join_links($baseURL, parse_url($url, PHP_URL_PATH));
 
-			// File urls dont need processing as they dont have Pages or .aspx present
-			// so create the file map key by just making the raw input url absolute
-			$fileMapKey = Controller::join_links($baseURL, $urlInput);
+			/*
+			 * File urls dont need processing as they dont have 'Pages' or '.aspx' present
+			 * so create the file map key by just making the raw input url absolute
+			 */
+			$fileMapKey = Controller::join_links($baseURL, $origUrl);
 
 			// Log the progress
 			if($task->verbose) {
-				$task->printMessage("# rewriting: \"$urlInput\"");
-				if($fragment != '') {
-					$task->printMessage(" - fragment: \"$fragment\"");
+				$task->printMessage("# rewriting: \"$origUrl\"");
+				if($anchor != '') {
+					$task->printMessage(" - anchor: \"$anchor\"");
 				}
 				$task->printMessage(" - page-key: \"$pageMapKey\"");
 				$task->printMessage(" - file-key: \"$fileMapKey\"");
 			}
+			
+			/*
+			 * @todo process and rewrite anchors correctly:
+			 * - If found on the same page, rewrite as #my-anchor
+			 * - If found on another page, strip them. SS doesn't support cross page anchors.
+			 */
 
-			// Rewrite SiteTree links by replacing the phpQuery processed Page-URL with a SiteTree shortcode
-			// @todo put into own method
+			/*
+			 * Rewrite SiteTree links by replacing the phpQuery processed Page-URL 
+			 * with a SiteTree shortcode
+			 */
 			$pageLookup = $pageLookup->toArray();
 			if(isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
-				$output = '[sitetree_link,id=' . $siteTreeID . ']' . $fragment;
+				$output = '[sitetree_link,id=' . $siteTreeID . ']';
 				if($task->verbose) {
 					$task->printMessage("+ found: SiteTree ID#" . $siteTreeID, null, $output);
 				}
 				return $output;
 			}
 
-			// Rewrite Asset links by replacing phpQuery processed Asset-URLs with the appropriate asset-filename
-			//@todo put into own method
+			/*
+			 * Rewrite Asset links by replacing phpQuery processed asset-URLs with 
+			 * the appropriate asset-filename.
+			 */
 			$fileLookup = $fileLookup->toArray();
 			if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
 					$output = $file->RelativeLink();
 					if($task->verbose) {
-						$task->printMessage("+ found: File ID#{$file->ID}", null, $output);
+						$task->printMessage("+ found: File ID#" . $fileID, null, $output);
 					}
 					return $output;
 				}
@@ -264,16 +286,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 
-			$task->printMessage('Rewriter failed ', 'WARNING', $urlInput);
+			// Got this far? Link-rewriting has failed.
+			$task->printMessage('Rewriter failed ', 'WARNING', $origUrl);
 
-			// log the failed rewrite
-			$segment01 = "Couldn't rewrite: " . $urlInput;
+			// log the failed rewrites
+			$segment01 = "Couldn't rewrite: " . $origUrl;
 			$segment02 = " Found in Page: " . $task->currentPageTitle;
 			$segment03 = " (ID:" . $task->currentPageID . ")";
 			array_push($task->listFailedRewrites, $segment01 . $segment02 . $segment03);
 
-			// return the url unchanged
-			return $urlInput;
+			return $origUrl;
 		});
 
 		// Perform rewriting
@@ -281,7 +303,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		foreach($pages as $i => $page) {
 			/*
 			 * Set these so the rewriter task can log some page context 
-			 * for the urls that could not be re-writen.
+			 * for the urls that couldn't be re-writen.
 			 */
 			$this->currentPageTitle = $page->Title;
 			$this->currentPageID = $page->ID;
@@ -340,7 +362,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		
 		$newLine = $this->newLine;
 		$this->printMessage("{$newLine}Complete.");
-		$this->printMessage("Amended $changedFields content fields.");
+		$this->printMessage("Amended $changedFields content fields for {$pages->count()} pages and {$files->count()} files processed.");
 		
 		$msgNextSteps = " - Not all links will get fixed. It's recommended to also run a 3rd party link-checker over your imported content.";
 		$msgSeeReport = " - Check the CMS \"".singleton('BadImportsReport')->title()."\" for a summary of failed link-rewrites.";
@@ -481,7 +503,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Empty string
 		if(!strlen($url) >0) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring empty URL");
+				$this->printMessage("+ ignoring: '' (Empty link)");
 			}
 			return true;
 		}
@@ -491,16 +513,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#", $url));
 		if($nonHTTPSchemes) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring Non-HTTP URL: $url");
+				$this->printMessage("+ ignoring: $url (Non-HTTP URL)");
 			}
 			return true;
 		}		
 
-		// Is external or absolute url
+		// Is external or an absolute url
 		$externalUrl = (substr($url, 0, 4) == 'http');
 		if($externalUrl) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring external url: {$url}");
+				$this->printMessage("+ ignoring $url (3rd party URL)");
 			}
 			return true;
 		}
@@ -509,11 +531,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#", $url));
 		if($alreadyRewritten) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring CMS link: $url");
+				$this->printMessage("+ ignoring: $url (CMS link, already converted)");
 			}
 			return true;
 		}		
-		
 		return false;
 	}
 
@@ -534,16 +555,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printTaskInfo() {
-		$msgFragment = (Director::is_cli() ? '' : '?').'SID=(number) IID=(number)';
-		$this->printMessage("Choose a Content Source ID (SID) and an Import ID (IID) e.g. $msgFragment", 'WARNING');
-		$this->printMessage("Choose an Import ID (IID) e.g. $msgFragment", 'WARNING');
+		$msgFragment = (Director::is_cli() ? '' : '?').'SourceID=(number) ImportID=(number)';
+		$this->printMessage("Choose a SourceID and an ImportID e.g. $msgFragment", 'WARNING');
 		$newLine = $this->newLine;
 
 		// List the content sources to prompt user for selection
 		if($contentSources = StaticSiteContentSource::get()) {
+			$this->printMessage($newLine.'Available content-sources:'.$newLine);
 			foreach($contentSources as $i => $contentSource) {
-				$this->printMessage($newLine.'Available content-sources:'.$newLine);
-				$this->printMessage("\tdev/tasks/".__CLASS__.' SID=' . $contentSource->ID);
+				$this->printMessage("\tdev/tasks/".__CLASS__.' SourceID=' . $contentSource->ID.' ImportID=<number>');
 			}
 			echo $newLine;
 			if(Director::is_cli()) {
@@ -551,7 +571,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$this->printMessage("\tSHOW=pages \tPrint the contents of the pages map.");
 				$this->printMessage("\tSHOW=files \tPrint the contents of the files map.");
 				$this->printMessage("\tDIE=1 \t\tStop processing after showing map contents.");
-				$this->printMessage("\tVERBOSE=1 \tShow debug information while processing.");
+				$this->printMessage("\tVERBOSE=1 \tShow debugging information while processing.");
 			}
 			echo $newLine;
 		}
