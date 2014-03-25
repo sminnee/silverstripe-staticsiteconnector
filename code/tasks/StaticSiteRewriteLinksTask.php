@@ -274,9 +274,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			// log the failed rewrites
-			$segment01 = "Couldn't rewrite: " . $origUrl;
-			$segment02 = " Found in Page: " . $task->currentPageTitle;
-			$segment03 = " (ID:" . $task->currentPageID . ")";
+			$segment01 = "Couldn't rewrite: '$origUrl'";
+			$segment02 = " Found in Page: '" . $task->currentPageTitle ."'";
+			$segment03 = " ID: " . $task->currentPageID;
 			array_push($task->listFailedRewrites, $segment01 . $segment02 . $segment03);
 
 			return $origUrl;
