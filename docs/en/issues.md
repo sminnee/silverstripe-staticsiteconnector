@@ -9,6 +9,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
+* TASK: Uncomment, optimise and refactor commented logic in StaticSiteRewriteLinksTask to give more detail about failed link-rewrites.
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
@@ -18,6 +19,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * ENHANCEMENT: Add a schema export function for use in between similar sites hosted on multi/subsite CMS systems like SilverStripe and eZPublish for example.
 * ENHANCEMENT: Add rewrite linjs-task to run runOnImportEnd() (see external-content module) to StaticSiteImporter and run StaticSiteRewriteLinksTask from it, based on CMS UI user-selection (default is 'yes')
 * ENHANCEMENT: Add CMS UI to allow fine-grained control of the sleep time between server hits. See usleep() in StaticSite#Transformer#transform()
+* ENHANCEMENT: Swap the CMS link-rewrite task from using a logfile for data to logging failed rewrites to a DataObject. More reliable this way.
 
 ## External Content Module Issues:
 

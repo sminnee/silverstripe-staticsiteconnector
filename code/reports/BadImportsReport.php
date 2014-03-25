@@ -6,13 +6,22 @@
  * @author Russell Michell <russell@silverstripe.com>
  */
 class BadImportsReport extends SS_Report {
+	
+	/**
+	 *
+	 * @var string
+	 */
+	protected $description = <<<'TXT'
+This report details which imported pages still contain links that need some 
+manual attention, even after having gone through the rewrite-links task.
+TXT;
 
 	/**
 	 * 
 	 * @return string
 	 */
 	public function title() {
-		return "Un-rewriteble imported URLs Report";
+		return "Imported pages with un-rewriteble URLs";
 	}
 
 	/**
