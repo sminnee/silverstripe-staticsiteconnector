@@ -26,3 +26,4 @@ Some are already registered as issues on Github, others are more in the "would l
 * ENHANCEMENT: Change the externalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
  * Add a 'label' static on ExternalContentSource and subclasses, to show in this menu
  * Make that text disappear onfocus if it equals the default text
+* StaticSiteTransformResult class should really exist in external-content module itself.

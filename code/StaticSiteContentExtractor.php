@@ -297,7 +297,9 @@ class StaticSiteContentExtractor extends Object {
 		curl_setopt($ch, CURLOPT_HEADER, 1);
 		curl_setopt($ch, CURLOPT_TIMEOUT, 120);
 
-		if($headers) curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		if($headers) {
+			curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+		}
 
 		// Add fields to POST and PUT requests
 		if($method == 'POST') {
@@ -325,7 +327,7 @@ class StaticSiteContentExtractor extends Object {
 		// See: http://forums.devshed.com/php-development-5/curlopt-timeout-option-for-curl-calls-isn-t-being-obeyed-605642.html
 		curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);		// No. seconds to wait while trying to connect.
 
-		// Deal to files, write to them directly then return
+		// Deal to files, write to them directly and then return
 		if($this->mimeProcessor->isOfFileOrImage($this->mime)) {
 			$tmp_name = tempnam(getTempFolder().'/'.rand(), 'tmp');
 			$fp = fopen($tmp_name, 'w+');
@@ -334,7 +336,7 @@ class StaticSiteContentExtractor extends Object {
 			curl_exec($ch);
 			curl_close($ch);
 			fclose($fp);
-			$this->setTmpFileName($tmp_name);		// Set a tmp filename ready for passing to `Upload`
+			$this->setTmpFileName($tmp_name);		// Set a tmp filename
 			return 'file';
 		}
 
@@ -355,7 +357,7 @@ class StaticSiteContentExtractor extends Object {
 		curl_close($ch);
 
 		if($curlError !== '' || $statusCode == 0) {
-			$this->utils->log(" - CURL ERROR: Error: {$curlError} Status: {$statusCode}");
+			$this->utils->log(" - CURL ERROR: Error: $curlError Status: $statusCode");
 			$statusCode = 500;
 		}
 
@@ -389,23 +391,40 @@ class StaticSiteContentExtractor extends Object {
 	}
 
 	/**
-	 * SilverStripe -> Mime shortcut methods
+	 * @see {@link StaticSiteMimeProcessor}
+	 * @return boolean
 	 */
 	public function isMimeHTML() {
 		return $this->mimeProcessor->isOfHTML($this->mime);
 	}
+	
+	/**
+	 * @see {@link StaticSiteMimeProcessor}
+	 * @return boolean
+	 */	
 	public function isMimeFile() {
 		return $this->mimeProcessor->isOfFile($this->mime);
 	}
+	
+	/**
+	 * @see {@link StaticSiteMimeProcessor}
+	 * @return boolean
+	 */	
 	public function isMimeImage() {
 		return $this->mimeProcessor->isOfImage($this->mime);
 	}
+	
+	/**
+	 * @see {@link StaticSiteMimeProcessor}
+	 * @return boolean
+	 */
 	public function isMimeFileOrImage() {
 		return $this->mimeProcessor->isOfFileOrImage($this->mime);
 	}
 
 	/**
 	 * Pre-process the content so phpQuery can parse it without violently barfing
+	 * 
 	 * @return void
 	 */
 	protected function prepareContent() {
@@ -413,7 +432,7 @@ class StaticSiteContentExtractor extends Object {
 		$this->content = trim($this->content);
 
 		// Ensure the content begins with the 'html' tag
-		if (stripos($this->content, '<html') === false) {
+		if(stripos($this->content, '<html') === false) {
 			$this->content = '<html>' . $this->content;
 			$this->utils->log('Warning: content was missing html open tag');
 		}

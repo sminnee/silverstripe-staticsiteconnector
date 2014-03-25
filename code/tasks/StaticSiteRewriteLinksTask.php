@@ -144,7 +144,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 		/*
 		 * Load imported page + file objects and filter the results on the passed ImportID,
-		 * so the task knows in which imported content links should be re-written.
+		 * so the task knows which imported content-links should be re-written.
 		 */
 		$pages = $this->contentSource->Pages()->filter('StaticSiteImportID', $this->contentImportID);
 		$files = $this->contentSource->Files()->filter('StaticSiteImportID', $this->contentImportID);
@@ -334,13 +334,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
 				// square-brackets are converted somewhere upstream..
-				$newContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
+				$fieldContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
 				
-				// if rewrite succeeded, then the content returned differs from the input
+				// if rewrite succeeded, then the content returned should differ from the original
 				if($newContent != $page->$field) {
 					$changedFields++;
 					$this->printMessage("Changed field: '$field' on page: \"{$page->Title}\" (ID: {$page->ID})", 'NOTICE');
-					$page->$field = $newContent;
+					$page->$field = $fieldContent;
 					$modified = true;
 				}
 			}

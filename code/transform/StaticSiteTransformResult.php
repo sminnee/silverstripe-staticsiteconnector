@@ -1,11 +1,11 @@
 <?php
 /**
  * Encapsulates the result of a transformation.
- * It subclasses TransformResult to allow dealing-to File objects also
+ * It subclasses {@link TransformResult} to allow dealing-to File objects also
  *
  * @package staticsiteconnector
  * @author Russell Michell <russell@silverstripe.com>
- * @see {@link TransformResult}
+ * @todo Logic should really exist in external-content module itself.
  */
 class StaticSiteTransformResult extends TransformResult {
 	
