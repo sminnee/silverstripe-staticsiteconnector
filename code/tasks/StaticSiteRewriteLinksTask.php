@@ -152,7 +152,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files",'NOTICE');
 
 		// Set up rewriter
-		$pageLookup = $pages->map('StaticSiteURL', 'ID');
+		$pageLookup = $pages;
 		$fileLookup = $files->map('StaticSiteURL', 'ID');
 
 		// Check for verbose argument
@@ -164,8 +164,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($show = $request->getVar('SHOW')) {
 			if($show == 'pages') {
 				$this->printMessage('Page Map');
-				foreach($pageLookup as $url => $id) {
-					$this->printMessage($id . ' => ' . $url);
+				foreach($pageLookup as $array) {
+					$this->printMessage($array['ID'] . ' => ' . $array['StaticSiteURL']);
 				}
 			}
 			if($show == 'files') {
@@ -180,29 +180,28 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			return;
 		}
 
-		$baseURL = $this->contentSource->BaseUrl;
 		$task = $this;
-		
-		/*
-		 * If no URL Processor is set in the external-content CMS UI, check for it
-		 * or calls to singleton() will fail.
-		 */
-		$urlProcessor = null;
-		if($this->contentSource->UrlProcessor) {
-			$urlProcessor = singleton($this->contentSource->UrlProcessor);
-		}
 
 		/*
 		 * Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, 
 		 * passed through the variable: $callback($url)
 		 */
 		$rewriter = new StaticSiteLinkRewriter(function($url) use(
-				$pageLookup, $fileLookup, $baseURL, $task, $urlProcessor) {
+				$pageLookup, $fileLookup, $task) {
 
 			$origUrl = $url;
 			$anchor = '';
 			if(strpos($url, '#') !== false) {
 				list($url, $anchor) = explode('#', $url, 2);
+			}
+			
+			/*
+			 * If no URL Processor is set in the external-content CMS UI, check for it
+			 * or calls to singleton() will fail.
+			 */
+			$urlProcessor = null;
+			if($task->contentSource->UrlProcessor) {
+				$urlProcessor = singleton($task->contentSource->UrlProcessor);
 			}
 
 			/*
@@ -217,15 +216,17 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$url = $processedURL['url'];				
 			}
 
-			// Return now if the url is empty, or is not an http scheme or is already processed into a SS shortcode
+			// Just return now if the url is "faulty"
 			if($task->ignoreUrl($url)) {
 				return;
 			}
 
-			// strip the trailing slash if any
+			// Strip the trailing slash, if any
 			if(substr($url, -1) == '/')  {
 				$url = rtrim($url, '/');
 			}
+			
+			$baseURL = $task->contentSource->BaseUrl;
 
 			/*
 			 * Strip the host and protocol from the url to ensure the url is relative before creating
@@ -235,59 +236,53 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			/*
 			 * File urls dont need processing as they dont have 'Pages' or '.aspx' present
-			 * so create the file map key by just making the raw input url absolute
+			 * so create the file map key by just making the raw input url absolute (sans anchors).
 			 */
 			$fileMapKey = Controller::join_links($baseURL, $origUrl);
 
 			// Log the progress
-			if($task->verbose) {
-				$task->printMessage("# rewriting: \"$origUrl\"");
-				if($anchor != '') {
-					$task->printMessage(" - anchor: \"$anchor\"");
-				}
-				$task->printMessage(" - page-key: \"$pageMapKey\"");
-				$task->printMessage(" - file-key: \"$fileMapKey\"");
+			$task->printMessage("START Rewriting: '$origUrl'");
+			if(strlen($anchor) >0) {
+				$task->printMessage("\tFound anchor: '$anchor' (Removed for comparison)");
 			}
+			$task->printMessage("\tPage-key: '$pageMapKey'");
+			$task->printMessage("\tFile-key: '$fileMapKey'");
 			
-			/*
-			 * @todo process and rewrite anchors correctly:
-			 * - If found on the same page, rewrite as #my-anchor
-			 * - If found on another page, strip them. SS doesn't support cross page anchors.
-			 */
+			$fileLookup = $fileLookup->toArray();
 
 			/*
 			 * Rewrite SiteTree links by replacing the phpQuery processed Page-URL 
-			 * with a SiteTree shortcode
+			 * with a SiteTree shortcode or an anchor, if one is found in the Content field.
 			 */
-			$pageLookup = $pageLookup->toArray();
-			if(isset($pageLookup[$pageMapKey]) && $siteTreeID = $pageLookup[$pageMapKey]) {
-				$output = '[sitetree_link,id=' . $siteTreeID . ']';
-				if($task->verbose) {
-					$task->printMessage("+ found: SiteTree ID#" . $siteTreeID, null, $output);
+			if($siteTreeObject = $pageLookup->find('StaticSiteURL', $pageMapKey)) {
+				$output = '[sitetree_link,id=' . $siteTreeObject->ID . ']';
+				// If $anchor can be found inside Content field, use that. Example: <a name="blah">
+				$anchorPattern = "<[\w]+\s+(name|id)=('|\")?". $anchor ."('|\")?";
+				if(strlen($anchor) >0 && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
+					$output = "#$anchor";
 				}
+				
+				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				return $output;
-			}
-
+			}			
 			/*
 			 * Rewrite Asset links by replacing phpQuery processed asset-URLs with 
 			 * the appropriate asset-filename.
 			 */
-			$fileLookup = $fileLookup->toArray();
-			if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
+			else if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
 					$output = $file->RelativeLink();
-					if($task->verbose) {
-						$task->printMessage("+ found: File ID#" . $fileID, null, $output);
-					}
+					$task->printMessage("\tFound: File ID#" . $fileID, null, $output);
 					return $output;
 				}
 				else {
-					$task->printMessage('File get_by_id failed with FileID: ' . $fileID . ', FileMapKey: ' . $fileMapKey, 'WARNING');
+					$task->printMessage("\tFailed: File ID#" . $fileID . "FileMapKey: " . $fileMapKey);
 				}
 			}
-
-			// Got this far? Link-rewriting has failed.
-			$task->printMessage('Rewriter failed ', 'WARNING', $origUrl);
+			else {
+				// Got this far? Link-rewriting has failed.
+				$task->printMessage("\tRewriter failed: ", '', $origUrl);
+			}
 
 			// log the failed rewrites
 			$segment01 = "Couldn't rewrite: " . $origUrl;
@@ -309,12 +304,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$this->currentPageID = $page->ID;
 
 			$url = $page->StaticSiteURL;
-			if($this->verbose) {
-				$this->printMessage('------------------------------------------------');
-				$this->printMessage($page->URLSegment, $i);
-			}
+			$this->printMessage(PHP_EOL.'------------------------------------------------'.PHP_EOL);
+			$this->printMessage('Title: '.$page->URLSegment, '#'.$i);
 			
-			// Get the schema that matches the page's url
+			// Get the schema that matches the page's legacy url
 			if($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
 				// Get fields to process
 				$fields = array();
@@ -326,20 +319,20 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$fields = array_unique($fields);
 			}
 			else {
-				$this->printMessage("No schema found for {$page->URLSegment}",'WARNING');
+				$this->printMessage("\tNo schema found for {$page->URLSegment}",'WARNING');
 				continue;
 			}
 			
 			$modified = false;
 			foreach($fields as $field) {
 				$newContent = $rewriter->rewriteInContent($page->$field);
-				// square-brackets are converted somewhere upstream..
+				// Square-brackets are converted upstream. Change them back.
 				$fieldContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
 				
-				// if rewrite succeeded, then the content returned should differ from the original
+				// If rewrite succeeded, then the content returned should differ from the original
 				if($newContent != $page->$field) {
 					$changedFields++;
-					$this->printMessage("Changed field: '$field' on page: \"{$page->Title}\" (ID: {$page->ID})", 'NOTICE');
+					$this->printMessage("\tChanged field: '$field' on page: \"{$page->Title}\" (ID: {$page->ID})");
 					$page->$field = $fieldContent;
 					$modified = true;
 				}
@@ -463,7 +456,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$countJunkUrl = 0;
 		foreach($rawData as $url) {
 			$url = trim(str_replace("Couldn't rewrite: ", '', $url));
-			if(stristr($url,'http')) {
+			if(stristr($url, 'http')) {
 				++$countNotBase;
 			}
 			else if(preg_match("#($nonHTTPSchemes):#", $url)) {
@@ -503,7 +496,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Empty string
 		if(!strlen($url) >0) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring: '' (Empty link)");
+				$this->printMessage("\tIgnoring: '' (Empty link)");
 			}
 			return true;
 		}
@@ -513,7 +506,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#", $url));
 		if($nonHTTPSchemes) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring: $url (Non-HTTP URL)");
+				$this->printMessage("\tIgnoring: $url (Non-HTTP URL)");
 			}
 			return true;
 		}		
@@ -522,7 +515,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$externalUrl = (substr($url, 0, 4) == 'http');
 		if($externalUrl) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring $url (3rd party URL)");
+				$this->printMessage("\tIgnoring $url (3rd party URL)");
 			}
 			return true;
 		}
@@ -531,7 +524,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#", $url));
 		if($alreadyRewritten) {
 			if($this->verbose) {
-				$this->printMessage("+ ignoring: $url (CMS link, already converted)");
+				$this->printMessage("\tIgnoring: $url (CMS link, already converted)");
 			}
 			return true;
 		}		
