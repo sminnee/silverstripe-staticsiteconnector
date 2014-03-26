@@ -9,10 +9,11 @@
  * Allows the rewriter to know which content to rewrite, if duplicate imports exist.
  * 
  * - A Source ID
- * Allows the rewriter to fetch the correct content.
+ * Allows the rewriter to fetch the correct content relative to the given source of scraped URLs.
  * 
- * - All rewrite failures are written to a logfile (@see $log_file).
- * - The log file is used as the data source for the CMS report {@link BadImportsReport}, this 
+ * All rewrite failures are written to a logfile (@see $log_file).
+ * 
+ * The log file is used as the data source for the CMS report {@link BadImportsReport}, this 
  * is because it's only after attempting to rewrite links that we can
  * analyse why some failed. Often we find the reason is that the URL being re-written 
  * hasn't actually made it 100% through the import process.
@@ -40,7 +41,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 *
 	 * @see http://en.wikipedia.org/wiki/URI_scheme
 	 * @var array
-	 * @todo just invert things so we test for [^http(s)?]
+	 * @todo just invert things so we test for [^http(s)?] ??
 	 */
 	public static $non_http_uri_schemes = array(
 		'mailto',
@@ -97,13 +98,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	protected $contentSource = null;
 	
 	/**
-	 * Holds the StaticSiteUtils object on construct
-	 * 
-	 * @var StaticSiteUtils
-	 */
-	protected $utils;
-	
-	/**
 	 * 
 	 * @var string
 	 */
@@ -116,32 +110,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return null | void
 	 */
 	public function run($request) {
-		
-		$this->utils = singleton('StaticSiteUtils');
 		$this->newLine = Director::is_cli() ? PHP_EOL : '<br/>';
 
-		// Get the StaticSiteContentSource and Import ID from the request parameters
+		// Get the StaticSiteContentSource and Import ID from request parameters
 		$this->contentSourceID = trim($request->getVar('SourceID'));
 		$this->contentImportID = trim($request->getVar('ImportID'));
-		$hasSid = ($this->contentSourceID && is_numeric($this->contentSourceID));
-		$hasIid = ($this->contentImportID && is_numeric($this->contentImportID));
-		
-		if(!$hasSid || !$hasIid) {
-			$this->printTaskInfo();
-			return;
-		}
 
-		// Load the content source using the passed content-source ID and Import ID
-		$this->contentSource = (StaticSiteContentSource::get()->byID($this->contentSourceID));
-		$contentImport = (StaticSiteImportDataObject::get()->byID($this->contentImportID));
-		if(!$this->contentSource) {
-			$this->printMessage("No content-source found via SourceID: ".$this->contentSourceID, 'WARNING');
+		if(!$this->checkInputs()) {
 			return;
 		}
-		if(!$contentImport) {
-			$this->printMessage("No content-import found via ImportID: ".$this->contentImportID, 'WARNING');
-			return;
-		}	
 
 		/*
 		 * Load imported page + file objects and filter the results on the passed ImportID,
@@ -175,11 +152,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		}
 
 		$task = $this;
-
-		/*
-		 * Create a callback function for the url rewriter which is called from StaticSiteLinkRewriter, 
-		 * passed through the variable: $callback($url)
-		 */
+		// Callback for URL rewriter, called from StaticSiteLinkRewriter and passed through $callback($url)
 		$rewriter = new StaticSiteLinkRewriter(function($url) use(
 				$pageLookup, $fileLookup, $task) {
 
@@ -188,26 +161,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			if(strpos($url, '#') !== false) {
 				list($url, $anchor) = explode('#', $url, 2);
 			}
-			
-			/*
-			 * If no URL Processor is set in the external-content CMS UI, check for it
-			 * or calls to singleton() will fail.
-			 */
-			$urlProcessor = null;
-			if($task->contentSource->UrlProcessor) {
-				$urlProcessor = singleton($task->contentSource->UrlProcessor);
-			}
 
 			/*
-			 * Process $url just the same as we did for the value of SiteTree.StaticSiteURL during import.
-			 * This ensures $url === SiteTree.StaticSiteURL so we can match very accurately on it.
-			 * The "mime" key is an expected argument but it's not actually used within this task.
-			 * It defaults to the page's mime type.
+			 * Process $url using same process as for SiteTree.StaticSiteURL during import.
+			 * This ensures $url == SiteTree.StaticSiteURL so we can match very accurately on it.
+			 * The "mime" key is an expected argument but not actually used within this task.
+			 * Note: Also checks if a URL Processor is set in the CMS UI.
 			 */
-			if($urlProcessor) {
+			if($task->contentSource->UrlProcessor && $urlProcessor = singleton($task->contentSource->UrlProcessor)) {
 				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
-				// processURL returns an array. Get the url from it
 				$url = $processedURL['url'];				
+			}
+			else {
+				return;
 			}
 
 			// Just return now if the url is "faulty"
@@ -216,27 +182,17 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			// Strip the trailing slash, if any
-			if(substr($url, -1) == '/')  {
-				$url = rtrim($url, '/');
-			}
-			
+			$url = substr($url, -1) == '/' ? rtrim($url, '/') : $url;
 			$baseURL = $task->contentSource->BaseUrl;
 
-			/*
-			 * Strip the host and protocol from the url to ensure the url is relative before creating
-			 * the pageMapKey as an absolute url, so it matches the keys in $pageLookup.
-			 */
+			// The keys to use to when URL-matching in $pageLookup and $fileLookup
 			$pageMapKey = Controller::join_links($baseURL, parse_url($url, PHP_URL_PATH));
-
-			/*
-			 * File urls dont need processing as they dont have 'Pages' or '.aspx' present
-			 * so create the file map key by just making the raw input url absolute (sans anchors).
-			 */
 			$fileMapKey = Controller::join_links($baseURL, $origUrl);
 			
-			if(strlen($anchor) >0) {
+			if(strlen($anchor)) {
 				$task->printMessage("\tFound anchor: '#$anchor' (Removed for matching)");
 			}
+			
 			$task->printMessage("\tPage-key: '$pageMapKey'");
 			$task->printMessage("\tFile-key: '$fileMapKey'");
 			
@@ -244,16 +200,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			/*
 			 * Rewrite SiteTree links by replacing the phpQuery processed Page-URL 
-			 * with a SiteTree shortcode or an anchor, if one is found in the Content field.
+			 * with a CMS shortcode or an anchor, if one is found in the Content field.
 			 */
 			if($siteTreeObject = $pageLookup->find('StaticSiteURL', $pageMapKey)) {
 				$output = '[sitetree_link,id=' . $siteTreeObject->ID . ']';
-				// If $anchor can be found inside Content field, use that. Example: <a name="blah">
+				// If $anchor is found, use that.
 				$anchorPattern = "<[\w]+\s+(name|id)=('|\")?". $anchor ."('|\")?";
-				if(strlen($anchor) >0 && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
+				if(strlen($anchor) && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
 					$output = "#$anchor";
 				}
-				
 				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				return $output;
 			}			
@@ -263,17 +218,16 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 */
 			else if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
-					$output = $file->RelativeLink();
-					$task->printMessage("\tFound: File ID#" . $fileID, null, $output);
+					$task->printMessage("\tFound: File ID#" . $fileID, null, $file->RelativeLink());
 					return $output;
 				}
 			}
 			else {
-				// Got this far? Link-rewriting has failed.
+				// Otherwise link-rewriting has failed.
 				$task->printMessage("\tRewriter failed. See detail below:");
 			}
 
-			// log the failed rewrites
+			// Log failures
 			$segment01 = "Couldn't rewrite: '$origUrl'";
 			$segment02 = " Found in Page: '" . $task->currentPageTitle ."'";
 			$segment03 = " ID: " . $task->currentPageID;
@@ -285,13 +239,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Perform rewriting
 		$changedFields = 0;
 		foreach($pages as $i => $page) {
-			/*
-			 * Set these so the rewriter task can log some page context 
-			 * for the urls that couldn't be re-writen.
-			 */
+			// For the rewriter, so it has some context for urls that couldn't be re-writen.
 			$this->currentPageTitle = $page->Title;
 			$this->currentPageID = $page->ID;
-
 			$url = $page->StaticSiteURL;
 			
 			// Get the schema that matches the page's legacy url
@@ -314,7 +264,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			foreach($fields as $field) {
 				$task->printMessage("START Rewriter for links in: '$url'");
 				$newContent = $rewriter->rewriteInContent($page->$field);
-				// Square-brackets are converted upstream. Change them back.
+				// Square-brackets are converted upstream, so change them back.
 				$fieldContent = str_replace(array('%5B', '%5D'), array('[', ']'), $newContent);
 				
 				// If rewrite succeeded, then the content returned should differ from the original
@@ -330,11 +280,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$task->printMessage("END Rewriter for links in: '$url'");
 			}
 			
-			/*
-			 * Only save the page if modifications have occurred.
-			 * Default is to just write the page with its changes, but not publish.
-			 * If the 'PUBLISH' flag is passed, then publish it. (Beats a CMS batch update for 100s of pages)
-			 */
+			// If the 'PUBLISH' param is passed, then publish the object.
 			if($modified) {
 				if($request->getVar('PUBLISH')) {
 					$page->doPublish();
@@ -427,7 +373,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		}
 		
 		$logData = $header . PHP_EOL . $logFail . PHP_EOL;
-		$this->utils->log($logData, null, null, __CLASS__);
+		StaticSiteUtils:create()->log($logData, null, null, __CLASS__);
 	}
 
 	/**
@@ -524,6 +470,33 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function setContentSourceID($contentSourceID) {
 		$this->contentSourceID = $contentSourceID;
 	}
+	
+	/**
+	 * Checks the user-passed data is cotia.
+	 * 
+	 * @return boolean
+	 */
+	public function checkInputs() {	
+		$hasSid = ($this->contentSourceID && is_numeric($this->contentSourceID));
+		$hasIid = ($this->contentImportID && is_numeric($this->contentImportID));
+		if(!$hasSid || !$hasIid) {
+			$this->printTaskInfo();
+			return false;
+		}
+
+		// Load the content source using the passed content-source ID and Import ID
+		$this->contentSource = (StaticSiteContentSource::get()->byID($this->contentSourceID));
+		$contentImport = (StaticSiteImportDataObject::get()->byID($this->contentImportID));
+		if(!$this->contentSource) {
+			$this->printMessage("No content-source found via SourceID: ".$this->contentSourceID, 'WARNING');
+			return false;
+		}
+		if(!$contentImport) {
+			$this->printMessage("No content-import found via ImportID: ".$this->contentImportID, 'WARNING');
+			return false;
+		}
+		return true;
+	}
 
 	/**
 	 * Prints information on the options available for running the task and
@@ -545,6 +518,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			echo $newLine;
 			if(Director::is_cli()) {
 				$this->printMessage('Available command line options: '.$newLine);
+				$this->printMessage("\tSourceID=<number> \t\tThe ID of the original crawl.");
+				$this->printMessage("\tImportID=<number> \t\tThe ID of the import to use.");
 				$this->printMessage("\tSHOW=pages \tPrint the contents of the pages map.");
 				$this->printMessage("\tSHOW=files \tPrint the contents of the files map.");
 				$this->printMessage("\tDIE=1 \t\tStop processing after showing map contents.");

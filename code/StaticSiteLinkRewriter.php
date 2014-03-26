@@ -9,7 +9,6 @@
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 
-// We need phpQuery
 require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
 
 class StaticSiteLinkRewriter {
@@ -82,7 +81,7 @@ class StaticSiteLinkRewriter {
 	/**
 	 * Rewrite URLs in the given content snippet. Returns the updated content.
 	 *
-	 * @param string $content The content containing the links to rewrite
+	 * @param string $content The content containing the links to rewrite.
 	 * @return string
 	 */
 	public function rewriteInContent($content) {
