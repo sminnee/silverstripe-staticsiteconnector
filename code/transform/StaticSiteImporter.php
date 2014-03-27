@@ -32,7 +32,7 @@ class StaticSiteImporter extends ExternalContentImporter {
 	/**
 	 * Run prior to the entire import process starting.
 	 * 
-	 * Creates an import DataObject record for hooking into later with the link-processing logic.
+	 * Creates an import DataObject record for hooking-into later with the link-processing logic.
 	 * 
 	 * @return void
 	 */

@@ -26,19 +26,6 @@ class StaticSiteContentItem extends ExternalContentItem {
 	private $default_content_type = 'sitetree';
 
 	/**
-	 * Set this by using the yml config system
-	 *
-	 * Example:
-	 * <code>
-	 * StaticSiteContentExtractor:
-     *    log_file:  ../logs/import-log.txt
-	 * </code>
-	 *
-	 * @var string
-	 */
-	private static $log_file = null;
-
-	/**
 	 * @return void
 	 */
 	public function init() {
@@ -87,8 +74,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		if(!$this->source->urlList()->hasCrawled()) {
 			return 0;
 		}
-
-		return sizeof($this->source->urlList()->getChildren($this->externalId));
+		return count($this->source->urlList()->getChildren($this->externalId));
 	}
 
 	/**
@@ -107,7 +93,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 			return "sitetree";
 		}
 		// Log everything that doesn't fit:
-		singleton('StaticSiteUtils')->log('UNKNOWN Schema not configured for Mime & URL: '. $this->ProcessedMIME, $this->AbsoluteURL, $this->ProcessedMIME);
+		singleton('StaticSiteUtils')->log('UNKNOWN Schema not configured for Mime & URL:', $this->AbsoluteURL, $this->ProcessedMIME);
 		return $this->default_content_type;
 	}
 

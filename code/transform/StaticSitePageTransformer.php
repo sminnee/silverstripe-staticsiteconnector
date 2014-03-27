@@ -26,20 +26,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 * 
 	 * @var StaticSiteUtils
 	 */
-	protected $utils;
-	
-	/**
-	 * Set this by using the yml config system
-	 *
-	 * Example:
-	 * <code>
-	 * StaticSiteContentExtractor:
-     *    log_file:  ../logs/import-log.txt
-	 * </code>
-	 *
-	 * @var string
-	 */
-	private static $log_file = null;	
+	protected $utils;	
 
 	/**
 	 * 
@@ -60,12 +47,12 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
-		$this->utils->log("START transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("START page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		$item->runChecks('sitetree');
 		if($item->checkStatus['ok'] !== true) {
 			$this->utils->log(' - '.$item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -89,17 +76,18 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			$urlSegment = preg_replace('#\.[^.]*$#', '', $name); // Lose file-extensions e.g .html
 			$contentFields['URLSegment'] = array('content' => $urlSegment);	
 		}
-		
+
 		// Default value for Content (Useful for during unit-testing)
 		if(empty($contentFields['Content'])) {
-			$contentFields['Content'] = array('content' => 'dummy');
+			$contentFields['Content'] = array('content' => 'No content found');
+			$this->utils->log(" - No content found for 'Content' field.", $item->AbsoluteURL, $item->ProcessedMIME);
 		}
 
 		// Get a user-defined schema suited to this URL and Mime
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
 			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -107,13 +95,13 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 
 		if(!$pageType) {
 			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
 		
 		// Process incoming according to user-selected duplication strategy
 		if(!$page = $this->processStrategy($pageType, $strategy, $item, $source->BaseUrl, $parentObject)) {
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 		
@@ -133,7 +121,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$page->write();
 		$page->publish('Stage', 'Live');
 
-		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($page, $item->stageChildren());
 	}

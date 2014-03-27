@@ -1,40 +1,31 @@
 <?php
 /**
- * Rewrites content-links found in <img> element "src" and <a> element "href"
- * HTML attributes, which were originally imported via {@link StaticSiteImporter}.
+ * Rewrites content-links found in <img> "src" and <a> "href"
+ * HTML tag-attributes, which were originally imported via {@link StaticSiteImporter}.
  * 
  * The task takes two arguments:
  * 
  * - An Import ID:
- * Allows the rewriter to know which content to rewrite, if duplicate imports exist.
+ * Allows the rewriter to know which content to rewrite, when duplicate imports exist.
  * 
  * - A Source ID
  * Allows the rewriter to fetch the correct content relative to the given source of scraped URLs.
  * 
- * All rewrite failures are written to a logfile (@see $log_file).
- * 
- * The log file is used as the data source for the CMS report {@link BadImportsReport}, this 
- * is because it's only after attempting to rewrite links that we can
- * analyse why some failed. Often we find the reason is that the URL being re-written 
- * hasn't actually made it 100% through the import process.
+ * All rewrite failures are written the {@link FailedURLRewriteObject} DataObject to power the
+ * CMS {@link FailedURLRewriteReport}.
  * 
  * @author Sam Minnee <sam@silverstripe.com>
  * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
+ * @todo
+ *  Add a way for users to remove completed ImportDataObjects
+ *  Ensure ignoreUrls() uses same linkIsThirdParty() (etc) methods as rest of logic
+ *	Bug where too-many failed URL Totals are being recorded for each imported pgae.
+ *	Fix writeFailedRewrites() so multiple imports for the same ImportID, are overwritten:
+ *	- Run the task twice for the same ImportID and SourceID
+ *	- Multiple blocks will be written to the failed-rewrite log for the same import
+ *	- To prevent this, simply overwrite a block if found for the same ImportID
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
-
-	/**
-	 * Set this by using the yml config system
-	 *
-	 * Example:
-	 * <code>
-	 * StaticSiteContentExtractor:
-     *    log_file:  ../logs/import-log.txt
-	 * </code>
-	 *
-	 * @var string
-	 */
-	private static $log_file = null;
 
 	/**
 	 * An inexhaustive list of non http(s) URI schemes which we don't want to try to normalise.
@@ -51,6 +42,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		'skype',
 		'ssh'
 	);
+	
+	/**
+	 * 
+	 * @var string The prefix to use for the log-file summary.
+	 */
+	public static $summary_prefix = 'Import No.';
 	
 	/**
 	 * @var string
@@ -120,14 +117,15 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			return;
 		}
 
-		/*
-		 * Load imported page + file objects and filter the results on the passed ImportID,
-		 * so the task knows which imported content-links should be re-written.
-		 */
+		// Load imported objects and filter on ImportID, to know which links should be re-written.
 		$pages = $this->contentSource->Pages()->filter('StaticSiteImportID', $this->contentImportID);
 		$files = $this->contentSource->Files()->filter('StaticSiteImportID', $this->contentImportID);
 
-		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files",'NOTICE');
+		$this->printMessage("Processing Import: {$pages->count()} pages, {$files->count()} files", 'NOTICE'); 
+		
+		if($pages->count() == 0) {
+			$this->printMessage("Nothing to rewrite! Did you forget to run an import?", 'NOTICE'); 
+		}
 
 		$pageLookup = $pages;
 		$fileLookup = $files->map('StaticSiteURL', 'ID');
@@ -135,8 +133,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($show = $request->getVar('SHOW')) {
 			if($show == 'pages') {
 				$this->printMessage('Page Map');
-				foreach($pageLookup as $array) {
-					$this->printMessage($array['ID'] . ' => ' . $array['StaticSiteURL']);
+				foreach($pageLookup as $page) {
+					$this->printMessage($page->ID . ' => ' . $page->StaticSiteURL);
 				}
 			}
 			if($show == 'files') {
@@ -153,8 +151,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 		$task = $this;
 		// Callback for URL rewriter, called from StaticSiteLinkRewriter and passed through $callback($url)
-		$rewriter = new StaticSiteLinkRewriter(function($url) use(
-				$pageLookup, $fileLookup, $task) {
+		$rewriter = new StaticSiteLinkRewriter(function($url) use($pageLookup, $fileLookup, $task) {
 
 			$origUrl = $url;
 			$anchor = '';
@@ -163,9 +160,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			/*
-			 * Process $url using same process as for SiteTree.StaticSiteURL during import.
-			 * This ensures $url == SiteTree.StaticSiteURL so we can match very accurately on it.
-			 * The "mime" key is an expected argument but not actually used within this task.
+			 * Process $url using same process as for SiteTree.StaticSiteURL during import,
+			 * ensures $url == SiteTree.StaticSiteURL so we can match accurately.
+			 * The "mime" key is an expected argument but not actually used here.
 			 * Note: Also checks if a URL Processor is set in the CMS UI.
 			 */
 			if($task->contentSource->UrlProcessor && $urlProcessor = singleton($task->contentSource->UrlProcessor)) {
@@ -183,11 +180,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			// Strip the trailing slash, if any
 			$url = substr($url, -1) == '/' ? rtrim($url, '/') : $url;
-			$baseURL = $task->contentSource->BaseUrl;
 
 			// The keys to use to when URL-matching in $pageLookup and $fileLookup
-			$pageMapKey = Controller::join_links($baseURL, parse_url($url, PHP_URL_PATH));
-			$fileMapKey = Controller::join_links($baseURL, $origUrl);
+			$pageMapKey = Controller::join_links($task->contentSource->BaseUrl, parse_url($url, PHP_URL_PATH));
+			$fileMapKey = Controller::join_links($task->contentSource->BaseUrl, $origUrl);
 			
 			if(strlen($anchor)) {
 				$task->printMessage("\tFound anchor: '#$anchor' (Removed for matching)");
@@ -200,11 +196,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			/*
 			 * Rewrite SiteTree links by replacing the phpQuery processed Page-URL 
-			 * with a CMS shortcode or an anchor, if one is found in the Content field.
+			 * with a CMS shortcode or anchor if one is found in the 'Content' field.
 			 */
 			if($siteTreeObject = $pageLookup->find('StaticSiteURL', $pageMapKey)) {
 				$output = '[sitetree_link,id=' . $siteTreeObject->ID . ']';
-				// If $anchor is found, use that.
 				$anchorPattern = "<[\w]+\s+(name|id)=('|\")?". $anchor ."('|\")?";
 				if(strlen($anchor) && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
 					$output = "#$anchor";
@@ -212,12 +207,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				return $output;
 			}			
-			/*
-			 * Rewrite Asset links by replacing phpQuery processed asset-URLs with 
-			 * the appropriate asset-filename.
-			 */
+			// Rewrite Asset links by replacing phpQuery processed URLs with appropriate filename.
 			else if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
+					$output = $file->RelativeLink();
 					$task->printMessage("\tFound: File ID#" . $fileID, null, $file->RelativeLink());
 					return $output;
 				}
@@ -226,13 +219,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				// Otherwise link-rewriting has failed.
 				$task->printMessage("\tRewriter failed. See detail below:");
 			}
-
-			// Log failures
-			$segment01 = "Couldn't rewrite: '$origUrl'";
-			$segment02 = " Found in Page: '" . $task->currentPageTitle ."'";
-			$segment03 = " ID: " . $task->currentPageID;
-			array_push($task->listFailedRewrites, $segment01 . $segment02 . $segment03);
-
+			
+			// Log failures for later analysis
+			$this->pushFailedRewrite($task, $url);			
 			return $origUrl;
 		});
 
@@ -240,13 +229,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$changedFields = 0;
 		foreach($pages as $i => $page) {
 			// For the rewriter, so it has some context for urls that couldn't be re-writen.
-			$this->currentPageTitle = $page->Title;
 			$this->currentPageID = $page->ID;
 			$url = $page->StaticSiteURL;
 			
 			// Get the schema that matches the page's legacy url
 			if($schema = $this->contentSource->getSchemaForURL($url, 'text/html')) {
-				// Get fields to process
 				$fields = array();
 				foreach($schema->ImportRules() as $rule) {
 					if(!$rule->PlainText) {
@@ -280,14 +267,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				$task->printMessage("END Rewriter for links in: '$url'");
 			}
 			
-			// If the 'PUBLISH' param is passed, then publish the object.
 			if($modified) {
-				if($request->getVar('PUBLISH')) {
-					$page->doPublish();
-				}
-				else {
-					$page->write();
-				}
+				Versioned::reading_stage('Stage');
+				$page->write();
+				$page->publish('Stage', 'Live');
 			}
 		}
 		
@@ -296,14 +279,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->printMessage("Amended $changedFields content fields for {$pages->count()} pages and {$files->count()} files processed.");
 		
 		$msgNextSteps = " - Not all links will get fixed. It's recommended to also run a 3rd party link-checker over your imported content.";
-		$msgSeeReport = " - Check the CMS \"".singleton('BadImportsReport')->title()."\" for a summary of failed link-rewrites.";
-		$msgSeeLogged = " - Check ".Config::inst()->get('StaticSiteRewriteLinksTask', 'log_file')." for more detail on failed link-rewrites.";
+		$msgSeeReport = " - Check the CMS \"".singleton('FailedURLRewriteReport')->title()."\" report for a summary of failed link-rewrites.";
 		
 		$this->printMessage("Tips:");
 		$this->printMessage("{$newLine}$msgNextSteps");
 		$this->printMessage($msgSeeReport);
-		$this->printMessage($msgSeeLogged);
-		
 		$this->writeFailedRewrites();
 	}
 
@@ -325,55 +305,36 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		else {
 			echo "<p>$level$message$url</p>" . PHP_EOL;
 		}
-/*
- * Commented logic allowed comprehensive and detailed information to be logged for quality debugging.
- * It is commented for now, as it is way too slow for imports comprising 1000s of URLs
- */
-		
-// @todo find a more intelligent way of matching the $page->field (See WARNING below)
-// @todo Extrapolate the field-matching into a separate method
-//		if($url && $level == 'WARNING') {
-//			// Attempt some context for the log, so we can tell what page the rewrite failed in
-//			$normalized = $this->normaliseUrl($url, $this->contentSource->BaseUrl);
-//			$url = preg_replace("#/$#",'',str_ireplace($this->contentSource->BaseUrl, '', $normalized['url']));
-//			$pages = $this->contentSource->Pages();
-//			$dbFieldsToMatchOn = array();
-//			foreach($pages as $page) {
-//				foreach($page->db() as $name=>$field) {
-//					// Check that the $name is available on this particular Page subclass
-//					// WARNING: We're hard-coding a connection between fields partially named as '.*Content.*' on the selected DataType!
-//					if(strstr($name, 'Content') && in_array($name, $page->database_fields($page->ClassName))) {
-//						$dbFieldsToMatchOn["{$name}:PartialMatch"] = $url;
-//					}
-//				}
-//			}
-//			// Query SiteTree for the page in which the link to be rewritten, was found
-//			$failureContext = 'unknown';
-//			if($page = SiteTree::get()->filter($dbFieldsToMatchOn)->First()) {
-//				$failureContext = '"'.$page->Title.'" (#'.$page->ID.')';
-//			}
-//			array_push($this->listFailedRewrites, "Couldn't rewrite: {$url}. Found in: {$failureContext}");
-//		}
 	}
 
 	/**
-	 * Write failed rewrites to a logfile for later analysis.
-	 * Note: There is a CMS report generated from this data.
+	 * Write failed rewrites to the {@link BadImportLog} for later analysis by users
+	 * via the CMS' Report admin.
 	 *
-	 * @see {@link BadImportsReport}
 	 * @return void
+	 * @todo What to do with report summaries when a task for the same import is re-run?
 	 */
 	public function writeFailedRewrites() {
-		$logFail = implode(PHP_EOL, $this->listFailedRewrites);
-		$header = 'Imported link failure log: (' . date('d/m/Y H:i:s') . ')' . PHP_EOL . PHP_EOL;
-		
-		foreach($this->countFailureTypes() as $label => $payload) {
-			$desc = $payload['desc'] ? " ({$payload['desc']})" : '';
-			$header .= FormField::name_to_label($label) . ': '. $payload['count'] . $desc . PHP_EOL;
+		$importID = 0;
+		foreach($this->listFailedRewrites as $failure) {
+			$importID = $failure['ImportID']; // Will be the same value each time
+			$failedURLObj = FailedURLRewriteObject::create();
+			$failedURLObj->BadLinkType = $failure['BadLinkType'];
+			$failedURLObj->ImportID = $failure['ImportID'];
+			$failedURLObj->ContainedInID = $failure['ContainedInID'];
+			$failedURLObj->write();
 		}
 		
-		$logData = $header . PHP_EOL . $logFail . PHP_EOL;
-		StaticSiteUtils:create()->log($logData, null, null, __CLASS__);
+		$summaryText = self::$summary_prefix . $this->contentImportID;
+		foreach($this->countFailureTypes() as $label => $payload) {
+			$summaryText .= ' ' . FormField::name_to_label($label) . ': '. $payload['count'] . ' ' . $payload['desc'] . PHP_EOL;
+		}
+		
+		// Write the summary, to be shown at the top of the report
+		$summary = FailedURLRewriteSummary::create();
+		$summary->Text = $summaryText;
+		$summary->ImportID = $importID;
+		$summary->write();
 	}
 
 	/**
@@ -387,33 +348,83 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function countFailureTypes() {
 		$rawData = $this->listFailedRewrites;
-		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
-		$countNotBase = 0;
-		$countNotSchm = 0;
-		$countNoImprt = 0;
-		$countJunkUrl = 0;
-		foreach($rawData as $url) {
-			$url = trim(str_replace("Couldn't rewrite: ", '', $url));
-			if(stristr($url, 'http')) {
-				++$countNotBase;
+		$countThirdParty = 0;
+		$countBadScheme = 0;
+		$countNotImported = 0;
+		$countJunk = 0;
+		foreach($rawData as $data) {
+			$url = $data['origUrl'];
+			if($this->linkIsThirdParty($url)) {
+				++$countThirdParty;
 			}
-			else if(preg_match("#($nonHTTPSchemes):#", $url)) {
-				++$countNotSchm;
+			else if($this->linkIsBadScheme($url)) {
+				++$countBadScheme;
 			}
-			else if(preg_match("#^/#", $url)) {
-				++$countNoImprt;
+			else if($this->linkIsNotImported($url)) {
+				++$countNotImported;
 			}
 			else {
-				++$countJunkUrl;
+				++$countJunk;
 			}
 		}
 		return array(
 			'Total failures'	=> array('count' => count($rawData), 'desc' => ''),
-			'ThirdParty'		=> array('count' => $countNotBase, 'desc' => 'Links to external websites'),
-			'BadScheme'			=> array('count' => $countNotSchm, 'desc' => 'Links with bad scheme'),
-			'BadImport'			=> array('count' => $countNoImprt, 'desc' => 'Links to pages that were not imported'),
-			'Junk'				=> array('count' => $countJunkUrl, 'desc' => 'Junk links')
+			'ThirdParty'		=> array('count' => $countThirdParty, 'desc' => '(Links to external websites)'),
+			'BadScheme'			=> array('count' => $countBadScheme, 'desc' => '(Links with bad scheme)'),
+			'NotImported'			=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
+			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)')
 		);
+	}
+	
+	/**
+	 * 
+	 * @param string $link
+	 * @return boolean
+	 */
+	protected function linkIsThirdParty($link) {
+		return (bool)stristr($link, 'http');
+	}
+	
+	/**
+	 * 
+	 * @param string $link
+	 * @return boolean
+	 */	
+	protected function linkIsBadScheme($link) {
+		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
+		$badScheme = preg_match("#($nonHTTPSchemes):#", $link);
+		$alreadyImported = preg_match("#(\[sitetree|assets)#", $link);
+		return (bool)($badScheme || $alreadyImported);
+	}
+	
+	/**
+	 * After rewrite task is run, link remains as-is - ergo unimported.
+	 * @param string $link
+	 * @return booleann
+	 */	
+	protected function linkIsNotImported($link) {
+		return (bool)preg_match("#^/#", $link);
+	}
+	
+	/**
+	 * What kind of bad link is $link? The returned string should match the ENUM
+	 * values on FailedURLRewriteObject
+	 * 
+	 * @param string $link
+	 * @return string
+	 * @todo can we add a check for links with anchors to other pages?
+	 */
+	protected function badLinkType($link) {
+		if($this->linkIsThirdParty($link)) {
+			return 'ThirdParty';
+		}
+		if($this->linkIsBadScheme($link)) {
+			return 'BadScheme';
+		}
+		if($this->linkIsNotImported($link)) {
+			return 'NotImported';
+		}
+		return 'Junk';
 	}
 
 	/**
@@ -429,8 +440,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo What if the remote site is a SilverStripe site? asset+sitetree URLs will be ignored!
 	 */
 	public function ignoreUrl($url) {
-		$url = trim($url);		
-
+		$this->pushFailedRewrite($this, $url);
+		
+		$url = trim($url);
 		// Empty string
 		if(!strlen($url) >0) {
 			$this->printMessage("\tIgnoring: '' (Empty link)");
@@ -457,7 +469,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($alreadyRewritten) {
 			$this->printMessage("\tIgnoring: $url (CMS link, already converted)");
 			return true;
-		}		
+		}	
+		
 		return false;
 	}
 
@@ -526,5 +539,21 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 			echo $newLine;
 		}
+	}
+	
+	/**
+	 * Build an array of failed URL rewrites for later reporting.
+	 * 
+	 * @param StaticSiteRewriteLinksTask $obj
+	 * @param string $link
+	 * @return void
+	 */
+	protected function pushFailedRewrite($obj, $link) {
+		array_push($obj->listFailedRewrites, array(
+			'origUrl' => $link,
+			'ImportID' => $obj->contentImportID,
+			'ContainedInID' => $obj->currentPageID,
+			'BadLinkType' => $obj->badLinkType($link)
+		));		
 	}
 }
