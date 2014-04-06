@@ -3,4 +3,6 @@ Name: staticsiteconnectorconfig
 After: 'framework/*','cms/*'
 ---
 StaticSiteRewriteLinksTask:
-  log_file: '/var/tmp/badlinks.log'
+  log_file: '/var/tmp/failed-rewrite.log'
+StaticSiteContentExtractor:
+  log_file: '/var/tmp/import.log'

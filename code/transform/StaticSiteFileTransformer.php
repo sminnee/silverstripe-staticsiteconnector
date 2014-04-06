@@ -23,19 +23,6 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 * @var number
 	 */
 	protected static $parent_id = 0;
-
-	/**
-	 * Set this by using the yml config system
-	 *
-	 * Example:
-	 * <code>
-	 * StaticSiteContentExtractor:
-     *    log_file:  ../logs/import-log.txt
-	 * </code>
-	 *
-	 * @var string
-	 */
-	private static $log_file = null;
 	
 	/**
 	 * The name to use for the folder beneath assets/Import to cache imported images.
@@ -76,12 +63,12 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
-		$this->utils->log("START transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("START file-transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
 
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - '.$item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - '.$item->checkStatus['msg']." for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -101,8 +88,8 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		$schema = $source->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$schema) {
-			$this->utils->log(" - Couldn't find an import schema for: ",$item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(" - Couldn't find an import schema for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
@@ -111,23 +98,23 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		if(!$dataType) {
 			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
 		
 		// Process incoming according to user-selected duplication strategy
 		if(!$file = $this->processStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 		
 		if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
-			$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$this->write($file, $item, $source, $contentFields['tmp_path']);
-		$this->utils->log("END transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($file, $item->stageChildren());
 	}
@@ -171,16 +158,16 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public function getContentFieldsAndSelectors($item) {
 		// Get the import rules from the content source
-		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
+		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$importSchema) {
-			$this->utils->log("Couldn't find an import schema for ",$item->AbsoluteURL,$item->ProcessedMIME,'WARNING');
+			$this->utils->log("Couldn't find an import schema for ", $item->AbsoluteURL, $item->ProcessedMIME, 'WARNING');
 			return null;
 		}
 		$importRules = $importSchema->getImportRules();
 
  		// Extract from the remote file based on those rules
-		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);
-		$extraction = $contentExtractor->extractMapAndSelectors($importRules,$item);
+		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL, $item->ProcessedMIME);
+		$extraction = $contentExtractor->extractMapAndSelectors($importRules, $item);
 		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		return $extraction;
 	}

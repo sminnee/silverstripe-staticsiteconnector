@@ -89,8 +89,8 @@ class StaticSiteContentExtractor extends Object {
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
 		$this->utils = singleton('StaticSiteUtils');
 
-		if (!class_exists('phpQuery')) {
-			throw new Exception("The third party library 'phpQuery' is required");
+		if(!class_exists('phpQuery')) {
+			throw new Exception("The third-party library 'phpQuery' is required.");
 		}
 	}
 
@@ -190,8 +190,7 @@ class StaticSiteContentExtractor extends Object {
 			}
 		}
 
-		$result = trim($result);
-		return $result;
+		return trim($result);
 	}
 
 	/**

@@ -10,7 +10,7 @@
 	},
 	{
 		"name": "Russell Michell",
-		"email": "russell@silverstripe.com"
+		"email": "russ@silverstripe.com"
 	},
 	{
 		"name": "Stig Lindqvist",
@@ -22,7 +22,7 @@
 	}],
 	"require": {
 		"silverstripe/framework": ">=3.0.0",
-		"silverstripe/external-content": "dev-master",
+		"silverstripe/external-content":"dev-master",
 		"cuab/phpcrawl": "*"
 	}
 }

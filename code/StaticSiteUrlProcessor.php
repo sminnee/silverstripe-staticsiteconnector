@@ -62,7 +62,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	 * @return string
 	 */
 	public function getDescription() {
-		return "Drop file extensions and trailing slashes on URLs but otherwise leave them the same";
+		return "Drop file extensions and trailing slashes, but otherwise leave them the same.";
 	}
 
 	/**
