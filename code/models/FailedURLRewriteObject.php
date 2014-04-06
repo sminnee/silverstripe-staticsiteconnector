@@ -6,7 +6,7 @@
  * 
  * @see {@link StaticSiteLinkRewriteTask}
  * @package staticsiteconnector
- * @author Russell Michell <russell@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
  */
 class FailedURLRewriteObject extends DataObject {
 

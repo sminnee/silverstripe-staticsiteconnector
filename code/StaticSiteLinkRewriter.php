@@ -3,12 +3,12 @@
  *
  * Helper class for rewriting links using phpQuery.
  * 
+ * @author Sam Minnee <sam@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
+ * @author Michael Parkhill <mike@silverstripe.com>
  * @package staticsiteconnector
  * @see {@link StaticSiteRewriteLinksTask}
- * @author Sam Minee <sam@silverstripe.com>
- * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
-
 require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
 
 class StaticSiteLinkRewriter {

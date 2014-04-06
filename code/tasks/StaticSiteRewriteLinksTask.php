@@ -15,15 +15,12 @@
  * CMS {@link FailedURLRewriteReport}.
  * 
  * @author Sam Minnee <sam@silverstripe.com>
- * @author SilverStripe Science Ninjas <scienceninjas@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
+ * @author Michael Parkhill <mike@silverstripe.com>
+ * @package staticsiteconnector
  * @todo
- *  Add a way for users to remove completed ImportDataObjects
- *  Ensure ignoreUrls() uses same linkIsThirdParty() (etc) methods as rest of logic
- *	Bug where too-many failed URL Totals are being recorded for each imported pgae.
- *	Fix writeFailedRewrites() so multiple imports for the same ImportID, are overwritten:
- *	- Run the task twice for the same ImportID and SourceID
- *	- Multiple blocks will be written to the failed-rewrite log for the same import
- *	- To prevent this, simply overwrite a block if found for the same ImportID
+ *	- Bug where too-many failed URL Totals are being recorded for each imported pgae.
+ *  - Add a way for users to remove completed ImportDataObjects
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
@@ -32,7 +29,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 *
 	 * @see http://en.wikipedia.org/wiki/URI_scheme
 	 * @var array
-	 * @todo just invert things so we test for [^http(s)?] ??
 	 */
 	public static $non_http_uri_schemes = array(
 		'mailto',
@@ -40,7 +36,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		'ftp',
 		'res',
 		'skype',
-		'ssh'
+		'ssh',
+		'telnet',
+		'gopher'
 	);
 	
 	/**
@@ -53,12 +51,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var string
 	 */
 	protected $description = 'Rewrites imported links into SilverStripe compatible format.';
-
-	/**
-	 *
-	 * @var string
-	 */
-	public $curentPageTitle = null;
 	
 	/**
 	 *
@@ -160,9 +152,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 
 			/*
-			 * Process $url using same process as for SiteTree.StaticSiteURL during import,
-			 * ensures $url == SiteTree.StaticSiteURL so we can match accurately.
-			 * The "mime" key is an expected argument but not actually used here.
+			 * Process $url using processURL() (same as for StaticSiteURL used during import,
+			 * to ensure $url == StaticSiteURL so we can match accurately.
 			 * Note: Also checks if a URL Processor is set in the CMS UI.
 			 */
 			if($task->contentSource->UrlProcessor && $urlProcessor = singleton($task->contentSource->UrlProcessor)) {
@@ -315,7 +306,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo What to do with report summaries when a task for the same import is re-run?
 	 */
 	public function writeFailedRewrites() {
-		$importID = 0;
 		foreach($this->listFailedRewrites as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
 			$failedURLObj = FailedURLRewriteObject::create();
@@ -327,13 +317,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		
 		$summaryText = self::$summary_prefix . $this->contentImportID;
 		foreach($this->countFailureTypes() as $label => $payload) {
-			$summaryText .= ' ' . FormField::name_to_label($label) . ': '. $payload['count'] . ' ' . $payload['desc'] . PHP_EOL;
+			$label = FormField::name_to_label($label) . ': ';
+			$summaryText .= ' ' . $label . $payload['count'] . ' ' . $payload['desc'] . PHP_EOL;
 		}
 		
 		// Write the summary, to be shown at the top of the report
 		$summary = FailedURLRewriteSummary::create();
 		$summary->Text = $summaryText;
-		$summary->ImportID = $importID;
+		$summary->ImportID = $importID ? $importID : 0;
 		$summary->write();
 	}
 
@@ -377,33 +368,47 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 	
 	/**
+	 * Detects if a link is to a third-party website.
 	 * 
 	 * @param string $link
 	 * @return boolean
 	 */
 	protected function linkIsThirdParty($link) {
-		return (bool)stristr($link, 'http');
+		$link = ltrim($link);
+		return (bool)(substr($link, 0, 4) == 'http');
 	}
 	
 	/**
+	 * Detects if a link uses an unsupported protocol (e.g. mailto, tel etc)
 	 * 
 	 * @param string $link
 	 * @return boolean
 	 */	
 	protected function linkIsBadScheme($link) {
 		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
-		$badScheme = preg_match("#($nonHTTPSchemes):#", $link);
-		$alreadyImported = preg_match("#(\[sitetree|assets)#", $link);
+		$badScheme = preg_match("#^($nonHTTPSchemes):#", $link);
+		$alreadyImported = $this->linkIsAlreadyRewritten($link);
 		return (bool)($badScheme || $alreadyImported);
 	}
 	
 	/**
 	 * After rewrite task is run, link remains as-is - ergo unimported.
+	 * 
 	 * @param string $link
 	 * @return booleann
 	 */	
 	protected function linkIsNotImported($link) {
 		return (bool)preg_match("#^/#", $link);
+	}
+	
+	/**
+	 * Detects if a link has already been re-written.
+	 * 
+	 * @param string $link
+	 * @return boolean
+	 */
+	protected function linkIsAlreadyRewritten($link) {
+		return (bool)(preg_match("#(\[sitetree|assets)#", $link));
 	}
 	
 	/**
@@ -440,37 +445,27 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo What if the remote site is a SilverStripe site? asset+sitetree URLs will be ignored!
 	 */
 	public function ignoreUrl($url) {
+		// If it's beung ingored, log it for a summary used in the report.
 		$this->pushFailedRewrite($this, $url);
-		
 		$url = trim($url);
-		// Empty string
-		if(!strlen($url) >0) {
-			$this->printMessage("\tIgnoring: '' (Empty link)");
-			return true;
-		}
-
+		
 		// Not an HTTP protocol
-		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
-		$nonHTTPSchemes = (preg_match("#($nonHTTPSchemes):#", $url));
-		if($nonHTTPSchemes) {
+		if($this->linkIsBadScheme($url)) {
 			$this->printMessage("\tIgnoring: $url (Non-HTTP URL)");
 			return true;
 		}		
 
 		// Is external or an absolute url
-		$externalUrl = (substr($url, 0, 4) == 'http');
-		if($externalUrl) {
+		if($this->linkIsThirdParty($url)) {
 			$this->printMessage("\tIgnoring: $url (3rd party URL)");
 			return true;
 		}
 		
 		// Has already been processed
-		$alreadyRewritten = (preg_match("#(\[sitetree|assets)#", $url));
-		if($alreadyRewritten) {
+		if($this->linkIsAlreadyRewritten($url)) {
 			$this->printMessage("\tIgnoring: $url (CMS link, already converted)");
 			return true;
-		}	
-		
+		}
 		return false;
 	}
 

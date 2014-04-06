@@ -6,7 +6,9 @@
  * @package staticsiteconnector
  * @see {@link BadImportLog}
  * @see {@link StaticSiteRewriteLinksTask}
- * @todo Ensure CSV export button works properly.
+ * @todo 
+ *	- Ensure CSV export button works properly.
+ *	- Render the summary using ViewableData::customise() so more detail can easily be added
  */
 class FailedURLRewriteReport extends SS_Report {
 	
@@ -38,7 +40,7 @@ TXT;
 		$_list = new ArrayList();
 		$linkCount = array();
 		foreach($list as $badLink) {		
-			// Prevent same page showing repeatedly in the report
+			// Prevent same page showing in the report and "sum" the totals
 			if(!isset($linkCount[$badLink->ContainedInID])) {
 				$linkCount[$badLink->ContainedInID] = 1;
 			}
@@ -92,11 +94,13 @@ TXT;
 	 * Get the raw data.
 	 * 
 	 * @param number $importID
-	 * @return mixed SS_List
+	 * @return DataList
 	 */
 	protected function getBadImportData($importID) {
 		$default = new ArrayList();		
-		if($badLinks = DataObject::get('FailedURLRewriteObject')->filter('ImportID', $importID)) {
+		if($badLinks = DataObject::get('FailedURLRewriteObject')
+				->filter('ImportID', $importID)
+				->sort('Created')) {
 			return $badLinks;
 		}
 		return $default;
