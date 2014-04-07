@@ -41,7 +41,7 @@ TXT;
 		$linkCount = array();
 		foreach($list as $badLink) {		
 			// Prevent same page showing in the report and "sum" the totals
-			if(!isset($linkCount[$badLink->ContainedInID])) {
+			if(empty($linkCount[$badLink->ContainedInID])) {
 				$linkCount[$badLink->ContainedInID] = 1;
 			}
 			else {

@@ -19,7 +19,7 @@
  * @author Michael Parkhill <mike@silverstripe.com>
  * @package staticsiteconnector
  * @todo
- *	- Bug where too-many failed URL Totals are being recorded for each imported pgae.
+ *	- Too-many failed URL Totals are recorded for each imported page. Suspect listFailedRewrites contains duplicates.
  *  - Add a way for users to remove completed ImportDataObjects
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
@@ -308,10 +308,26 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function writeFailedRewrites() {
 		foreach($this->listFailedRewrites as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
+			
+			/*
+			 * Prevent the same bad-link (for the same Import & container page)
+			 * being written.
+			 */
+			$failureExists = DataObject::get('FailedURLRewriteObject')->filter(array(
+				'ImportID' => $importID,
+				'OrigUrl' => $failure['origUrl'],
+				'ContainedInID' => $failure['ContainedInID']
+			));
+			
+			if($failureExists->count() >0) {
+				continue;
+			}
+			
 			$failedURLObj = FailedURLRewriteObject::create();
 			$failedURLObj->BadLinkType = $failure['BadLinkType'];
 			$failedURLObj->ImportID = $failure['ImportID'];
 			$failedURLObj->ContainedInID = $failure['ContainedInID'];
+			$failedURLObj->OrigUrl = $failure['origUrl'];
 			$failedURLObj->write();
 		}
 		
@@ -543,12 +559,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return void
 	 */
-	protected function pushFailedRewrite($obj, $link) {
+	protected function pushFailedRewrite($obj, $link) {		
 		array_push($obj->listFailedRewrites, array(
 			'origUrl' => $link,
 			'ImportID' => $obj->contentImportID,
 			'ContainedInID' => $obj->currentPageID,
 			'BadLinkType' => $obj->badLinkType($link)
-		));		
+		));	
 	}
 }
