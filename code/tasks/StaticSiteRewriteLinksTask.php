@@ -315,7 +315,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 */
 			$failureExists = DataObject::get('FailedURLRewriteObject')->filter(array(
 				'ImportID' => $importID,
-				'OrigUrl' => $failure['origUrl'],
+				'OrigUrl' => $failure['OrigUrl'],
 				'ContainedInID' => $failure['ContainedInID']
 			));
 			
@@ -327,7 +327,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			$failedURLObj->BadLinkType = $failure['BadLinkType'];
 			$failedURLObj->ImportID = $failure['ImportID'];
 			$failedURLObj->ContainedInID = $failure['ContainedInID'];
-			$failedURLObj->OrigUrl = $failure['origUrl'];
+			$failedURLObj->OrigUrl = $failure['OrigUrl'];
 			$failedURLObj->write();
 		}
 		
@@ -360,7 +360,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$countNotImported = 0;
 		$countJunk = 0;
 		foreach($rawData as $data) {
-			$url = $data['origUrl'];
+			$url = $data['OrigUrl'];
 			if($this->linkIsThirdParty($url)) {
 				++$countThirdParty;
 			}
@@ -561,7 +561,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	protected function pushFailedRewrite($obj, $link) {		
 		array_push($obj->listFailedRewrites, array(
-			'origUrl' => $link,
+			'OrigUrl' => $link,
 			'ImportID' => $obj->contentImportID,
 			'ContainedInID' => $obj->currentPageID,
 			'BadLinkType' => $obj->badLinkType($link)
