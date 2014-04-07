@@ -19,7 +19,6 @@
  * @author Michael Parkhill <mike@silverstripe.com>
  * @package staticsiteconnector
  * @todo
- *	- Too-many failed URL Totals are recorded for each imported page. Suspect listFailedRewrites contains duplicates.
  *  - Add a way for users to remove completed ImportDataObjects
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
@@ -461,7 +460,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo What if the remote site is a SilverStripe site? asset+sitetree URLs will be ignored!
 	 */
 	public function ignoreUrl($url) {
-		// If it's beung ingored, log it for a summary used in the report.
+		// If it's being ignored, log it for a summary used in the report.
 		$this->pushFailedRewrite($this, $url);
 		$url = trim($url);
 		

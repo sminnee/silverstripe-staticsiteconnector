@@ -147,8 +147,12 @@ TXT;
 		foreach($source as $import) {
 			$date = DBField::create_field('SS_Datetime', $import->Created)->Nice24();
 			$_source[$import->ID] = $date . ' (Import #' . $import->ID . ')';
-		}		
-		$importDropdown = new DropdownField('ImportID', 'Import selection', $_source);
+		}
+		
+		$importDropdown = new LiteralField('ImportID', '<p>No imports found.</p>');
+		if($_source) {
+			$importDropdown = new DropdownField('ImportID', 'Import selection', $_source);
+		}
 		
 		$fields->push($importDropdown);
 		return $fields;

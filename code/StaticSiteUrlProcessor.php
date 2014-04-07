@@ -8,13 +8,13 @@
  *  - Building content hierarchy.
  *
  * For example, MOSS has a habit of putting unnecessary "/Pages/" elements into the URLs, and adding
- * .aspx extensions.  We don't want to include these in the content heirarchy.
+ * .aspx extensions. We don't want to include these in the content heirarchy.
  *
- * More sophisticated processing might be done to facilitate importing of less
+ * More sophisticated processing might be done to facilitate importing of less.
  * 
- * @package staticsiteconnector
  * @author Sam Minee <sam@silverstripe.com>
- * @author Science Ninjas <scienceninjas@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
+ * @package staticsiteconnector
  */
 interface StaticSiteUrlProcessor {
 
@@ -78,7 +78,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-			$url = preg_replace("#\.[^.]*$#",'',$url);
+			$url = preg_replace("#^([^.]+)\.[^.]*$#", "$1", $url);
 			$url = $this->postProcessUrl($url);
 			return array(
 				'url'=>"$url?$qs",
@@ -87,7 +87,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		} 
 		else {
 			$url = $urlData['url'];
-			$url = preg_replace("#\.[^.]*$#",'',$url);
+			$url = preg_replace("#^([^.]+)\.[^.]*$#", "$1", $url);
 			return array(
 				'url'=>$this->postProcessUrl($url),
 				'mime'=>$urlData['mime']
@@ -108,8 +108,8 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		// Replace all encoded slashes with non-encoded versions
 		$noSlashes = str_ireplace('%2f', '/', $url);	
 		// Replace all types of brackets
-		$noBrackets = str_replace(array('%28','(',')'), '', $noSlashes);
-		// Return, ensuring $url never has >1 consecutive '/'e.g. /blah//test
+		$noBrackets = str_replace(array('%28', '(', ')'), '', $noSlashes);
+		// Return, ensuring $url never has >1 consecutive slash e.g. /blah//test
 		return preg_replace("#/{2,}#", '/', $noBrackets);
 	}
 }
@@ -141,7 +141,7 @@ class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions i
 	 * @return array
 	 */
 	public function processURL($urlData) {
-		$url = str_ireplace('/Pages/','/',$urlData['url']);
+		$url = str_ireplace('/Pages/', '/', $urlData['url']);
 		$urlData = array(
 			'url'	=> $url,
 			'mime'	=> $urlData['mime']
