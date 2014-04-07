@@ -6,9 +6,6 @@
  * @package staticsiteconnector
  * @see {@link BadImportLog}
  * @see {@link StaticSiteRewriteLinksTask}
- * @todo 
- *	- Ensure CSV export button works properly.
- *	- Render the summary using ViewableData::customise() so more detail can easily be added.
  */
 class FailedURLRewriteReport extends SS_Report {
 	

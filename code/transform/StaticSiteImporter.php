@@ -45,9 +45,22 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * Run right when the import process ends.
 	 * 
 	 * @return void
+	 * @todo auto-run the StaticSiteRewriteLinksTask on import completion
+	 *	- How to get sourceID to know which StaticSiteContentSource to fetch for a  "auto-rewrite" CMS field-value under the "Import" tab
 	 */
 	public function runOnImportEnd() {
 		parent::runOnImportEnd();
-		StaticSiteImportDataObject::current()->end();
+		$current = StaticSiteImportDataObject::current();
+		$current->end();
+		
+		$params = Controller::curr()->getURLParams();
+		$sourceID = $params['ID'];
+		$importID = $current->ID;
+		$source = DataObject::get('StaticSiteContentSource')->filter('ID', $sourceID);
+		
+		if($source && $source->autoRunRewriteTask) {
+			// Create the task runner to invoke dev/tasks/StaticSiteRewriteLinksTask
+			// How?? See controller where dev/tasks is invoked as it does when you call index.php for the first time
+		}
 	}	
 }
