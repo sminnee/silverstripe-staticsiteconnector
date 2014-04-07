@@ -18,8 +18,6 @@
  * @author Russell Michell <russ@silverstripe.com>
  * @author Michael Parkhill <mike@silverstripe.com>
  * @package staticsiteconnector
- * @todo
- *  - Add a way for users to remove completed ImportDataObjects
  */
 class StaticSiteRewriteLinksTask extends BuildTask {
 
