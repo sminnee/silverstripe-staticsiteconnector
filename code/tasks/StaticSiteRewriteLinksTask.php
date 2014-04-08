@@ -303,6 +303,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo What to do with report summaries when a task for the same import is re-run?
 	 */
 	public function writeFailedRewrites() {
+		$importID = 0;
 		foreach($this->listFailedRewrites as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
 			

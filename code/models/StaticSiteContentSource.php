@@ -20,7 +20,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		'UrlProcessor' => 'Varchar(255)',
 		'ExtraCrawlUrls' => 'Text',
 		'UrlExcludePatterns' => 'Text',
-		'ParseCSS' => 'Boolean'
+		'ParseCSS' => 'Boolean',
+		'AutoRunTask' => 'Boolean'
 	);
 
 	/**
@@ -99,8 +100,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 				. "</strong><br>" . Convert::raw2xml($processorObj->getDescription());
 		}
 		$fields->addFieldToTab("Root.Main", new OptionsetField("UrlProcessor", "URL processing", $processingOptions));
-		$fields->addFieldToTab("Root.Main", $parseCss = new CheckboxField("ParseCSS", "Parse external CSS"));
-		$parseCss->setDescription("Fetches images defined in CSS <strong>background-image</strong> selectors, not reachable through content scraping");
+		$fields->addFieldToTab("Root.Main", $parseCss = new CheckboxField("ParseCSS", "Fetch external CSS"));
+		$parseCss->setDescription("Fetches images defined in CSS <strong>background-image</strong> selectors, not ordinarily reachable.");
+		$fields->addFieldToTab("Root.Main", $autoRunLinkTask = new CheckboxField("AutoRunTask", "Automatically run link-rewrite task"));
+		$autoRunLinkTask->setDescription("This will run the link-rewriter task automatically once an import has completed.");		
 
 		// Schemas Gridfield
 		$importRules = $fields->dataFieldByName('Schemas');

@@ -53,14 +53,34 @@ class StaticSiteImporter extends ExternalContentImporter {
 		$current = StaticSiteImportDataObject::current();
 		$current->end();
 		
-		$params = Controller::curr()->getURLParams();
-		$sourceID = $params['ID'];
 		$importID = $current->ID;
-		$source = DataObject::get('StaticSiteContentSource')->filter('ID', $sourceID);
-		
-		if($source && $source->autoRunRewriteTask) {
-			// Create the task runner to invoke dev/tasks/StaticSiteRewriteLinksTask
-			// How?? See controller where dev/tasks is invoked as it does when you call index.php for the first time
-		}
+		$this->runRewriteLinksTask($importID);
 	}	
+	
+	/**
+	 * 
+	 * @param number $importID
+	 * @return void
+	 * @todo How to interject with external-content's "Import Complete" message to only show when
+	 * this method has completed?
+	 * @todo Use the returned task output, and display on-screen deploynaut style
+	 */
+	protected function runRewriteLinksTask($importID) {
+		$params = Controller::curr()->getRequest()->postVars();
+		$sourceID = !empty($params['ID']) ? $params['ID'] : 0;
+		$autoRun = !empty($params['AutoRunTask']) ? $params['AutoRunTask'] : null;
+		
+		if($sourceID && $autoRun) {
+			$task = TaskRunner::create();
+			$getVars = array(
+				'SourceID' => $sourceID,
+				'ImportID' => $importID
+			);
+			
+			// Skip TaskRunner. Too few docs available on its use
+			$request = new SS_HTTPRequest('GET', '/dev/tasks/StaticSiteRewriteLinksTask', $getVars);
+			$inst = Injector::inst()->create('StaticSiteRewriteLinksTask');
+			$inst->run($request);
+		}		
+	}
 }
