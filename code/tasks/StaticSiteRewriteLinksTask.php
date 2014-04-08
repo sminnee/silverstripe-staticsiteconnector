@@ -148,13 +148,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				list($url, $anchor) = explode('#', $url, 2);
 			}
 
-			// For accuracy, process $url using processURL(), the same as during crawl.
-			$urlProcessor = 'StaticSiteURLProcessor_DropExtensions';
-			if($task->contentSource->UrlProcessor) {
-				$urlProcessor = singleton($task->contentSource->UrlProcessor);
+			// For accuracy, process $url using processURL(), the same as during crawl (if set)
+			if($task->contentSource->UrlProcessor && $urlProcessor = singleton($task->contentSource->UrlProcessor)) {
+				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
+				$url = $processedURL['url'];				
 			}
-			$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
-			$url = $processedURL['url'];
 
 			// Just return now if the url is un-rewritable
 			if($task->ignoreUrl($url)) {
