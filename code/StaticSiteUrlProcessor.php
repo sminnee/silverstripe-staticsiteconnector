@@ -79,7 +79,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-			$url = preg_replace("#^([^.]+)\.[^.]*$#", "$1", $url);
+			$url = preg_replace("#\.[^./?]*$#", "$1", $url);
 			$url = $this->postProcessUrl($url);
 			return array(
 				'url'=>"$url?$qs",
@@ -88,7 +88,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		} 
 		else {
 			$url = $urlData['url'];
-			$url = preg_replace("#^(.+)\.[^.]*$#", "$1", $url);
+			$url = preg_replace("#\.[^./?]*$#", "$1", $url);
 			return array(
 				'url'=>$this->postProcessUrl($url),
 				'mime'=>$urlData['mime']
@@ -142,6 +142,10 @@ class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions i
 	 * @return array
 	 */
 	public function processURL($urlData) {
+		if(!is_array($urlData) || empty($urlData['url'])) {
+			return false;
+		}
+		
 		$url = str_ireplace('/Pages/', '/', $urlData['url']);
 		$urlData = array(
 			'url'	=> $url,

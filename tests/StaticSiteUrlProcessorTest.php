@@ -16,23 +16,46 @@ class StaticSiteUrlProcessorTest extends SapphireTest {
 		$this->assertFalse($processor->processUrl(''));
 		$this->assertFalse($processor->processUrl(array()));
 		
-		$testUrl4Char = $processor->processUrl(array(
-			'url' => 'http://test.com/test1.html',
+		$testUrl4CharSufx = $processor->processUrl(array(
+			'url' => 'http://fluff.com/test1.html',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test1', $testUrl4Char['url']);
+		$this->assertEquals('http://fluff.com/test1', $testUrl4CharSufx['url']);
 		
-		$testUrl3Char = $processor->processUrl(array(
-			'url' => 'http://test.com/test2.htm',
+		$testUrl3CharSufx = $processor->processUrl(array(
+			'url' => 'http://fluff.com/test2.htm',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test2', $testUrl3Char['url']);
+		$this->assertEquals('http://fluff.com/test2', $testUrl3CharSufx['url']);
 		
-		$testUrlNoChar = $processor->processUrl(array(
-			'url' => 'http://test.com/test3',
+		$testUrlNoCharSufx = $processor->processUrl(array(
+			'url' => 'http://fluff.com/test3',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test3', $testUrlNoChar['url']);		
+		$this->assertEquals('http://fluff.com/test3', $testUrlNoCharSufx['url']);
+		
+		$testUrlWithBrackets = $processor->processUrl(array(
+			'url' => 'http://fluff.com/test3/(subdir)',
+			'mime' => 'text/html'
+		));
+		$this->assertEquals('http://fluff.com/test3/subdir', $testUrlWithBrackets['url']);		
 	}
+	
+	/**
+	 * Tests StaticSiteURLProcessor_DropExtensions URL Processor
+	 */
+	public function testStaticSiteMOSSURLProcessor() {
+		$processor = new StaticSiteMOSSURLProcessor();
+		
+		$this->assertFalse($processor->processUrl('http://test.com/test1.html'));
+		$this->assertFalse($processor->processUrl(''));
+		$this->assertFalse($processor->processUrl(array()));
+		
+		$testUrlWithPages = $processor->processUrl(array(
+			'url' => 'http://fluff.com/Pages/test1.aspx',
+			'mime' => 'text/html'
+		));
+		$this->assertEquals('http://fluff.com/test1', $testUrlWithPages['url']);
+	}	
 	
 }
