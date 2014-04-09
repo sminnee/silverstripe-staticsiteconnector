@@ -16,23 +16,23 @@ class StaticSiteUrlProcessorTest extends SapphireTest {
 		$this->assertFalse($processor->processUrl(''));
 		$this->assertFalse($processor->processUrl(array()));
 		
-		$testUrlData01 = $processor->processUrl(array(
+		$testUrl4Char = $processor->processUrl(array(
 			'url' => 'http://test.com/test1.html',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test1', $testUrlData01['url']);
+		$this->assertEquals('http://test.com/test1', $testUrl4Char['url']);
 		
-		$testUrlData02 = $processor->processUrl(array(
+		$testUrl3Char = $processor->processUrl(array(
 			'url' => 'http://test.com/test2.htm',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test2', $testUrlData02['url']);
+		$this->assertEquals('http://test.com/test2', $testUrl3Char['url']);
 		
-		$testUrlData03 = $processor->processUrl(array(
+		$testUrlNoChar = $processor->processUrl(array(
 			'url' => 'http://test.com/test3',
 			'mime' => 'text/html'
 		));
-		$this->assertEquals('http://test.com/test3', $testUrlData03['url']);		
+		$this->assertEquals('http://test.com/test3', $testUrlNoChar['url']);		
 	}
 	
 }
