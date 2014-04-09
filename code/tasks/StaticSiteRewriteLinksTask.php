@@ -344,6 +344,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * - No. Junk URLs (i.e. those not matching any of the above)
 	 *
 	 * @return array
+	 * @todo too many URLs being collected in $this->listFailedRewrites
 	 */
 	public function countFailureTypes() {
 		$rawData = $this->listFailedRewrites;
@@ -351,27 +352,36 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$countBadScheme = 0;
 		$countNotImported = 0;
 		$countJunk = 0;
+		$countUnknown = 0;
 		foreach($rawData as $data) {
 			$url = $data['OrigUrl'];
-			if($this->linkIsThirdParty($url)) {
+			if($this->linkIsJunk($url)) {
+				++$countJunk;
+				continue;
+			}		
+			else if($this->linkIsThirdParty($url)) {
 				++$countThirdParty;
+				continue;
 			}
 			else if($this->linkIsBadScheme($url)) {
 				++$countBadScheme;
+				continue;
 			}
 			else if($this->linkIsNotImported($url)) {
 				++$countNotImported;
+				continue;
 			}
 			else {
-				++$countJunk;
+				++$countUnknown;
 			}
 		}
 		return array(
 			'Total failures'	=> array('count' => count($rawData), 'desc' => ''),
 			'ThirdParty'		=> array('count' => $countThirdParty, 'desc' => '(Links to external websites)'),
 			'BadScheme'			=> array('count' => $countBadScheme, 'desc' => '(Links with bad scheme)'),
-			'NotImported'			=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
-			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)')
+			'NotImported'		=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
+			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)'),
+			'Unknown'			=> array('count' => $countUnknown, 'desc' => '(Not categorisable)')
 		);
 	}
 	
@@ -406,7 +416,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return booleann
 	 */	
 	public function linkIsNotImported($link) {
-		return (bool)(stristr($link, 'sitetree') === false || stristr($link, 'assets') === false);
+		return (bool)(stristr($link, 'sitetree') === false && stristr($link, 'assets') === false);
 	}
 	
 	/**
@@ -416,7 +426,14 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return boolean
 	 */
 	public function linkIsAlreadyRewritten($link) {
-		return (bool)(preg_match("#(\[sitetree|assets)#", $link));
+		return (bool)(stristr($link, 'sitetree') !== false || stristr($link, 'assets') !== false);
+	}
+	
+	/**
+	 * Link begins with non-legitimate character
+	 */
+	public function linkIsJunk($link) {
+		return (bool)preg_match("#^[^(a-zA-Z|/)]+#", $link);
 	}
 	
 	/**
@@ -427,7 +444,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return string
 	 * @todo can we add a check for links with anchors to other pages?
 	 */
-	protected function badLinkType($link) {
+	public function badLinkType($link) {
+		if($this->linkIsJunk($link)) {
+			return 'Junk';
+		}		
 		if($this->linkIsThirdParty($link)) {
 			return 'ThirdParty';
 		}
@@ -437,7 +457,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($this->linkIsNotImported($link)) {
 			return 'NotImported';
 		}
-		return 'Junk';
+		return 'Unknown';
 	}
 
 	/**
