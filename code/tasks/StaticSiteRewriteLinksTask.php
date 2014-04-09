@@ -30,6 +30,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public static $non_http_uri_schemes = array(
 		'mailto',
 		'tel',
+		'htp',
 		'ftp',
 		'res',
 		'skype',
@@ -380,9 +381,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */
-	protected function linkIsThirdParty($link) {
-		$link = ltrim($link);
-		return (bool)(substr($link, 0, 4) == 'http');
+	public function linkIsThirdParty($link) {
+		$link = trim($link);
+		return (bool)preg_match("#^http(s)?://.+#", $link);
 	}
 	
 	/**
@@ -391,7 +392,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */	
-	protected function linkIsBadScheme($link) {
+	public function linkIsBadScheme($link) {
 		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
 		$badScheme = preg_match("#^($nonHTTPSchemes):#", $link);
 		$alreadyImported = $this->linkIsAlreadyRewritten($link);
@@ -399,13 +400,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 	
 	/**
-	 * After rewrite task is run, link remains as-is - ergo unimported.
+	 * After rewrite task is run, link doesn't match a valid CMS link shortcode.
 	 * 
 	 * @param string $link
 	 * @return booleann
 	 */	
-	protected function linkIsNotImported($link) {
-		return (bool)preg_match("#^/#", $link);
+	public function linkIsNotImported($link) {
+		return (bool)(stristr($link, 'sitetree') === false || stristr($link, 'assets') === false);
 	}
 	
 	/**
@@ -414,7 +415,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */
-	protected function linkIsAlreadyRewritten($link) {
+	public function linkIsAlreadyRewritten($link) {
 		return (bool)(preg_match("#(\[sitetree|assets)#", $link));
 	}
 	
