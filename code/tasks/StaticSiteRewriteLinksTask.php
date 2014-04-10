@@ -30,6 +30,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public static $non_http_uri_schemes = array(
 		'mailto',
 		'tel',
+		'htp',
 		'ftp',
 		'res',
 		'skype',
@@ -297,7 +298,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function writeFailedRewrites() {
 		$importID = 0;
-		foreach($this->listFailedRewrites as $failure) {
+		$postProcessed = array();
+		$uniq = $this->uniq($this->listFailedRewrites);
+		foreach($uniq as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
 			
 			/*
@@ -343,34 +346,44 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * - No. Junk URLs (i.e. those not matching any of the above)
 	 *
 	 * @return array
+	 * @todo too many URLs being collected in $this->listFailedRewrites
 	 */
 	public function countFailureTypes() {
-		$rawData = $this->listFailedRewrites;
+		$rawData = $this->uniq($this->listFailedRewrites);
 		$countThirdParty = 0;
 		$countBadScheme = 0;
 		$countNotImported = 0;
 		$countJunk = 0;
+		$countUnknown = 0;
 		foreach($rawData as $data) {
 			$url = $data['OrigUrl'];
-			if($this->linkIsThirdParty($url)) {
+			if($this->linkIsJunk($url)) {
+				++$countJunk;
+				continue;
+			}		
+			else if($this->linkIsThirdParty($url)) {
 				++$countThirdParty;
+				continue;
 			}
 			else if($this->linkIsBadScheme($url)) {
 				++$countBadScheme;
+				continue;
 			}
 			else if($this->linkIsNotImported($url)) {
 				++$countNotImported;
+				continue;
 			}
 			else {
-				++$countJunk;
+				++$countUnknown;
 			}
 		}
 		return array(
 			'Total failures'	=> array('count' => count($rawData), 'desc' => ''),
 			'ThirdParty'		=> array('count' => $countThirdParty, 'desc' => '(Links to external websites)'),
 			'BadScheme'			=> array('count' => $countBadScheme, 'desc' => '(Links with bad scheme)'),
-			'NotImported'			=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
-			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)')
+			'NotImported'		=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
+			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)'),
+			'Unknown'			=> array('count' => $countUnknown, 'desc' => '(Not categorisable)')
 		);
 	}
 	
@@ -380,9 +393,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */
-	protected function linkIsThirdParty($link) {
-		$link = ltrim($link);
-		return (bool)(substr($link, 0, 4) == 'http');
+	public function linkIsThirdParty($link) {
+		$link = trim($link);
+		return (bool)preg_match("#^http(s)?://#", $link);
 	}
 	
 	/**
@@ -391,7 +404,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */	
-	protected function linkIsBadScheme($link) {
+	public function linkIsBadScheme($link) {
 		$nonHTTPSchemes = implode('|', self::$non_http_uri_schemes);
 		$badScheme = preg_match("#^($nonHTTPSchemes):#", $link);
 		$alreadyImported = $this->linkIsAlreadyRewritten($link);
@@ -399,13 +412,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 	
 	/**
-	 * After rewrite task is run, link remains as-is - ergo unimported.
+	 * After rewrite task is run, link doesn't match a valid CMS link shortcode.
 	 * 
 	 * @param string $link
-	 * @return booleann
+	 * @return boolean
 	 */	
-	protected function linkIsNotImported($link) {
-		return (bool)preg_match("#^/#", $link);
+	public function linkIsNotImported($link) {
+		return (bool)(stristr($link, 'sitetree') === false && stristr($link, 'assets') === false);
 	}
 	
 	/**
@@ -414,8 +427,18 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @param string $link
 	 * @return boolean
 	 */
-	protected function linkIsAlreadyRewritten($link) {
-		return (bool)(preg_match("#(\[sitetree|assets)#", $link));
+	public function linkIsAlreadyRewritten($link) {
+		return (bool)(stristr($link, 'sitetree') !== false || stristr($link, 'assets') !== false);
+	}
+	
+	/**
+	 * Link begins with non-legitimate character
+	 * 
+	 * @param string $link
+	 * @return boolean
+	 */
+	public function linkIsJunk($link) {
+		return (bool)preg_match("#^\.#", $link);
 	}
 	
 	/**
@@ -426,7 +449,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return string
 	 * @todo can we add a check for links with anchors to other pages?
 	 */
-	protected function badLinkType($link) {
+	public function badLinkType($link) {
+		if($this->linkIsJunk($link)) {
+			return 'Junk';
+		}
 		if($this->linkIsThirdParty($link)) {
 			return 'ThirdParty';
 		}
@@ -436,7 +462,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($this->linkIsNotImported($link)) {
 			return 'NotImported';
 		}
-		return 'Junk';
+		return 'Unknown';
 	}
 
 	/**
@@ -557,5 +583,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			'ContainedInID' => $obj->currentPageID,
 			'BadLinkType' => $obj->badLinkType($link)
 		));	
+	}
+	
+	/**
+	 * 
+	 * @param array $array
+	 * @return array
+	 */
+	protected function uniq($array) {
+		$serialized = array();
+		$unserialized = array();
+		foreach($array as $item) {
+			$serialized[] = serialize($item);
+		}
+		foreach(array_unique($serialized) as $item) {
+			$unserialized[] = unserialize($item);
+		}		
+		return $unserialized;
 	}
 }

@@ -66,19 +66,20 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	}
 
 	/**
-	 * @todo:
-	 * - Find out the reason for the replacement of a trailing slash in URLs
-	 * - These are needed if child-nodes are to be discovered and imported later
 	 * 
 	 * @param array $urlData
 	 * @return array
 	 */
 	public function processURL($urlData) {
+		if(!is_array($urlData) || empty($urlData['url'])) {
+			return false;
+		}
+		
 		$url = '';
 		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
-			$url = preg_replace("#^([^.]+)\.[^.]*$#", "$1", $url);
+			$url = preg_replace("#\.[^./?]*$#", "$1", $url);
 			$url = $this->postProcessUrl($url);
 			return array(
 				'url'=>"$url?$qs",
@@ -87,7 +88,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		} 
 		else {
 			$url = $urlData['url'];
-			$url = preg_replace("#^([^.]+)\.[^.]*$#", "$1", $url);
+			$url = preg_replace("#\.[^./?]*$#", "$1", $url);
 			return array(
 				'url'=>$this->postProcessUrl($url),
 				'mime'=>$urlData['mime']
@@ -110,7 +111,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		// Replace all types of brackets
 		$noBrackets = str_replace(array('%28', '(', ')'), '', $noSlashes);
 		// Return, ensuring $url never has >1 consecutive slash e.g. /blah//test
-		return preg_replace("#/{2,}#", '/', $noBrackets);
+		return preg_replace("#[^:]/{2,}#", '/', $noBrackets);
 	}
 }
 
@@ -141,6 +142,10 @@ class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions i
 	 * @return array
 	 */
 	public function processURL($urlData) {
+		if(!is_array($urlData) || empty($urlData['url'])) {
+			return false;
+		}
+		
 		$url = str_ireplace('/Pages/', '/', $urlData['url']);
 		$urlData = array(
 			'url'	=> $url,

@@ -15,7 +15,7 @@ class FailedURLRewriteObject extends DataObject {
 	 * @var array
 	 */
 	public static $db = array(
-		"BadLinkType" => "Enum('ThirdParty, BadScheme, NotImported, Junk', 'Junk')",
+		"BadLinkType" => "Enum('ThirdParty, BadScheme, NotImported, Junk, Unknown', 'Unknown')",
 		"OrigUrl" => "Varchar(255)"
 	);
 	
