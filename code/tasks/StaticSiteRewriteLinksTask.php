@@ -298,7 +298,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function writeFailedRewrites() {
 		$importID = 0;
-		foreach($this->listFailedRewrites as $failure) {
+		$postProcessed = array();
+		$uniq = $this->uniq($this->listFailedRewrites);
+		foreach($uniq as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
 			
 			/*
@@ -347,7 +349,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo too many URLs being collected in $this->listFailedRewrites
 	 */
 	public function countFailureTypes() {
-		$rawData = $this->listFailedRewrites;
+		$rawData = $this->uniq($this->listFailedRewrites);
 		$countThirdParty = 0;
 		$countBadScheme = 0;
 		$countNotImported = 0;
@@ -393,7 +395,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function linkIsThirdParty($link) {
 		$link = trim($link);
-		return (bool)preg_match("#^http(s)?://.+#", $link);
+		return (bool)preg_match("#^http(s)?://#", $link);
 	}
 	
 	/**
@@ -413,7 +415,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * After rewrite task is run, link doesn't match a valid CMS link shortcode.
 	 * 
 	 * @param string $link
-	 * @return booleann
+	 * @return boolean
 	 */	
 	public function linkIsNotImported($link) {
 		return (bool)(stristr($link, 'sitetree') === false && stristr($link, 'assets') === false);
@@ -431,9 +433,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	
 	/**
 	 * Link begins with non-legitimate character
+	 * 
+	 * @param string $link
+	 * @return boolean
 	 */
 	public function linkIsJunk($link) {
-		return (bool)preg_match("#^[^(a-zA-Z|/)]+#", $link);
+		return (bool)preg_match("#^\.#", $link);
 	}
 	
 	/**
@@ -447,7 +452,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function badLinkType($link) {
 		if($this->linkIsJunk($link)) {
 			return 'Junk';
-		}		
+		}
 		if($this->linkIsThirdParty($link)) {
 			return 'ThirdParty';
 		}
@@ -578,5 +583,22 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			'ContainedInID' => $obj->currentPageID,
 			'BadLinkType' => $obj->badLinkType($link)
 		));	
+	}
+	
+	/**
+	 * 
+	 * @param array $array
+	 * @return array
+	 */
+	protected function uniq($array) {
+		$serialized = array();
+		$unserialized = array();
+		foreach($array as $item) {
+			$serialized[] = serialize($item);
+		}
+		foreach(array_unique($serialized) as $item) {
+			$unserialized[] = unserialize($item);
+		}		
+		return $unserialized;
 	}
 }

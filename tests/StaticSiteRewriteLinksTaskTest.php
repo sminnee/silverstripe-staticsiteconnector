@@ -12,8 +12,7 @@ class StaticSiteRewriteLinksTaskTest extends SapphireTest {
 		$this->assertTrue($task->linkIsThirdParty('http://test.com'));
 		$this->assertTrue($task->linkIsThirdParty('http://test.com/subdir/test.html'));
 		$this->assertTrue($task->linkIsThirdParty('https://test.com/subdir/test.html'));
-		$this->assertFalse($task->linkIsThirdParty('https://')); // Will be registered as junk
-		$this->assertFalse($task->linkIsThirdParty('https://  ')); // Will be registered as junk
+		$this->assertTrue($task->linkIsThirdParty('https://  ')); // Will be registered as junk
 		$this->assertFalse($task->linkIsThirdParty('/subdir/test.html'));
 	}
 
@@ -31,7 +30,7 @@ class StaticSiteRewriteLinksTaskTest extends SapphireTest {
 		$this->assertTrue($task->linkIsNotImported('/'));
 		$this->assertTrue($task->linkIsNotImported('/fluff'));
 		$this->assertTrue($task->linkIsNotImported('/fluff.html'));
-		$this->assertFalse($task->linkIsNotImported('[sitetree'));
+		$this->assertFalse($task->linkIsNotImported('[sitetree ID=1234]'));
 		$this->assertFalse($task->linkIsNotImported('/assets/test.pdf'));
 	}	
 	
@@ -49,8 +48,11 @@ class StaticSiteRewriteLinksTaskTest extends SapphireTest {
 		$task = singleton('StaticSiteRewriteLinksTask');
 		
 		$this->assertTrue($task->linkIsJunk('./fluff.sh'));
-		$this->assertTrue($task->linkIsJunk('1234.com'));
+		$this->assertTrue($task->linkIsJunk('.junk'));
 		$this->assertTrue($task->linkIsJunk('../test.aspx'));
+		$this->assertFalse($task->linkIsJunk('http://tampin.co.uk'));
+		$this->assertFalse($task->linkIsJunk('/blah.html'));
+		$this->assertFalse($task->linkIsJunk('[sitetree ID=1234]'));
 	}	
 	
 	public function testBadLinkType() {
