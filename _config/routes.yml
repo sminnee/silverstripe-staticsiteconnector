@@ -1,0 +1,7 @@
+---
+Name: staticsiteconnector-routes
+After: '#external-content-routes'
+---
+Director:
+  rules:
+    'deleteimports': 'StaticSiteExternalContentAdminExtension'
