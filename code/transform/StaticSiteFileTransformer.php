@@ -63,7 +63,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
-		$this->utils->log("START file-transform for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+		$this->utils->log("START file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
@@ -184,8 +184,14 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	 */
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
+		$postVars = Controller::curr()->request->postVars();
+		$parentDir = 'Import';
+		if(!empty($postVars['FileMigrationTarget'])) {
+			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
+			$parentDir = $parentDirData->Title;
+		}
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
-		$path = 'Import' . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
+		$path = $parentDir . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
 		$parentFolder = Folder::find_or_make($path);
 		if(!file_exists(ASSETS_PATH . DIRECTORY_SEPARATOR . $path)) {
 			$this->utils->log(" - WARNING: File-import directory wasn't created.", $url, $mime);

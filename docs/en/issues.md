@@ -8,7 +8,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Bug when using no "www." prefix in basic setup, URLs appear as t.nz for example in "urls" cache file (see simplifyUrl() ??)
 * BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered in legacy site's (incoming) URLs.
-* BUG: Make the selection in the "Folder to import into" dropdown (FileMigrationTarget) used as the assets-target instead of the hard-coded "Import" value.
 * BUG: If a tree of imported content is deleted in the CMS and the same import+link-rewrite is performed, the rewrite fails.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
