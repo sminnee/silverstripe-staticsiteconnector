@@ -102,6 +102,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Get the StaticSiteContentSource and Import ID from request parameters
 		$this->contentSourceID = trim($request->getVar('SourceID'));
 		$this->contentImportID = trim($request->getVar('ImportID'));
+		$this->SilentRun = trim($request->getVar('SilentRun'));
 
 		if(!$this->checkInputs()) {
 			return;
@@ -279,6 +280,9 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printMessage($message, $level = null, $url = null) {
+		if($this->SilentRun) {
+			return;
+		}
 		$url = ($url ? '(' . $url . ') ' : '');
 		$level = ($level ? '[' . $level .'] ' : '');
 		if(Director::is_cli()) {

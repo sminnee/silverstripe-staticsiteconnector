@@ -13,7 +13,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Ensure all messages are rendered through _t()
-* TASK: Add LiteralField() with AJAX-logic to delete one/all StaticSiteImportDataObject's
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
@@ -29,7 +28,4 @@ Some are already registered as issues on Github, others are more in the "would l
 
 * BUG: Fix the UI under the "Import" tab to store saved values. Currently you will lose your changes if you move away from the "Import" tab and then go back to it.
 * [PR#17] ENHANCEMENT: Add a default to "Select how duplicate items should be handled" radio buttons field
-* ENHANCEMENT: Change the externalContentSource` in the external-content module for displaying in the "Create" dropdown instead of the classname
- * Add a 'label' static on ExternalContentSource and subclasses, to show in this menu
- * Make that text disappear onfocus if it equals the default text
 * Logic found in StaticSiteTransformResult class should really exist in the external-content module itself.

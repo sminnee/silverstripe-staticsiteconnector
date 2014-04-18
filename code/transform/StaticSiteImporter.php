@@ -45,8 +45,6 @@ class StaticSiteImporter extends ExternalContentImporter {
 	 * Run right when the import process ends.
 	 * 
 	 * @return void
-	 * @todo auto-run the StaticSiteRewriteLinksTask on import completion
-	 *	- How to get sourceID to know which StaticSiteContentSource to fetch for a  "auto-rewrite" CMS field-value under the "Import" tab
 	 */
 	public function runOnImportEnd() {
 		parent::runOnImportEnd();
@@ -74,7 +72,8 @@ class StaticSiteImporter extends ExternalContentImporter {
 			$task = TaskRunner::create();
 			$getVars = array(
 				'SourceID' => $sourceID,
-				'ImportID' => $importID
+				'ImportID' => $importID,
+				'SilentRun' => 1
 			);
 			
 			// Skip TaskRunner. Too few docs available on its use

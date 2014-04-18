@@ -12,7 +12,16 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	 */
 	static $allowed_actions = array(
 		"crawlsite",
+		"deleteimports"
 	);
+	
+	/**
+	 * 
+	 * @return void
+	 */
+	public function init() {
+		Requirements::javascript('staticsiteconnector/js/StaticSiteConnectorAdmin.js');
+	}
 
 	/**
 	 * 
@@ -49,5 +58,26 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 		Session::set("FormInfo.Form_EditForm.formError.type", $messageType);
 
 		return $this->owner->getResponseNegotiator()->respond($this->owner->getRequest());	
+	}
+	
+	/**
+	 * 
+	 * Delete all StaticSiteImportDataObject's via AJAX.
+	 * 
+	 * @param SS_HTTPRequest $request
+	 */
+	public function deleteimports($request) {
+		$imports = DataObject::get('StaticSiteImportDataObject');
+		$imports->each(function($item) {
+			$item->delete();
+		});
+		
+		$messageType = 'good';
+		$message = _t('StaticSiteConnector.ImportsDeleted', 'All import-data deleted successfully.');
+		
+		Session::set("FormInfo.Form_EditForm.formError.message", $message);
+		Session::set("FormInfo.Form_EditForm.formError.type", $messageType);
+
+		return $this->getResponseNegotiator()->respond($this->owner->request);		
 	}
 }

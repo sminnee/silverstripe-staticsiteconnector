@@ -172,6 +172,12 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$fields->dataFieldByName("UrlExcludePatterns")
 			->setDescription("URLs that should be excluded (support regular expression). eg: '/about/.*'. One per URL")
 			->setTitle('Excluded URLs');
+		
+		$hasImports = DataObject::get('StaticSiteImportDataObject');
+		if($hasImports->count()) {
+			$clearImports = new LiteralField('ClearImports', '[<a href="/admin/external-content/deleteimports" class="del-imports">Clear imports</a>]');
+			$fields->addFieldToTab('Root.Import', $clearImports);
+		}
 
 		return $fields;
 	}

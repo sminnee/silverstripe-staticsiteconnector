@@ -4,9 +4,9 @@
  * running of the StaticSiteRewriteLinksTask. This data is then used to power the 
  * {@link FailedURLRewriteReport}.
  * 
- * @see {@link StaticSiteLinkRewriteTask}
- * @package staticsiteconnector
  * @author Russell Michell <russ@silverstripe.com>
+ * @package staticsiteconnector
+ * @see {@link StaticSiteLinkRewriteTask}
  */
 class FailedURLRewriteObject extends DataObject {
 

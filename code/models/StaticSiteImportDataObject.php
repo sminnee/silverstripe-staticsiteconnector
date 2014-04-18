@@ -2,7 +2,7 @@
 /**
  * Caches some metadata for each import. Allows imports to have some DataObject-like functionality.
  * 
- * @author Russell Michell <russell@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
  * @package staticsiteconnector
  * @see {@link StaticSiteImporter}
  */
@@ -61,6 +61,23 @@ class StaticSiteImportDataObject extends DataObject {
 		$this->Ended = SS_Datetime::now()->getValue();
 		$this->write();
 		return $this;
+	}
+	
+	/**
+	 * Make sure related FailedURLRewriteObject's are also removed
+	 * 
+	 * @todo Would belongs_to() do the job?
+	 */
+	public function onAfterDelete() {
+		parent::onAfterDelete();
+		$relatedFailedRewriteObjects = DataObject::get('FailedURLRewriteObject')->filter('ImportID', $this->ID);
+		$relatedFailedRewriteSummaries = DataObject::get('FailedURLRewriteSummary')->filter('ImportID', $this->ID);
+		$relatedFailedRewriteObjects->each(function($item) {
+			$item->delete();
+		});
+		$relatedFailedRewriteSummaries->each(function($item) {
+			$item->delete();
+		});
 	}
 	
 }
