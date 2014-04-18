@@ -6,12 +6,13 @@ Some are already registered as issues on Github, others are more in the "would l
 ## StaticSiteConnector Module Issues
 
 * BUG: Bug when using no "www." prefix in basic setup, URLs appear as t.nz for example in "urls" cache file (see simplifyUrl() ??)
-* BUG: Show only a partial tree under each "Connector" in the crawl tab, as larger lists from large crawls, slow down the CMS considerably (Firefox OS/X, likely others also)
+* BUG: Show only partial tree under each "Connector" in the crawl tab. Lists from large crawls (1000+ pages), slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered in legacy site's (incoming) URLs.
 * BUG: If a tree of imported content is deleted in the CMS and the same import+link-rewrite is performed, the rewrite fails.
+* BUG: Multiple "Junk" links are mis-reported in the CMS report summary.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
-* TASK: Ensure all messages are rendered through _t()
+* TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
