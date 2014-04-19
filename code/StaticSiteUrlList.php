@@ -378,7 +378,9 @@ class StaticSiteUrlList {
 	 * @return void
 	 */
 	public function saveURLs() {
-		file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
+		if(!SapphireTest::is_running_test()) {
+			file_put_contents($this->cacheDir . 'urls', serialize($this->urls));
+		}
 	}
 
 	/**
