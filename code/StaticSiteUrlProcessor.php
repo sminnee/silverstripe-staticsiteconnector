@@ -8,7 +8,7 @@
  *  - Building content hierarchy.
  *
  * For example, MOSS has a habit of putting unnecessary "/Pages/" elements into the URLs, and adding
- * .aspx extensions. We don't want to include these in the content heirarchy.
+ * .aspx extensions. We don't want to include these in the content hierarchy.
  *
  * More sophisticated processing might be done to facilitate importing of less.
  * 
@@ -110,13 +110,13 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		$noSlashes = str_ireplace('%2f', '/', $url);	
 		// Replace all types of brackets
 		$noBrackets = str_replace(array('%28', '(', ')'), '', $noSlashes);
-		// Return, ensuring $url never has >1 consecutive slash e.g. /blah//test
+		// Return, ensuring $url never has >1 consecutive slashes e.g. /blah//test
 		return preg_replace("#[^:]/{2,}#", '/', $noBrackets);
 	}
 }
 
 /**
- * Processor for MOSS URLs
+ * Processor for MOSS URLs (Microsoft Office Sharepoint Server)
  */
 class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	

@@ -98,7 +98,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 		$crawler = new StaticSiteCrawler($urlList);
 		
 		foreach(self::$url_patterns_for_drop_extensions as $urlFromServer => $expected) {
-			$urlFromServer = 'http://localhost'.$urlFromServer;
+			$urlFromServer = 'http://localhost' . $urlFromServer;
 			foreach(self::$server_codes_bad as $code) {
 				// Fake a server response into a PHPCrawlerDocumentInfo object
 				$crawlerInfo = new PHPCrawlerDocumentInfo(); 
@@ -121,7 +121,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 		$crawler = new StaticSiteCrawler($urlList);
 		
 		foreach(self::$url_patterns_for_drop_extensions as $urlFromServer=>$expected) {
-			$urlFromServer = 'http://localhost'.$urlFromServer;
+			$urlFromServer = 'http://localhost' . $urlFromServer;
 			foreach(self::$server_codes_good as $code) {
 				// Fake a server response into a PHPCrawlerDocumentInfo object
 				$crawlerInfo = new PHPCrawlerDocumentInfo(); 
