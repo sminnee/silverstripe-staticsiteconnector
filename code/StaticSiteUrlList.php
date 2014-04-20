@@ -80,9 +80,6 @@ class StaticSiteUrlList {
 	 * @return void
 	 */
 	public function __construct(StaticSiteContentSource $source, $cacheDir) {
-		if(SapphireTest::is_running_test()) {
-			$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1';
-		}
 		// baseURL must not have a trailing slash
 		$baseURL = $source->BaseUrl;
 		if(substr($baseURL,-1) == "/") {

@@ -57,7 +57,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testInstantiateStaticSiteUrlList() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		
 		$this->assertGreaterThan(1, strlen($urlList->getProperty('baseURL')));
@@ -70,7 +70,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testSimplifyUrl() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		
 		$this->assertEquals('http://www.stuff.co.nz', $urlList->simplifyUrl('http://stuff.co.nz'));
@@ -92,7 +92,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testHandleDocumentInfoBadServerCode_DropExtensions() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		$urlList->setUrlProcessor(new StaticSiteURLProcessor_DropExtensions());
 		$crawler = new StaticSiteCrawler($urlList);
@@ -108,29 +108,6 @@ class StaticSiteUrlListTest extends SapphireTest {
 				$this->assertNull($crawler->handleDocumentInfo($crawlerInfo));
 			}
 		}
-	}
-	
-	/**
-	 * Tests dodgy URLs with "Good" server code(s) using the StaticSiteURLProcessor_DropExtensions URL Processor
-	 */
-	public function testHandleDocumentInfoGoodServerCode_DropExtensions() {
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
-		$urlList = new StaticSiteUrlList($source, $cacheDir);
-		$urlList->setUrlProcessor(new StaticSiteURLProcessor_DropExtensions());
-		$crawler = new StaticSiteCrawler($urlList);
-		
-		foreach(self::$url_patterns_for_drop_extensions as $urlFromServer=>$expected) {
-			$urlFromServer = 'http://localhost' . $urlFromServer;
-			foreach(self::$server_codes_good as $code) {
-				// Fake a server response into a PHPCrawlerDocumentInfo object
-				$crawlerInfo = new PHPCrawlerDocumentInfo(); 
-				$crawlerInfo->url = $urlFromServer;
-				$crawlerInfo->http_status_code = $code;
-				$crawler->handleDocumentInfo($crawlerInfo);
-				$this->assertContains($expected, $urlList->getProcessedURLs());
-			}
-		}
 	}	
 	
 	/**
@@ -138,7 +115,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testHandleDocumentInfoBadServerCode_MOSS() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		$urlList->setUrlProcessor(new StaticSiteMOSSURLProcessor());
 		$crawler = new StaticSiteCrawler($urlList);
@@ -157,34 +134,6 @@ class StaticSiteUrlListTest extends SapphireTest {
 				$crawlerInfo->http_status_code = $code;
 				// If we get a bad server error code, we return null regardless
 				$this->assertNull($crawler->handleDocumentInfo($crawlerInfo));
-			}
-		}
-	}
-	
-	/**
-	 * Tests dodgy URLs with "Good" server code(s) using the StaticSiteMOSSURLProcessor URL Processor
-	 */
-	public function testHandleDocumentInfoGoodServerCode_Moss() {
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
-		$urlList = new StaticSiteUrlList($source, $cacheDir);
-		$urlList->setUrlProcessor(new StaticSiteMOSSURLProcessor());
-		$crawler = new StaticSiteCrawler($urlList);
-		
-		$mossUrltests = array_merge(
-			self::$url_patterns_for_drop_extensions,
-			self::$url_patterns_for_moss
-		);
-		
-		foreach($mossUrltests as $urlFromServer=>$expected) {
-			$urlFromServer = 'http://localhost'.$urlFromServer;
-			foreach(self::$server_codes_good as $code) {
-				// Fake a server response into a PHPCrawlerDocumentInfo object
-				$crawlerInfo = new PHPCrawlerDocumentInfo(); 
-				$crawlerInfo->url = $urlFromServer;
-				$crawlerInfo->http_status_code = $code;
-				$crawler->handleDocumentInfo($crawlerInfo);
-				$this->assertContains($expected, $urlList->getProcessedURLs());
 			}
 		}
 	}		
