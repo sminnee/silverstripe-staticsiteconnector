@@ -257,6 +257,9 @@ class StaticSiteUrlList {
 	 * @return boolean
 	 */
 	public function hasCrawled() {
+		if(SapphireTest::is_running_test()) {
+			$this->cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
+		}
 		return file_exists($this->cacheDir . 'urls') && !file_exists($this->cacheDir . 'crawlerid');
 	}
 

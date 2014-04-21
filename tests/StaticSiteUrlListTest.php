@@ -57,7 +57,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testInstantiateStaticSiteUrlList() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		
 		$this->assertGreaterThan(1, strlen($urlList->getProperty('baseURL')));
@@ -70,7 +70,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testSimplifyUrl() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		
 		$this->assertEquals('http://www.stuff.co.nz', $urlList->simplifyUrl('http://stuff.co.nz'));
@@ -92,7 +92,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testHandleDocumentInfoBadServerCode_DropExtensions() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		$urlList->setUrlProcessor(new StaticSiteURLProcessor_DropExtensions());
 		$crawler = new StaticSiteCrawler($urlList);
@@ -115,7 +115,7 @@ class StaticSiteUrlListTest extends SapphireTest {
 	 */
 	public function testHandleDocumentInfoBadServerCode_MOSS() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
-		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/fixture-static-site-1/';
+		$cacheDir = BASE_PATH . '/staticsiteconnector/tests/static-site-1/';
 		$urlList = new StaticSiteUrlList($source, $cacheDir);
 		$urlList->setUrlProcessor(new StaticSiteMOSSURLProcessor());
 		$crawler = new StaticSiteCrawler($urlList);

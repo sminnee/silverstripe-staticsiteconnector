@@ -79,13 +79,15 @@ class StaticSiteContentExtractor extends Object {
 	 * Create a StaticSiteContentExtractor for a single URL/.
 	 *
 	 * @param string $url The absolute URL to extract content from
-	 * @param string $mimr The Mime-Type
+	 * @param string $mime The Mime-Type
+	 * @param string $content (Optional. Useful only for crude tests that avoid rigging-up a URL to parse)
 	 * @return void
 	 * @throws \Exception
 	 */
-	public function __construct($url,$mime) {
+	public function __construct($url, $mime, $content = null) {
 		$this->url = $url;
 		$this->mime = $mime;
+		$this->content = $content;
 		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
 		$this->utils = singleton('StaticSiteUtils');
 
@@ -426,14 +428,14 @@ class StaticSiteContentExtractor extends Object {
 	 * 
 	 * @return void
 	 */
-	protected function prepareContent() {
+	public function prepareContent() {
 		// Trim it
 		$this->content = trim($this->content);
 
 		// Ensure the content begins with the 'html' tag
 		if(stripos($this->content, '<html') === false) {
 			$this->content = '<html>' . $this->content;
-			$this->utils->log('Warning: content was missing html open tag');
+			$this->utils->log('Warning: content was missing opening "<html>" tag.');
 		}
 	}
 }

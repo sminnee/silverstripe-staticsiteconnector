@@ -27,7 +27,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 */
 	public function setUp() {
 		$this->transformer = singleton('StaticSiteFileTransformer');
-		parent::setUp();	
+		parent::setUp();
 	}
 	
 	/**
