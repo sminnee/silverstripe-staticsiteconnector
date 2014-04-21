@@ -17,10 +17,10 @@ class StaticSiteContentExtractorTest extends SapphireTest {
 	}
 	
 	public function testPrepareContentRootTag() {
-		$badContent = '<html><head></head><body><p>test.</p></body></html>';
+		$goodContent = '<html><head></head><body><p>test.</p></body></html>';
 		$url = '/test/test.html';
 		$mime = 'text/html';
-		$extractor = new StaticSiteContentExtractor($url, $mime, $badContent);
+		$extractor = new StaticSiteContentExtractor($url, $mime, $goodContent);
 		$extractor->prepareContent();
 		$matcher = array('tag' => 'html');
 		$this->assertTag($matcher, $extractor->getContent());

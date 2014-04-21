@@ -1,13 +1,9 @@
-#Migration
+# Migration
 
  * Once the module is installed (See README.md), log into the CMS. You will see a new section called 'External Content', open it.
-
  * In the top-left, you will see a dropdown menu and a 'Create' button. Select the 'StaticSiteContentSource' option and click 'Create'.
-
  * Refresh the page and you will see 'New Connector' in the list of Connectors, click it to open.
-
- * Give it a name and enter the base URL, eg, http://www.example.org. If the site you wish to import is a MOSS (Microsoft SharePoint Server) site with /Pages/bla-bla.aspx URLs, select 'MOSS-style URLs' under URL processing, then click save.
-
+ * Give it a name and enter the base URL, eg, http://www.example.org. If the site you wish to import is a MOSS (Microsoft Office Sharepoint Server) site with /Pages/bla-bla.aspx URLs, select 'MOSS-style URLs' under URL processing, then click save.
  * Go to the "Crawl" tab and click "Crawl site". Leave it running. It will take some time.
   * Protip #1: If you reopen the Connector admin in a different browser (so that it has a different session cookie), you can see the current status of the crawling process.
   * Protip #2: If you're using Firebug or Chrome, ensure you have the debugger open before you set the crawl off. Occassionally the crawl will die for unknown reasons, and this will help in debugging.
@@ -16,7 +12,7 @@
 	StaticSiteContentExtractor:
 	  curl_opts_proxy:
 	    hostname: 'my-gateway.co.nz'
-	    port: 8888
+	    port: 1234
 
   * Protip #4: Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
 
@@ -24,29 +20,23 @@
 	  log_file: /var/tmp/import.log
 
  * Once the crawling is complete (A message will show in the CMS UI), you'll see all the URLs laid out underneath the connector. The URL structure (i.e., where the slashes are) is used to build a hierarchy of URLs.
-
  * Now it's time to write some CSS selectors to query different pieces of content for the import
+  * Go to the Main tab of the connector and click the "Add Schema" button.
+  * Fill out the fields as follows:
 
-	* Go to the Main tab of the connector and click the "Add Schema" button.
+	Priority: 1
+	URLs applied to: .*
+	DataType: Page
 
-	* Fill out the fields as follows:
-
-		* Priority: 1
-		* URLs applied to: .*
-		* DataType: Page
-
-	* Now click the "Add Rule" button, then immediately click "Save" - this allows you to select from the "Field Name" dropdown menu
-
-		* Specify a field to import into - usually "Title" or "Content"
-		* Specify a CSS selector e.g. #content h1
-		* If you have different CSS selectors for different pages, create multiple Import Rules. The first one that actually returns content will be used.
-
+ * Now click the "Add Rule" button, then immediately click "Save" - this allows you to select from the "Field Name" dropdown menu
+  * Specify a field to import into - usually "Title" or "Content"
+  * Specify a CSS selector e.g. #content h1
+  * If you have different CSS selectors for different pages, create multiple Import Rules. The first one that actually returns content will be used.
  * Open sample pages in the tree on the left and you will be able to preview whether the Import Rules work. If they don't work, debug them.
 
 Using simple CSS selectors you can control what part of each remote page is mapped to a particular field within the `SiteTree` class.
 
  * Select a base page to import onto. Sometimes it's helpful to create an "imported contnet" page in the Pages section of the CMS first.
-
  * Press "Start Importing" (See Protip #2, above). This will also take a long while and doesn't have a robust resume functionality. That's on the to-do list.
 
 That's it! There are quite a few steps but it's easier than copy & pasting all those pages.
@@ -71,7 +61,7 @@ The actual preg_match expression is located in staticsiteconnector/code/StaticSi
 #### Schema Priority
 
 Priority order of your schemas is important, the 'Applies To' url patterns are matched against the imported urls in priority order until the first matching schema is found.
-This means you need to order your schemas with the most specific patterns first (e.g. CustomNewsPage, NewsPage, NewsHolder), then gradually filtering down the priority order to the default catch-all patterns for Page, Image and File.
+This means you need to order your schemas with the most specific patterns first (e.g. `CustomNewsPage`, `NewsPage`, `NewsHolder` etc), then gradually filtering down the priority order to the default catch-all patterns for `Page`, `Image` and `File`.
 
 The default catch-all patterns are:
 	(Url Applies To | Data Type | Mime-types)
@@ -91,7 +81,10 @@ The default catch-all patterns are:
 
 #### Example Rules:
 
-__Note:__ This example is based on your import using a subclass of `SiteTree`
+__Notes:__
+
+* There is an (example SQL dump)[docs/en/example.sql] (MySQL/MariaDB only) included to get you up and running quickly.
+* The example below is based on your import using a subclass of `SiteTree`
 
 ##### Title
 
