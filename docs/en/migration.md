@@ -1,43 +1,56 @@
 # Migration
 
- * Once the module is installed (See README.md), log into the CMS. You will see a new section called 'External Content', open it.
- * In the top-left, you will see a dropdown menu and a 'Create' button. Select the 'StaticSiteContentSource' option and click 'Create'.
- * Refresh the page and you will see 'New Connector' in the list of Connectors, click it to open.
- * Give it a name and enter the base URL, eg, http://www.example.org. If the site you wish to import is a MOSS (Microsoft Office Sharepoint Server) site with /Pages/bla-bla.aspx URLs, select 'MOSS-style URLs' under URL processing, then click save.
- * Go to the "Crawl" tab and click "Crawl site". Leave it running. It will take some time.
-  * Protip #1: If you reopen the Connector admin in a different browser (so that it has a different session cookie), you can see the current status of the crawling process.
-  * Protip #2: If you're using Firebug or Chrome, ensure you have the debugger open before you set the crawl off. Occassionally the crawl will die for unknown reasons, and this will help in debugging.
-  * Protip #3: If the host you're running the module is behind a proxy, enable the following in mysite/_config/config.yml
+Once the module is installed (See README.md), log into the CMS. You will see a new section called 'External Content', open it.
+
+In the top-left, you will see a dropdown menu and a 'Create' button. Select the 'StaticSiteContentSource' option and click 'Create'.
+
+Refresh the page and you will see 'New Connector' in the list of Connectors, click it to open.
+
+Give it a name and enter the base URL, eg, http://www.example.org. If the site you wish to import is a MOSS (Microsoft Office Sharepoint Server) site with /Pages/bla-bla.aspx URLs, select 'MOSS-style URLs' under URL processing, then click save.
+
+Go to the "Crawl" tab and click "Crawl site". Leave it running. It will take some time, depending on the number of pages and assets in the site being crawled.
+
+## Protips
+
+If you reopen the Connector admin in a different browser (so that it has a different session cookie), you can see the current status of the crawling process.
+ 
+If you're using Firebug or Chrome, ensure you have the debugger open before you set the crawl off. Occassionally the crawl will die for unknown reasons, and this will help in debugging.
+ 
+If the host you're running the module is behind a proxy, enable the following in mysite/_config/config.yml
 
 	StaticSiteContentExtractor:
 	  curl_opts_proxy:
 	    hostname: 'my-gateway.co.nz'
 	    port: 1234
 
-  * Protip #4: Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
+Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
 
 	StaticSiteContentExtractor:
 	  log_file: /var/tmp/import.log
 
- * Once the crawling is complete (A message will show in the CMS UI), you'll see all the URLs laid out underneath the connector. The URL structure (i.e., where the slashes are) is used to build a hierarchy of URLs.
- * Now it's time to write some CSS selectors to query different pieces of content for the import
-  * Go to the Main tab of the connector and click the "Add Schema" button.
-  * Fill out the fields as follows:
+## Next Steps
+
+Once the crawling is complete (A message will show in the CMS UI), you'll see all the URLs laid out underneath the connector in tree hierarchy. The URL structure (i.e., where the slashes are) is used to build a hierarchy of URLs.
+
+Now it's time to write some CSS selectors to query different pieces of content for the import. Go to the Main tab of the connector and click the "Add Schema" button. Fill out the fields as follows:
 
 	Priority: 1
 	URLs applied to: .*
 	DataType: Page
 
- * Now click the "Add Rule" button, then immediately click "Save" - this allows you to select from the "Field Name" dropdown menu
-  * Specify a field to import into - usually "Title" or "Content"
+Now click the "Add Rule" button, then immediately click "Save" - this allows you to select from the "Field Name" dropdown menu.
+
+Specify a field to import into - usually "Title" or "Content"
   * Specify a CSS selector e.g. #content h1
   * If you have different CSS selectors for different pages, create multiple Import Rules. The first one that actually returns content will be used.
- * Open sample pages in the tree on the left and you will be able to preview whether the Import Rules work. If they don't work, debug them.
+  
+Open sample pages in the tree on the left and you will be able to preview whether the Import Rules work. If they don't work, debug them.
 
 Using simple CSS selectors you can control what part of each remote page is mapped to a particular field within the `SiteTree` class.
 
- * Select a base page to import onto. Sometimes it's helpful to create an "imported contnet" page in the Pages section of the CMS first.
- * Press "Start Importing" (See Protip #2, above). This will also take a long while and doesn't have a robust resume functionality. That's on the to-do list.
+Select a base page to import onto. Sometimes it's helpful to create an "imported contnet" page in the Pages section of the CMS first.
+
+Press "Start Importing" (See Protip #2, above). This will also take a long while and doesn't have a robust resume functionality. That's on the to-do list.
 
 That's it! There are quite a few steps but it's easier than copy & pasting all those pages.
 
@@ -138,13 +151,13 @@ After the import has completed, the content will most likely contain urls and as
 
 ### Static Site Link Rewriting
 
-This task replaces static site urls in the imported pages, replacing the src & href attributes of links, images and files with cms shortcodes to imported assets and pages.
+This task replaces static site urls in the imported pages, replacing the src & href attributes of links, images and files with CMS shortcodes to imported assets and pages.
 
-	Source location:
-		staticsiteconnector/code/tasks/StaticSiteRewriteLinksTask.php
+See: 
 
-	Usage: __Note:__ replace X with the ID number of the StaticSiteContentSource used to import the content
-		#> ./framework/sake dev/tasks/StaticSiteRewriteLinksTask ID=X
+	staticsiteconnector/code/tasks/StaticSiteRewriteLinksTask.php
+
+For hints on usage, run the task from the command-lne without any arguments.
 
 To enable output logging for this task, edit your environment configuration file (see: mysite/_config/config.yml) and add the following:
 
@@ -152,6 +165,11 @@ To enable output logging for this task, edit your environment configuration file
     log_file: '/var/tmp/rewrite_links.log'
 
 Note: you need to manually create the log file and make sure the webservice can write to it, e.g.
+
 	#> touch /var/tmp/rewrite_links.log && chmod 766 /var/tmp/rewrite_links.log
 
-__Note:__ The built-in CMS report BadImportsReport depends on this log file and uses its content for the report, see: staticsiteconntector/code/reports/BadImportsReport.php
+#### Notes
+
+If enabled in the `exernal-content` "Import" section, this task can be run automatically once the import itself has completed. This is useful for SilverStripe setups where you may not have shell access to the server.
+
+There is a comprehensive CMS report "Imported links rewrite report" which you can use to analyse your imports and rewritten links, to guide you in tweaking your crawl and import rules which help in pointing out exactly what's failing and to fix it manually if need be.
