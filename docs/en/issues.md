@@ -15,7 +15,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
-* TASK: Add warning message if assets dir isn't writable.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
