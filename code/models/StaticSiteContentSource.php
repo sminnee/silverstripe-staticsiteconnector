@@ -131,17 +131,23 @@ class StaticSiteContentSource extends ExternalContentSource {
 			default:
 				throw new LogicException("Invalid getSpiderStatus() value '".$this->urlList()->getSpiderStatus().";");
 		}
-
+		
 		$crawlButton = FormAction::create('crawlsite', $crawlButtonText)
 			->setAttribute('data-icon', 'arrow-circle-double')
 			->setUseButtonTag(true);
+			// Disable crawl-button if assets dir isn't writable
+			$crawlMsg = 'Click the button below to do so:';
+			if(!file_exists(ASSETS_PATH) || !is_writable(ASSETS_PATH)) {
+				$crawlMsg = '<strong>Warning!</strong> Assets directory is not writable.';
+				$crawlButton->setDisabled(true);
+			}
 		$fields->addFieldsToTab('Root.Crawl', array(
 			new ReadonlyField("CrawlStatus", "Crawling Status", $this->urlList()->getSpiderStatus()),
 			new ReadonlyField("NumURLs", "Number of URLs", $this->urlList()->getNumURLs()),
 
 			new LiteralField('CrawlActions',
-			"<p>Before importing this content, all URLs on the site must be crawled (like a search engine does). Click"
-			. " the button below to do so:</p>"
+			"<p>Before importing this content, all URLs on the site must be crawled (like a search engine does)."
+			. " $crawlMsg</p>"
 			. "<div class='Actions'>{$crawlButton->forTemplate()}</div>")
 		));
 
