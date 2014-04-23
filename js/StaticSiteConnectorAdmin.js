@@ -7,9 +7,9 @@
 			onclick: function(e) {
 				e.preventDefault();
 				// send "delImports" POST var
-				$url = '/admin/external-content/deleteimports';
+				var url = $(this).attr('href');
 				var data = {delImports:true};
-				$.post($url, data);				
+				$.post(url, data);				
 				// Reload main content area
 				$('.cms-container').reloadCurrentPanel();
 			}

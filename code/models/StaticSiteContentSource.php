@@ -180,8 +180,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 			->setTitle('Excluded URLs');
 		
 		$hasImports = DataObject::get('StaticSiteImportDataObject');
-		if($hasImports->count()) {
-			$clearImports = new LiteralField('ClearImports', '[<a href="/admin/external-content/deleteimports" class="del-imports">Clear imports</a>]');
+		if($importCount = $hasImports->count()) {
+			$clearImports = new LiteralField('ClearImports', "[<a href=\"admin/external-content/deleteimports\" class=\"del-imports\">Clear imports</a> ($importCount)]");
 			$fields->addFieldToTab('Root.Import', $clearImports);
 		}
 

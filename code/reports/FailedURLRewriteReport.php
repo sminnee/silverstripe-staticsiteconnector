@@ -66,7 +66,7 @@ TXT;
 			'Title' => array(
 				'title' => 'Imported page',
 				'formatting' => function($value, $item) {
-					return sprintf('<a href="/admin/pages/edit/show/%s">%s</a>',
+					return sprintf('<a href="admin/pages/edit/show/%s">%s</a>',
 						$item->ContainedInID,
 						$item->Title()
 					);

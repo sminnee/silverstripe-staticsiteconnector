@@ -158,6 +158,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			// Just return now if the url is un-rewritable
 			if($task->ignoreUrl($url)) {
+				// If it's being ignored, log it for a summary used in the report.
+				$this->pushFailedRewrite($this, $url);				
 				return;
 			}
 
@@ -382,7 +384,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			}
 		}
 		return array(
-			'Total failures'	=> array('count' => count($rawData), 'desc' => ''),
+			'Total failed link rewrites'	=> array('count' => count($rawData), 'desc' => ''),
 			'ThirdParty'		=> array('count' => $countThirdParty, 'desc' => '(Links to external websites)'),
 			'BadScheme'			=> array('count' => $countBadScheme, 'desc' => '(Links with bad scheme)'),
 			'NotImported'		=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
@@ -474,16 +476,13 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * 
 	 *	- An empty string
 	 *	- A non-HTTP scheme like an email link see: self::$non_http_uri_schemes
-	 *	- A CMS sitetree shortcode or file/image asset path, e.g. [sitetree, 123] or assets/Images/logo.gif
-	 *	- An absolute url, i.e. anything that beings with 'http'
+	 *	- A CMS sitetree shortcode or file/image asset path, e.g. [sitetree_link,id=1234] or assets/Images/logo.gif
+	 *	- An absolute url, i.e. anything that begins with 'http'
 	 *
 	 * @param string $url A URL
-	 * @return boolean True is the url can be ignored
-	 * @todo What if the remote site is a SilverStripe site? asset+sitetree URLs will be ignored!
+	 * @return boolean true if the url can be ignored
 	 */
 	public function ignoreUrl($url) {
-		// If it's being ignored, log it for a summary used in the report.
-		$this->pushFailedRewrite($this, $url);
 		$url = trim($url);
 		
 		// Not an HTTP protocol
