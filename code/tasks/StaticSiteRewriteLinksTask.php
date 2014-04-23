@@ -158,8 +158,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 
 			// Just return now if the url is un-rewritable
 			if($task->ignoreUrl($url)) {
-				// If it's being ignored, log it for a summary used in the report.
-				$this->pushFailedRewrite($this, $url);				
+				// If it's being ignored, log it for a summary used in the CMS report.
+				$task->pushFailedRewrite($task, $url);
 				return;
 			}
 
@@ -356,11 +356,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function countFailureTypes() {
 		$rawData = $this->uniq($this->listFailedRewrites);
-		$countThirdParty = 0;
-		$countBadScheme = 0;
-		$countNotImported = 0;
-		$countJunk = 0;
-		$countUnknown = 0;
+		$countThirdParty = $countBadScheme = $countNotImported = $countJunk = $countUnknown = 0;
 		foreach($rawData as $data) {
 			$url = $data['OrigUrl'];
 			if($this->linkIsJunk($url)) {
@@ -485,6 +481,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function ignoreUrl($url) {
 		$url = trim($url);
 		
+		// Link is "Junk"
+		if($this->linkIsJunk($url)) {
+			$this->printMessage("\tIgnoring: $url (Junk URL)");
+			return true;
+		}		
+		
 		// Not an HTTP protocol
 		if($this->linkIsBadScheme($url)) {
 			$this->printMessage("\tIgnoring: $url (Non-HTTP URL)");
@@ -532,11 +534,11 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		$this->contentSource = (StaticSiteContentSource::get()->byID($this->contentSourceID));
 		$contentImport = (StaticSiteImportDataObject::get()->byID($this->contentImportID));
 		if(!$this->contentSource) {
-			$this->printMessage("No content-source found via SourceID: ".$this->contentSourceID, 'WARNING');
+			$this->printMessage("No content-source found via SourceID: " . $this->contentSourceID, 'WARNING');
 			return false;
 		}
 		if(!$contentImport) {
-			$this->printMessage("No content-import found via ImportID: ".$this->contentImportID, 'WARNING');
+			$this->printMessage("No content-import found via ImportID: " . $this->contentImportID, 'WARNING');
 			return false;
 		}
 		return true;
@@ -549,7 +551,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return void
 	 */
 	public function printTaskInfo() {
-		$msgFragment = (Director::is_cli() ? '' : '?').'SourceID=(number) ImportID=(number)';
+		$msgFragment = (Director::is_cli() ? '' : '?') . 'SourceID=(number) ImportID=(number)';
 		$this->printMessage("Choose a SourceID and an ImportID e.g. $msgFragment", 'WARNING');
 		$newLine = $this->newLine;
 
@@ -557,7 +559,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		if($contentSources = StaticSiteContentSource::get()) {
 			$this->printMessage($newLine.'Available content-sources:'.$newLine);
 			foreach($contentSources as $i => $contentSource) {
-				$this->printMessage("\tdev/tasks/".__CLASS__.' SourceID=' . $contentSource->ID.' ImportID=<number>');
+				$this->printMessage("\tdev/tasks/" . __CLASS__ . ' SourceID=' . $contentSource->ID . ' ImportID=<number>');
 			}
 			echo $newLine;
 			if(Director::is_cli()) {
@@ -589,6 +591,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	}
 	
 	/**
+	 * Quick way to ensure array values are unique in a multi-dimensional array.
 	 * 
 	 * @param array $array
 	 * @return array
