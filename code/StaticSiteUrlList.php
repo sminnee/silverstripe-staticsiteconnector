@@ -342,7 +342,7 @@ class StaticSiteUrlList {
 		singleton('StaticSiteUtils')->defineProxyOpts(!Director::isDev(), $crawler);
 
 		// Allow for resuming an incomplete crawl
-		if(file_exists($this->cacheDir.'crawlerid')) {
+		if(file_exists($this->cacheDir . 'crawlerid')) {
 			// We should re-load the partial list of URLs, if relevant
 			// This should only happen when we are resuming a partial crawl
 			if(file_exists($this->cacheDir . 'urls')) {
@@ -352,19 +352,19 @@ class StaticSiteUrlList {
 				$this->urls = array('regular' => array(), 'inferred' => array());
 			}
 
-			$crawlerID = file_get_contents($this->cacheDir.'crawlerid');
+			$crawlerID = file_get_contents($this->cacheDir . 'crawlerid');
 			$crawler->resume($crawlerID);
 		} 
 		else {
 			$crawlerID = $crawler->getCrawlerId();
-			file_put_contents($this->cacheDir.'/crawlerid', $crawlerID);
+			file_put_contents($this->cacheDir. '/crawlerid', $crawlerID);
 			$this->urls = array('regular' => array(), 'inferred' => array());
 		}
 
 		$crawler->setURL($this->baseURL);
 		$crawler->go();
 
-		unlink($this->cacheDir.'crawlerid');
+		unlink($this->cacheDir . 'crawlerid');
 
 		ksort($this->urls['regular']);
 		ksort($this->urls['inferred']);
@@ -468,7 +468,7 @@ class StaticSiteUrlList {
 			$simpifiedURL = $this->simplifyURL($url);
 			$simpifiedBase = $this->simplifyURL($this->baseURL);
 
-			if(substr($simpifiedURL,0,strlen($simpifiedBase)) == $simpifiedBase) {
+			if(substr($simpifiedURL, 0, strlen($simpifiedBase)) == $simpifiedBase) {
 				$url = substr($simpifiedURL, strlen($simpifiedBase));
 			} 
 			else {
@@ -480,15 +480,13 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Simplify a URL.
-	 * - Ignores https/http differences and "www." / non differences.
-	 * - We needn't run strtolower() to force lowercase URLs, SilverStripe does this for us.
+	 * Simplify a URL. Ignores https/http differences and "www." / non differences.
 	 *
 	 * @param  string $url
 	 * @return string
 	 */
 	public function simplifyURL($url) {
-		return preg_replace('#^https?://(www\.)?#i','http://www.', $url);
+		return preg_replace("#^http(s)?://(www.)?#i", 'http://www.', $url);
 	}
 
 	/**
@@ -538,7 +536,7 @@ class StaticSiteUrlList {
 		}
 
 		// URL hierarchy can be broken down by querystring or by URL
-		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL,'/'));
+		$breakpoint = max(strrpos($processedURL, '?'), strrpos($processedURL, '/'));
 
 		// Special case for children of the root
 		if($breakpoint == 0) {
@@ -546,7 +544,7 @@ class StaticSiteUrlList {
 		}
 
 		// Get parent URL
-		$parentProcessedURL = substr($processedURL,0,$breakpoint);
+		$parentProcessedURL = substr($processedURL, 0, $breakpoint);
 
 		$processedURLData = array(
 			'url'	=> $parentProcessedURL,
@@ -635,10 +633,10 @@ class StaticSiteUrlList {
 
 		// Subtly different regex if the URL ends in ? or /
 		if(preg_match('#[/?]$#',$processedURL)) {
-			$regEx = '#^'.preg_quote($processedURL,'#') . '[^/?]+$#';
+			$regEx = '#^' . preg_quote($processedURL, '#') . '[^/?]+$#';
 		}
 		else {
-			$regEx = '#^'.preg_quote($processedURL,'#') . '[/?][^/?]+$#';
+			$regEx = '#^' . preg_quote($processedURL, '#') . '[/?][^/?]+$#';
 		}
 
 		$children = array();
@@ -772,7 +770,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		 * when re-requesting it using Curl in the import stage, as long as we cache it correctly here
 		 */		
 		if($badStatusCode && !$isRecoverableUrl) {
-			$message = $info->url . " Skipped. We got a {$info->http_status_code} and URL was irrecoverable".PHP_EOL;
+			$message = $info->url . " Skipped. We got a {$info->http_status_code} and URL was irrecoverable" . PHP_EOL;
 			$this->utils->log($message);
 			return;
 		}
@@ -782,7 +780,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		
 		// @todo is this needed?
 		if($this->verbose) {
-			echo "[+] ".$info->url.PHP_EOL;
+			echo "[+] " . $info->url . PHP_EOL;
 		}
 		$this->urlList->saveURLs();
 	}
@@ -806,9 +804,9 @@ class StaticSiteCrawler extends PHPCrawler {
 		// Prevent URLs that match the exclude patterns from being fetched
 		if($excludePatterns = $this->urlList->getExcludePatterns()) {
 			foreach($excludePatterns as $pattern) {
-				$validRegExp = $this->addURLFilterRule('|'.str_replace('|', '\|', $pattern).'|');
+				$validRegExp = $this->addURLFilterRule('|' . str_replace('|', '\|', $pattern) . '|');
 				if(!$validRegExp) {
-					throw new InvalidArgumentException('Exclude url pattern "'.$pattern.'" is not a valid regular expression.');
+					throw new InvalidArgumentException('Exclude url pattern "' . $pattern . '" is not a valid regular expression.');
 				}
 			}
 		}
