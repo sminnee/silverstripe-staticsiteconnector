@@ -138,7 +138,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 			// Disable crawl-button if assets dir isn't writable
 			$crawlMsg = 'Click the button below to do so:';
 			if(!file_exists(ASSETS_PATH) || !is_writable(ASSETS_PATH)) {
-				$crawlMsg = '<strong>Warning!</strong> Assets directory is not writable.';
+				$crawlMsg = '<span class="message warning"><strong>Warning!</strong> Assets directory is not writable.</span>';
 				$crawlButton->setDisabled(true);
 			}
 		$fields->addFieldsToTab('Root.Crawl', array(
