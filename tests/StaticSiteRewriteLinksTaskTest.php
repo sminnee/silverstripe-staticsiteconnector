@@ -50,9 +50,12 @@ class StaticSiteRewriteLinksTaskTest extends SapphireTest {
 		$this->assertTrue($task->linkIsJunk('./fluff.sh'));
 		$this->assertTrue($task->linkIsJunk('.junk'));
 		$this->assertTrue($task->linkIsJunk('../test.aspx'));
+		$this->assertTrue($task->linkIsJunk('-fluff.html'));
+		$this->assertTrue($task->linkIsJunk('_fluffy.htm'));
 		$this->assertFalse($task->linkIsJunk('http://tampin.co.uk'));
 		$this->assertFalse($task->linkIsJunk('/blah.html'));
-		$this->assertFalse($task->linkIsJunk('[sitetree ID=1234]'));
+		$this->assertFalse($task->linkIsJunk('[sitetree,id=1234]'));
+		$this->assertFalse($task->linkIsJunk('assets/test.png'));
 	}	
 	
 	public function testBadLinkType() {

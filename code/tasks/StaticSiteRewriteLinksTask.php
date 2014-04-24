@@ -438,7 +438,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @return boolean
 	 */
 	public function linkIsJunk($link) {
-		return (bool)preg_match("#^\.#", $link);
+		return (bool)preg_match("#^[^\[\/a-zA-Z\d].+#", $link);
 	}
 	
 	/**
