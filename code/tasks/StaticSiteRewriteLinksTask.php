@@ -201,12 +201,10 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				}
 			}
 			else {
-				// Otherwise link-rewriting has failed.
+				// Log failures for later analysis
+				$this->pushFailedRewrite($task, $url);				
 				$task->printMessage("\tRewriter failed. See detail below:");
 			}
-			
-			// Log failures for later analysis
-			$this->pushFailedRewrite($task, $url);			
 			return $origUrl;
 		});
 

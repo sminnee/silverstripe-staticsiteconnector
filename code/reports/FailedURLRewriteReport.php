@@ -31,8 +31,8 @@ TXT;
 	 * @return \ArrayList
 	 */
 	public function SourceRecords() {
-		$getVars = Controller::curr()->request->getVars();
-		$importID = !empty($getVars['filters']) ? $getVars['filters']['ImportID'] : 1;
+		$reqVars = Controller::curr()->request->requestVars();
+		$importID = !empty($reqVars['filters']) ? $reqVars['filters']['ImportID'] : 1;
 		$list = $this->getBadImportData($importID);
 		$_list = new ArrayList();
 		$linkCount = array();
@@ -131,8 +131,8 @@ TXT;
 	 */
 	public function parameterFields() {
 		$fields = new FieldList();
-		$getVars = Controller::curr()->request->getVars();
-		$importID = !empty($getVars['filters']) ? $getVars['filters']['ImportID'] : 1;
+		$reqVars = Controller::curr()->request->requestVars();
+		$importID = !empty($reqVars['filters']) ? $reqVars['filters']['ImportID'] : 1;
 		
 		if($summary = $this->getSummary($importID)) {
 			$fields->push(new HeaderField('SummaryHead', 'Summary', 4));

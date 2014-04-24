@@ -11,6 +11,8 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: If a tree of imported content is deleted in the CMS and the same import+link-rewrite is performed, the rewrite fails.
 * BUG: Multiple "Junk" links are mis-reported in the CMS report summary.
 * BUG: If a class is stipulated in the schema config that doesn't exist, an exception is thrown but not caught and no error is shown in the CMS.
+* BUG: Where an import exists and a new import is run, the new one will use the existing one's SiteTree parent.
+	- This also screws-up existing link-rewrite report(s).
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
