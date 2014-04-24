@@ -5,7 +5,9 @@ Some are already registered as issues on Github, others are more in the "would l
 
 ## StaticSiteConnector Module Issues
 
-* BUG: Bug when using no "www." prefix in basic setup, URLs appear as t.nz for example in "urls" cache file. Suspect getChildren()
+* BUG: Bug when using no "www." prefix in basic setup, URLs appear as t.nz for example in "urls" cache file.
+	- Suspect getChildren()
+	- Test URLs with/without 'www.' with compound TLD's e.g. '.govt.nz'
 * BUG: Show only partial tree under each "Connector" in the crawl tab. Lists from large crawls (1000+ pages), slow down the CMS considerably (Firefox OS/X, likely others also)
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered in legacy site's (incoming) URLs.
 * BUG: If a tree of imported content is deleted in the CMS and the same import+link-rewrite is performed, the rewrite fails.
