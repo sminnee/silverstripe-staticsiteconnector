@@ -324,7 +324,7 @@ class StaticSiteUrlList {
 
 		if(!is_dir($this->cacheDir)) {
 			if(!mkdir($this->cacheDir)) {
-				user_error('Unable to create cache directory at: '.$this->cacheDir);
+				user_error('Unable to create cache directory at: ' . $this->cacheDir);
 				exit;
 			}
 		}
@@ -357,7 +357,7 @@ class StaticSiteUrlList {
 		} 
 		else {
 			$crawlerID = $crawler->getCrawlerId();
-			file_put_contents($this->cacheDir. '/crawlerid', $crawlerID);
+			file_put_contents($this->cacheDir . '/crawlerid', $crawlerID);
 			$this->urls = array('regular' => array(), 'inferred' => array());
 		}
 
@@ -396,7 +396,7 @@ class StaticSiteUrlList {
 		$simplifiedBase = $this->simplifyURL($this->baseURL);
 
 		// Check we're adhering to the correct base URL
-		if(substr($simplifiedURL,0,strlen($simplifiedBase)) == $simplifiedBase) {
+		if(substr($simplifiedURL, 0, strlen($simplifiedBase)) == $simplifiedBase) {
 			$relURL = substr($url, strlen($this->baseURL));
 		} 
 		else {

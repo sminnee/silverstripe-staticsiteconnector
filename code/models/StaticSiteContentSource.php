@@ -292,7 +292,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$urlToTest = str_replace(rtrim($this->BaseUrl, '/'), '', $url);
 	
 		if(preg_match("|^$appliesTo|i", $urlToTest)) {				
-			$this->utils->log(' - ' . __FUNCTION__ . ' matched: ' . $appliesTo . ', Url: '. $url);
+			$this->utils->log(' - ' . __FUNCTION__ . ' matched: ' . $appliesTo . ', Url: ' . $url);
 			return true;
 		}
 		return false;
