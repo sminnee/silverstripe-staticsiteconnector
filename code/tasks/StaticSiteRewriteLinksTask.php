@@ -281,6 +281,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function printMessage($message, $level = null, $url = null) {
 		if($this->SilentRun) {
+			// Just log it to file
+			singleton('StaticSiteUtils')->log($message, null, null, __CLASS__);
 			return;
 		}
 		$url = ($url ? '(' . $url . ') ' : '');
