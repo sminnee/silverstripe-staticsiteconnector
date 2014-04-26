@@ -28,6 +28,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * ENHANCEMENT: Add CMS UI to allow fine-grained control of the sleep time between server hits. See usleep() in StaticSite#Transformer#transform()
 * ENHANCEMENT: Create a default, out-of-the-box schema etc using requireDefaultRecords()
 * ENHANCEMENT: Create a multi-select dropdown menu that comprises data from framework/_config/mimetypes.yml
+* ENHANCEMENT: Use php-diff lib via composer as the arbiter of change in the StaticSiteUrlRewriteTask::run() method
 
 ## External Content Module Issues:
 
