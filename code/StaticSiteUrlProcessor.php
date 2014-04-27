@@ -76,6 +76,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 		}
 		
 		$url = '';
+		// With query string
 		if(preg_match("#^([^?]*)\?(.*)$#", $urlData['url'], $matches)) {
 			$url = $matches[1];
 			$qs = $matches[2];
@@ -86,6 +87,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 				'mime'=>$urlData['mime']
 			);
 		} 
+		// No query string
 		else {
 			$url = $urlData['url'];
 			$url = preg_replace("#\.[^./?]*$#", "$1", $url);

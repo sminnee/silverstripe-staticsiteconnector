@@ -184,19 +184,19 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * with a CMS shortcode or anchor if one is found in the 'Content' field.
 			 */
 			if($siteTreeObject = $pageLookup->find('StaticSiteURL', $pageMapKey)) {
+				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				$output = '[sitetree_link,id=' . $siteTreeObject->ID . ']';
 				$anchorPattern = "<[\w]+\s+(name|id)=('|\")?". $anchor ."('|\")?";
 				if(strlen($anchor) && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
 					$output = "#$anchor";
-				}
-				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
+				}				
 				return $output;
 			}			
 			// Rewrite Asset links by replacing phpQuery processed URLs with appropriate filename.
 			else if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
-					$output = $file->RelativeLink();
 					$task->printMessage("\tFound: File ID#" . $fileID, null, $file->RelativeLink());
+					$output = $file->RelativeLink();
 					return $output;
 				}
 			}
