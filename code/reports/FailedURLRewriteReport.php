@@ -35,21 +35,56 @@ TXT;
 		$importID = !empty($reqVars['filters']) ? $reqVars['filters']['ImportID'] : 1;
 		$list = $this->getBadImportData($importID);
 		$_list = new ArrayList();
-		$linkCount = array();
-		foreach($list as $badLink) {		
-			// Prevent same page showing in the report and "sum" the totals
-			if(empty($linkCount[$badLink->ContainedInID])) {
-				$linkCount[$badLink->ContainedInID] = 1;
+		$countNotImported = $countJunk = $countThirdParty = $countBadScheme = array();
+		foreach($list as $badLink) {
+			if($badLink->BadLinkType == 'NotImported') {
+				// Prevent same page showing in the report and "sum" the totals
+				if(empty($countNotImported[$badLink->ContainedInID])) {
+					$countNotImported[$badLink->ContainedInID] = 1;
+				}
+				else {
+					$countNotImported[$badLink->ContainedInID] += 1;
+				}
+				continue;
 			}
-			else {
-				$linkCount[$badLink->ContainedInID] += 1;
+			if($badLink->BadLinkType == 'ThirdParty') {
+				// Prevent same page showing in the report and "sum" the totals
+				if(empty($countThirdParty[$badLink->ContainedInID])) {
+					$countThirdParty[$badLink->ContainedInID] = 1;
+				}
+				else {
+					$countThirdParty[$badLink->ContainedInID] += 1;
+				}
 			}
+			if($badLink->BadLinkType == 'BadScheme') {
+				// Prevent same page showing in the report and "sum" the totals
+				if(empty($countBadScheme[$badLink->ContainedInID])) {
+					$countBadScheme[$badLink->ContainedInID] = 1;
+				}
+				else {
+					$countBadScheme[$badLink->ContainedInID] += 1;
+				}
+				continue;
+			}
+			if($badLink->BadLinkType == 'Junk') {
+				// Prevent same page showing in the report and "sum" the totals
+				if(empty($countJunk[$badLink->ContainedInID])) {
+					$countJunk[$badLink->ContainedInID] = 1;
+				}
+				else {
+					$countJunk[$badLink->ContainedInID] += 1;
+				}
+				continue;
+			}			
 		}
 		
 		foreach($list as $item) {
 			// Only push new items if not already in the list
 			if(!$_list->find('ContainedInID', $item->ContainedInID)) {
-				$item->Total = $linkCount[$item->ContainedInID];
+				$item->ThirdPartyTotal = isset($countThirdParty[$item->ContainedInID]) ? $countThirdParty[$item->ContainedInID] : 0;
+				$item->BadSchemeTotal = isset($countBadScheme[$item->ContainedInID]) ? $countBadScheme[$item->ContainedInID] : 0;
+				$item->NotImportedTotal = isset($countNotImported[$item->ContainedInID]) ? $countNotImported[$item->ContainedInID] : 0;
+				$item->JunkTotal = isset($countJunk[$item->ContainedInID]) ? $countJunk[$item->ContainedInID] : 0;
 				$_list->push($item);
 			}			
 		}
@@ -72,10 +107,22 @@ TXT;
 					);
 				}
 			),
-			'Total' => array(
-				'title' => 'No. Bad Urls in page',
-				'formatting' => '".$Total."'
-			),
+			'ThirdPartyTotal' => array(
+				'title' => '# 3rd Party Urls',
+				'formatting' => '".$ThirdPartyTotal."'
+			),	
+			'BadSchemeTotal' => array(
+				'title' => '# Urls w/bad-scheme',
+				'formatting' => '".$BadSchemeTotal."'
+			),					
+			'NotImportedTotal' => array(
+				'title' => '# Unimported Urls',
+				'formatting' => '".$NotImportedTotal."'
+			),	
+			'JunkTotal' => array(
+				'title' => '# Junk Urls',
+				'formatting' => '".$JunkTotal."'
+			),					
 			'Created' => array(
 				'title' => 'Task run date',
 				'casting' => 'SS_Datetime->Nice24'

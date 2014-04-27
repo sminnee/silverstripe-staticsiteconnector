@@ -298,7 +298,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	public function writeFailedRewrites() {
 		$importID = 0;
 		$postProcessed = array();
-		$uniq = $this->uniq($this->listFailedRewrites);
+		$uniq = ($this->listFailedRewrites);
 		foreach($uniq as $failure) {
 			$importID = $failure['ImportID']; // Will be the same value each time
 			
@@ -348,7 +348,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @todo too many URLs being collected in $this->listFailedRewrites
 	 */
 	public function countFailureTypes() {
-		$rawData = $this->uniq($this->listFailedRewrites);
+		$rawData = $this->listFailedRewrites;
 		$countThirdParty = $countBadScheme = $countNotImported = $countJunk = $countUnknown = 0;
 		foreach($rawData as $data) {
 			$url = $data['OrigUrl'];
