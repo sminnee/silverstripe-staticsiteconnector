@@ -150,12 +150,6 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 				list($url, $anchor) = explode('#', $url, 2);
 			}
 
-			// For accuracy, process $url using processURL(), the same as during crawl (if set)
-			if($task->contentSource->UrlProcessor && $urlProcessor = singleton($task->contentSource->UrlProcessor)) {
-				$processedURL = $urlProcessor->processURL(array('url' => $url, 'mime'=> 'text/html'));
-				$url = $processedURL['url'];				
-			}
-
 			// Just return now if the url is un-rewritable
 			if($task->ignoreUrl($url)) {
 				// If it's being ignored, log it for a summary used in the CMS report.
@@ -184,8 +178,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			 * with a CMS shortcode or anchor if one is found in the 'Content' field.
 			 */
 			if($siteTreeObject = $pageLookup->find('StaticSiteURL', $pageMapKey)) {
-				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				$output = '[sitetree_link,id=' . $siteTreeObject->ID . ']';
+				$task->printMessage("\tFound: SiteTree ID#" . $siteTreeObject->ID, null, $output);
 				$anchorPattern = "<[\w]+\s+(name|id)=('|\")?". $anchor ."('|\")?";
 				if(strlen($anchor) && preg_match("#$anchorPattern#mi", $siteTreeObject->Content)) {
 					$output = "#$anchor";
@@ -195,8 +189,8 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			// Rewrite Asset links by replacing phpQuery processed URLs with appropriate filename.
 			else if(isset($fileLookup[$fileMapKey]) && $fileID = $fileLookup[$fileMapKey]) {
 				if($file = DataObject::get_by_id('File', $fileID)) {
-					$task->printMessage("\tFound: File ID#" . $fileID, null, $file->RelativeLink());
 					$output = $file->RelativeLink();
+					$task->printMessage("\tFound: File ID#" . $fileID, null, $output);
 					return $output;
 				}
 			}
