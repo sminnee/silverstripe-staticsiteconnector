@@ -10,7 +10,7 @@
  */
 
 // We need PHPCrawl
-require_once(BASE_PATH.'/vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
+require_once(BASE_PATH . '/vendor/cuab/phpcrawl/libs/PHPCrawler.class.php');
 
 class StaticSiteUrlList {
 
@@ -82,11 +82,11 @@ class StaticSiteUrlList {
 	public function __construct(StaticSiteContentSource $source, $cacheDir) {
 		// baseURL must not have a trailing slash
 		$baseURL = $source->BaseUrl;
-		if(substr($baseURL,-1) == "/") {
-			$baseURL = substr($baseURL,0,-1);
+		if(substr($baseURL, -1) == "/") {
+			$baseURL = substr($baseURL, 0, -1);
 		}
 		// cacheDir must have a trailing slash
-		if(substr($cacheDir,-1) != "/") {
+		if(substr($cacheDir, -1) != "/") {
 			$cacheDir .= "/";
 		}
 
@@ -206,19 +206,19 @@ class StaticSiteUrlList {
 			return null;
 		}
 
-		if (!isset($urls['regular']) || !isset($urls['regular'])) {
+		if(!isset($urls['regular']) || !isset($urls['regular'])) {
 			return null;
 		}
 
 		$_regular = array();
 		$_inferred = array();
 		foreach($urls['regular'] as $key => $urlData) {
-			array_push($_regular,$urlData['url']);
+			array_push($_regular, $urlData['url']);
 		}
 		foreach($urls['inferred'] as $key => $urlData) {
-			array_push($_inferred,$urlData['url']);
+			array_push($_inferred, $urlData['url']);
 		}
-		return sizeof(array_unique($_regular)) + sizeof($_inferred);
+		return count(array_unique($_regular)) + count($_inferred);
 	}
 
 	/**
@@ -397,7 +397,7 @@ class StaticSiteUrlList {
 
 		// Check we're adhering to the correct base URL
 		if(substr($simplifiedURL, 0, strlen($simplifiedBase)) == $simplifiedBase) {
-			$relURL = substr($url, strlen($this->baseURL));
+			$relURL = preg_replace("#https?://(www.)?[^/]+#", '', $url);
 		} 
 		else {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
