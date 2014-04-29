@@ -91,6 +91,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$fields->removeFieldFromTab("Root", "Pages");
 		$fields->removeFieldFromTab("Root", "Files");
 		$fields->removeFieldFromTab("Root", "ShowContentInMenu");
+		
+		$fields->insertBefore(new HeaderField('CrawlConfigHeader', 'Crawl config'), 'BaseUrl');
 
 		// Processing Option
 		$processingOptions = array("" => "No pre-processing");
@@ -106,6 +108,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$autoRunLinkTask->setDescription("This will run the link-rewriter task automatically once an import has completed.");		
 
 		// Schemas Gridfield
+		$fields->addFieldToTab('Root.Main', new HeaderField('ImportConfigHeader', 'Import config'));
 		$importRules = $fields->dataFieldByName('Schemas');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddExistingAutocompleter');
 		$importRules->getConfig()->removeComponentsByType('GridFieldAddNewButton');
@@ -176,7 +179,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 			->setDescription("Add URLs that are not reachable through content scraping, eg: '/about/team'. One per line")
 			->setTitle('Additional URLs');
 		$fields->dataFieldByName("UrlExcludePatterns")
-			->setDescription("URLs that should be excluded (support regular expression). eg: '/about/.*'. One per URL")
+			->setDescription("URLs that should be excluded. (Supports regular expressions e.g. '/about/.*'). One per URL")
 			->setTitle('Excluded URLs');
 		
 		$hasImports = DataObject::get('StaticSiteImportDataObject');
@@ -275,7 +278,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 
 	/**
 	 * Performs a match on the Schema->AppliedTo field with reference to the URL
-	 * of the current iteration
+	 * of the current iteration within getSchemaForURL().
 	 *
 	 * @param StaticSiteContentSource_ImportSchema $schema
 	 * @param string $url
@@ -479,16 +482,18 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$dataObjects = ClassInfo::subclassesFor('DataObject');
 		array_shift($dataObjects);
 		natcasesort($dataObjects);
+		$appliesTo = $fields->dataFieldByName('AppliesTo');
+		$appliesTo->setDescription('A full or partial URI. Supports regular expressions.');
 		$fields->addFieldToTab('Root.Main', new DropdownField('DataType', 'DataType', $dataObjects));
 		$mimes = new TextareaField('MimeTypes', 'Mime-types');
 		$mimes->setRows(3);
-		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. Examples of valid entries are e.g text/html, image/png or image/jpeg, separated by a newline.');
+		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. e.g. text/html (<strong>SiteTree</strong>), image/png or image/jpeg (<strong>Image</strong>) or application/pdf (<strong>File</strong>), separated by a newline.');
 		$fields->addFieldToTab('Root.Main', $mimes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');
 		$fields->removeFieldFromTab('Root', 'ImportRules');
 
-		// File don't use import rules
+		// Exclude File, as it doesn't use import rules
 		if($this->DataType && in_array('File', ClassInfo::ancestry($this->DataType))) {
 			return $fields;
 		}
@@ -619,7 +624,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * @return boolean
 	 */
 	public function validateUrlPattern() {
-		// Basic check used negative lookbehind and check if glob chars exist which are _not_ preceeded by a '.' char
+		// Basic check uses negative lookbehind and checks if glob chars exist which are _not_ preceeded by a '.' char
 		if(preg_match("#(?<!.)(\+|\*)#", $this->AppliesTo)) {
 			return $this->AppliesTo;
 		}
@@ -703,7 +708,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 		$dataType = $this->Schema()->DataType;
 		if($dataType) {
 			$fieldList = singleton($dataType)->inheritedDatabaseFields();
-			$fieldList = array_combine(array_keys($fieldList),array_keys($fieldList));
+			$fieldList = array_combine(array_keys($fieldList), array_keys($fieldList));
 			unset($fieldList->ParentID);
 			unset($fieldList->WorkflowDefinitionID);
 			unset($fieldList->Version);

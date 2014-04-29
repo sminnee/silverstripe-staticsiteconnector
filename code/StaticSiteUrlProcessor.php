@@ -62,7 +62,7 @@ class StaticSiteURLProcessor_DropExtensions implements StaticSiteUrlProcessor {
 	 * @return string
 	 */
 	public function getDescription() {
-		return "Drop file extensions and trailing slashes, but otherwise leave them the same.";
+		return "Drop extensions and trailing slashes.";
 	}
 
 	/**
@@ -135,7 +135,7 @@ class StaticSiteMOSSURLProcessor extends StaticSiteURLProcessor_DropExtensions i
 	 * @return string
 	 */
 	public function getDescription() {
-		return "Remove '/Pages/' from the URL, and drops extensions";
+		return "Removes '/Pages/' and drops extensions and trailing slashes.";
 	}
 
 	/**
