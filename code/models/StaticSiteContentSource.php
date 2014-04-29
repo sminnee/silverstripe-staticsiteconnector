@@ -564,6 +564,10 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		if(!is_bool($mime)) {
 			$result->error('Invalid Mime-type "' . $mime . '" for DataType "' . $this->DataType . '"');
 		}
+		$appliesTo = $this->validateUrlPattern();
+		if(!is_bool($appliesTo)) {
+			$result->error('Invalid PCRE expression "' . $appliesTo . '"');
+		}		
 		return $result;
 	}
 
@@ -601,9 +605,23 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 
 		$mimesForSSType = StaticSiteMimeProcessor::get_mime_for_ss_type($type);
 		foreach($selectedMimes as $mime) {
-			if(!in_array($mime,$mimesForSSType)) {
+			if(!in_array($mime, $mimesForSSType)) {
 				return $mime;
 			}
+		}
+		return true;
+	}
+	
+	/**
+	 * 
+	 * Prevent ugly CMS console errors if user-defined regex's are not 100% PCRE compatible.
+	 * 
+	 * @return boolean
+	 */
+	public function validateUrlPattern() {
+		// Basic check used negative lookbehind and check if glob chars exist which are _not_ preceeded by a '.' char
+		if(preg_match("#(?<!.)(\+|\*)#", $this->AppliesTo)) {
+			return $this->AppliesTo;
 		}
 		return true;
 	}
