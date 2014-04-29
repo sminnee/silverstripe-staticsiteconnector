@@ -1,8 +1,8 @@
 # Migration
 
-Once the module is installed (See README.md), log into the CMS. You will see a new section called 'External Content', open it.
+Once the module is installed (See [README](../../README.md)), log into the CMS. You will see a new section called 'External Content', open it.
 
-In the top-left, you will see a dropdown menu and a 'Create' button. Select the 'StaticSiteContentSource' option and click 'Create'.
+In the top-left, you will see a dropdown menu and a 'Create' button. Select the 'Static Site Content Source' option and click 'Create'.
 
 Refresh the page and you will see 'New Connector' in the list of Connectors, click it to open.
 

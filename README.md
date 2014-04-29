@@ -5,7 +5,7 @@
 * [Sam Minnee](https://github.com/sminnee)
 * [Russell Michell](https://github.com/phptek)
 * [Mike Parkhill](https://github.com/mparkhill)
-* [Stig Lindvist](https://github.com/stojg)
+* [Stig Lindqvist](https://github.com/stojg)
 
 ## Introduction
 
