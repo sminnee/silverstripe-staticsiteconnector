@@ -3,6 +3,10 @@
  * A Queued jobs wrapper for StaticSiteRewriteLinksTask
  *
  */
+if(!class_exists('AbstractQueuedJob')) {
+	return;
+}
+
 class StaticSiteRewriteLinksJob extends AbstractQueuedJob implements QueuedJob {
 
 	/**
