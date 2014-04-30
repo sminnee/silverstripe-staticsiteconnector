@@ -12,11 +12,13 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: MimeType Processing is buggy when a zero-length mime-type is encountered in legacy site's (incoming) URLs.
+* BUG: Fix StaticSiteExternalContentAdminExtension::deleteimports() with a PJAX header so the session-based success message is shown.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
 * TASK: Selecting "external content" in the CMS shows nothing in the main pane. Show a default connector (e.g. the first) by default.
+* TASK: A lot of duplication in both StaticSiteXXXXTransformer classes. Refactor into a common StaticSiteObjectTransformer class, to be extended for Page & File-specific logic.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: Add user help-text or hint explaining what the "Show content in menus" checkbox does.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)

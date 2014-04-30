@@ -76,6 +76,12 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 * @var int
 	 */
 	protected $contentImportID;	
+	
+	/**
+	 * 
+	 * @var
+	 */
+	protected $silentRun;
 
 	/**
 	 * The StaticSiteContentSource which has the links to be rewritten
@@ -102,7 +108,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Get the StaticSiteContentSource and Import ID from request parameters
 		$this->contentSourceID = trim($request->getVar('SourceID'));
 		$this->contentImportID = trim($request->getVar('ImportID'));
-		$this->SilentRun = trim($request->getVar('SilentRun'));
+		$this->silentRun = trim($request->getVar('silentRun'));
 
 		if(!$this->checkInputs()) {
 			return;
@@ -275,7 +281,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 	 */
 	public function printMessage($message, $level = null, $url = null) {
 		singleton('StaticSiteUtils')->log("$level$message$url", null, null, __CLASS__);
-		if($this->SilentRun) {
+		if($this->silentRun) {
 			return;
 		}
 		$url = ($url ? '(' . $url . ') ' : '');

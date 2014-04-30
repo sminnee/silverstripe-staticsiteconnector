@@ -36,6 +36,10 @@ class StaticSiteMimeProcessor {
 	 */
 	public static function get_mime_for_ss_type($SSType = null) {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
+		// This config file not guaranteed to always be present
+		if(!$httpMimeTypes or !is_array($httpMimeTypes)) {
+			return false;
+		}
 		$ssTypeMimeMap = self::ss_type_to_suffix_map();
 
 		$mimes = array(
@@ -116,7 +120,7 @@ class StaticSiteMimeProcessor {
 			if(!in_array(strtolower($SSType), array_keys($mimeCategories))) {
 				return false;
 			}			
-			return $map[$key];
+			return $map[$SSType];
 		}
 		return $map;
 	}
@@ -203,7 +207,7 @@ class StaticSiteMimeProcessor {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime, self::get_mime_for_ss_type('image'))) {
+			if(self::get_mime_for_ss_type('image') && in_array($mime, self::get_mime_for_ss_type('image'))) {
 				return true;
 			}
 		}
@@ -221,7 +225,7 @@ class StaticSiteMimeProcessor {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime, self::get_mime_for_ss_type('file'))) {
+			if(self::get_mime_for_ss_type('file') && in_array($mime, self::get_mime_for_ss_type('file'))) {
 				return true;
 			}
 		}
@@ -239,7 +243,7 @@ class StaticSiteMimeProcessor {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(in_array($mime, self::get_mime_for_ss_type('sitetree'))) {
+			if(self::get_mime_for_ss_type('sitetree') && in_array($mime, self::get_mime_for_ss_type('sitetree'))) {
 				return true;
 			}
 		}
