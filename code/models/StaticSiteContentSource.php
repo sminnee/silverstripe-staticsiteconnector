@@ -413,7 +413,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * 
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		"DataType" => "Varchar", // classname
 		"Order" => "Int",
 		"AppliesTo" => "Varchar(255)", // regex
@@ -445,13 +445,13 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * 
 	 * @var string
 	 */	
-	public static $default_sort = "Order";
+	private static $default_sort = "Order";
 
 	/**
 	 * 
 	 * @var array
 	 */	
-	public static $has_one = array(
+	private static $has_one = array(
 		"ContentSource" => "StaticSiteContentSource",
 	);
 
@@ -459,7 +459,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * 
 	 * @var array
 	 */	
-	public static $has_many = array(
+	private static $has_many = array(
 		"ImportRules" => "StaticSiteContentSource_ImportRule",
 	);
 
@@ -641,7 +641,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	 *
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		"FieldName" => "Varchar",
 		"CSSSelector" => "Text",
 		"ExcludeCSSSelector" => "Text",
@@ -678,7 +678,7 @@ class StaticSiteContentSource_ImportRule extends DataObject {
 	 *
 	 * @var array
 	 */	
-	public static $has_one = array(
+	private static $has_one = array(
 		"Schema" => "StaticSiteContentSource_ImportSchema",
 	);
 
