@@ -15,7 +15,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 *
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		'BaseUrl' => 'Varchar(255)',
 		'UrlProcessor' => 'Varchar(255)',
 		'ExtraCrawlUrls' => 'Text',
@@ -28,7 +28,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 *
 	 * @var array
 	 */	
-	public static $has_many = array(
+	private static $has_many = array(
 		"Schemas" => "StaticSiteContentSource_ImportSchema",
 		"Pages" => "SiteTree",
 		"Files" => "File"

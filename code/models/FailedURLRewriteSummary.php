@@ -12,7 +12,7 @@ class FailedURLRewriteSummary extends DataObject {
 	 *
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		'Text' => 'Text',
 		'ImportID' => 'Int'
 	);

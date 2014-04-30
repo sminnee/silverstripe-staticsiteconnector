@@ -14,7 +14,7 @@ class FailedURLRewriteObject extends DataObject {
 	 *
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		"BadLinkType" => "Enum('ThirdParty, BadScheme, NotImported, Junk, Unknown', 'Unknown')",
 		"OrigUrl" => "Varchar(255)"
 	);
@@ -23,7 +23,7 @@ class FailedURLRewriteObject extends DataObject {
 	 * 
 	 * @var array
 	 */
-	public static $has_one = array(
+	private static $has_one = array(
 		'Import' => 'StaticSiteImportDataObject',
 		'ContainedIn' => 'SiteTree'
 	);

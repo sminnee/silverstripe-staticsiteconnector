@@ -10,7 +10,7 @@ class StaticSiteDataExtension extends DataExtension {
 	 * 
 	 * @var array
 	 */
-	static $has_one = array(
+	private static $has_one = array(
 		"StaticSiteContentSource" => "StaticSiteContentSource",
 	);
 	
@@ -18,7 +18,7 @@ class StaticSiteDataExtension extends DataExtension {
 	 * 
 	 * @var array
 	 */	
-	static $db = array(
+	private static $db = array(
 		"StaticSiteURL" => "Varchar(255)",
 		"StaticSiteImportID" => "Int"
 	);

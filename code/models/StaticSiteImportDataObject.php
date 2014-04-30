@@ -12,7 +12,7 @@ class StaticSiteImportDataObject extends DataObject {
 	 *
 	 * @var array
 	 */
-	public static $db = array(
+	private static $db = array(
 		'Ended' => 'SS_Datetime'
 	);
 	
@@ -20,7 +20,7 @@ class StaticSiteImportDataObject extends DataObject {
 	 *
 	 * @var array
 	 */
-	public static $has_one = array(
+	private static $has_one = array(
 		'User' => 'Member'
 	);
 	
