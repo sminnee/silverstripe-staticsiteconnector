@@ -116,8 +116,8 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$addNewButton->setButtonName("Add Schema");
 		$importRules->getConfig()->addComponent($addNewButton);
 		$fields->removeFieldFromTab("Root", "Schemas");
-		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Schemas define rules for importing content into fields"
-			. " by getting the results of their CSS selector rules. If more than one schema exists for a field, then they will be"
+		$fields->addFieldToTab("Root.Main", new LiteralField("", "<p>Schemas define rules for importing scraped content into database fields"
+			. " via CSS selector rules. If more than one schema exists for a field, then they will be"
 			. " processed in the order of Priority. The first Schema to a match a URL Pattern will be the one used for that field.</p>"));
 		$fields->addFieldToTab("Root.Main", $importRules);
 

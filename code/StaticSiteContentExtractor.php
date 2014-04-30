@@ -307,7 +307,7 @@ class StaticSiteContentExtractor extends Object {
 			curl_setopt($ch, CURLOPT_POST, 1);
 			curl_setopt($ch, CURLOPT_POSTFIELDS, $data);
 		} 
-		elseif($method == 'PUT') {
+		else if($method == 'PUT') {
 			$put = fopen("php://temp", 'r+');
 			fwrite($put, $data);
 			fseek($put, 0);
@@ -330,7 +330,7 @@ class StaticSiteContentExtractor extends Object {
 
 		// Deal to files, write to them directly and then return
 		if($this->mimeProcessor->isOfFileOrImage($this->mime)) {
-			$tmp_name = tempnam(getTempFolder().'/'.rand(), 'tmp');
+			$tmp_name = tempnam(getTempFolder() . '/' . rand(), 'tmp');
 			$fp = fopen($tmp_name, 'w+');
 			curl_setopt($ch, CURLOPT_HEADER, 0);	// We do not want _any_ header info, it corrupts the file data
 			curl_setopt($ch, CURLOPT_FILE, $fp);	// write curl response directly to file, no messing about
@@ -344,9 +344,9 @@ class StaticSiteContentExtractor extends Object {
 		$fullResponseBody = curl_exec($ch);
 		$curlError = curl_error($ch);
 
-		list($responseHeaders, $responseBody) = explode("\n\n", str_replace("\r","",$fullResponseBody), 2);
+		@list($responseHeaders, $responseBody) = explode("\n\n", str_replace("\r", "", $fullResponseBody), 2);
 		if(preg_match("#^HTTP/1.1 100#", $responseHeaders)) {
-			list($responseHeaders, $responseBody) = explode("\n\n", str_replace("\r","",$responseBody), 2);
+			list($responseHeaders, $responseBody) = explode("\n\n", str_replace("\r", "", $responseBody), 2);
 		}
 
 		$responseHeaders = explode("\n", trim($responseHeaders));
