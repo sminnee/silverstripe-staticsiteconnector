@@ -228,9 +228,10 @@ class StaticSiteMimeProcessor {
 	public function isOfFile($mimeTypes) {
 		if(!is_array($mimeTypes)) {
 			$mimeTypes = array(self::cleanse($mimeTypes));
-		}
+		}		
 		foreach($mimeTypes as $mime) {
-			if(self::get_mime_for_ss_type('file') && in_array($mime, self::get_mime_for_ss_type('file'))) {
+			$fileMime = self::get_mime_for_ss_type('file');
+			if($fileMime && in_array($mime, $fileMime)) {
 				return true;
 			}
 		}
@@ -248,7 +249,8 @@ class StaticSiteMimeProcessor {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(self::get_mime_for_ss_type('sitetree') && in_array($mime, self::get_mime_for_ss_type('sitetree'))) {
+			$htmlMime = self::get_mime_for_ss_type('sitetree');
+			if($htmlMime && in_array($mime, $htmlMime)) {
 				return true;
 			}
 		}
