@@ -6,12 +6,15 @@
 		$('a.del-imports').entwine({
 			onclick: function(e) {
 				e.preventDefault();
-				// send "delImports" POST var
-				var url = $(this).attr('href');
-				var data = {delImports:true};
-				$.post(url, data);				
-				// Reload main content area
-				$('.cms-container').reloadCurrentPanel();
+				$.ajax(jQuery.extend({
+					headers: {"X-Pjax" : "CurrentForm"},
+					url: $(this).attr('href'), 
+					data: {delImports : true},
+					type: 'POST',
+					success: function(data, status, xhr) {
+						$('.cms-container').reloadCurrentPanel();
+					}
+				}, {}));				
 			}
 		});
 		

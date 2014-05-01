@@ -108,7 +108,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 		// Get the StaticSiteContentSource and Import ID from request parameters
 		$this->contentSourceID = trim($request->getVar('SourceID'));
 		$this->contentImportID = trim($request->getVar('ImportID'));
-		$this->silentRun = trim($request->getVar('silentRun'));
+		$this->silentRun = trim($request->getVar('SilentRun'));
 
 		if(!$this->checkInputs()) {
 			return;

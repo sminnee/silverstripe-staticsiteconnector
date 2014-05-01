@@ -159,7 +159,9 @@ class StaticSiteContentSource extends ExternalContentSource {
 		 */
 		if($this->urlList()->getSpiderStatus() == "Complete") {
 			$urlsAsUL = "<ul>";
-			$list = array_unique($this->urlList()->getProcessedURLs());
+			$processedUrls = $this->urlList()->getProcessedURLs();
+			$processed = ($processedUrls ? $processedUrls : array());
+			$list = array_unique($processed);
 
 			foreach($list as $raw => $processed) {
 				if($raw == $processed) {
@@ -579,7 +581,6 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	/**
 	 * 
 	 * Validate user-inputted mime-types until we use some sort of multi-select list in the CMS to select from (@todo).
-	 * If we don't validate, then we can be haflway through an import and Upload#oad() wil throw a validation error "Extension is not allowed"
 	 *
 	 * @return mixed boolean|string Boolean true if all is OK, otherwise the invalid mimeType to be shown in the CMS UI
 	 */
@@ -609,7 +610,8 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		}
 
 		$mimesForSSType = StaticSiteMimeProcessor::get_mime_for_ss_type($type);
-		foreach($selectedMimes as $mime) {
+		$mimes = $mimesForSSType ? $mimesForSSType : array();
+		foreach($mimes as $mime) {
 			if(!in_array($mime, $mimesForSSType)) {
 				return $mime;
 			}

@@ -78,6 +78,6 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 		Session::set("FormInfo.Form_EditForm.formError.message", $message);
 		Session::set("FormInfo.Form_EditForm.formError.type", $messageType);
 
-		return $this->getResponseNegotiator()->respond($this->owner->request);		
+		return $this->owner->getResponseNegotiator()->respond($this->owner->getRequest());	
 	}
 }

@@ -144,18 +144,22 @@ class StaticSiteMimeProcessor {
 		$httpMimeTypes = Config::inst()->get('HTTP', 'MimeTypes');
 		$mimeCategories = singleton('File')->config()->app_categories;
 		list($ext, $mime) = array(strtolower($ext), strtolower($mime));
+		
 		$notAuthoratative = !isset($httpMimeTypes[$ext]);					// We've found ourselves a weird extension
 		$notMatch = (!$notAuthoratative && $httpMimeTypes[$ext] !== $mime);	// No match found for passed extension in our ext=>mime mapping from config
+		
 		if($notAuthoratative || $notMatch) {
 			if(!$fix) {
 				return false;
 			}
+			
 			// Attempt to "fix" broken or badly encoded file-extensions by guessing what it should be, based on $mime
 			$coreExts = array_merge($mimeCategories['doc'],$mimeCategories['image']);
 			foreach($coreExts as $coreExt) {
 				// Make sure we check the correct category so we don't find a match for ms-excel in the image \File category (.cel) !!
 				$isFile = in_array($coreExt, $mimeCategories['doc']) && singleton(__CLASS__)->isOfFile($mime);		// dirty
 				$isImge = in_array($coreExt, $mimeCategories['image']) && singleton(__CLASS__)->isOfImage($mime);	// more dirt
+				
 				if(($isFile || $isImge) && stristr($mime,$coreExt) !== false) {
 					// "Manually" force "jpg" as the file-suffix to be returned
 					return $coreExt == 'jpeg' ? 'jpg' : $coreExt;
@@ -207,7 +211,8 @@ class StaticSiteMimeProcessor {
 			$mimeTypes = array(self::cleanse($mimeTypes));
 		}
 		foreach($mimeTypes as $mime) {
-			if(self::get_mime_for_ss_type('image') && in_array($mime, self::get_mime_for_ss_type('image'))) {
+			$imgMime = self::get_mime_for_ss_type('image');
+			if($imgMime && in_array($mime, $imgMime)) {
 				return true;
 			}
 		}
