@@ -10,6 +10,7 @@ Some are already registered as issues on Github, others are more in the "would l
  * The above errors seem to only occur after an import failed with an error and is then manually resumed.
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
+* BUG: Travis is failing for env: DB=PGSQL CORE_RELEASE=3.1
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
