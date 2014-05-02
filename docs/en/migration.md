@@ -26,7 +26,7 @@ If the host you're running the module is behind a proxy, enable the following in
 Add the following to mysite/_config/config.yml to enable the debug log for link-crawling and importing:
 
 	StaticSiteContentExtractor:
-	  log_file: /var/tmp/import.log
+	  log_file: /var/tmp/crawl-and-import.log
 
 ## Next Steps
 
