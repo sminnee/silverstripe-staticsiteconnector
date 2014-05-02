@@ -1,0 +1,14 @@
+.cms {
+	.readonly-click-toggle span {
+		cursor: pointer;
+	}
+	.readonly-click-toggle span:hover {
+		background-color: #CCC;
+	}
+	.Actions {
+		&.clear-imports {
+			padding-bottom: 6px;
+			border-bottom: 1px solid #D0D3D5;
+		}
+	}
+}

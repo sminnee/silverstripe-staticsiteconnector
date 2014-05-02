@@ -1,7 +1,0 @@
-.readonly-click-toggle span {
-	cursor: pointer;
-}
-
-.readonly-click-toggle span:hover {
-	background-color: #CCC;
-}

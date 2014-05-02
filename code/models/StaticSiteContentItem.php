@@ -138,7 +138,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 		}
 
 		Requirements::javascript('staticsiteconnector/js/StaticSiteContentItem.js');
-		Requirements::css('staticsiteconnector/css/StaticSiteContentItem.css');
+		Requirements::css('staticsiteconnector/css/StaticSiteConnector.css');
 
 		return $fields;
 	}

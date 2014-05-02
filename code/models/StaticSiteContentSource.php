@@ -137,13 +137,15 @@ class StaticSiteContentSource extends ExternalContentSource {
 		
 		$crawlButton = FormAction::create('crawlsite', $crawlButtonText)
 			->setAttribute('data-icon', 'arrow-circle-double')
-			->setUseButtonTag(true);
-			// Disable crawl-button if assets dir isn't writable
-			$crawlMsg = 'Click the button below to do so:';
-			if(!file_exists(ASSETS_PATH) || !is_writable(ASSETS_PATH)) {
-				$crawlMsg = '<span class="message warning"><strong>Warning!</strong> Assets directory is not writable.</span>';
-				$crawlButton->setDisabled(true);
-			}
+			->setUseButtonTag(true);		
+		
+		// Disable crawl-button if assets dir isn't writable
+		$crawlMsg = 'Click the button below to do so:';
+		if(!file_exists(ASSETS_PATH) || !is_writable(ASSETS_PATH)) {
+			$crawlMsg = '<span class="message warning"><strong>Warning!</strong> Assets directory is not writable.</span>';
+			$crawlButton->setDisabled(true);
+		}
+			
 		$fields->addFieldsToTab('Root.Crawl', array(
 			new ReadonlyField("CrawlStatus", "Crawling Status", $this->urlList()->getSpiderStatus()),
 			new ReadonlyField("NumURLs", "Number of URLs", $this->urlList()->getNumURLs()),
@@ -186,7 +188,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 		
 		$hasImports = DataObject::get('StaticSiteImportDataObject');
 		if($importCount = $hasImports->count()) {
-			$clearImports = new LiteralField('ClearImports', '[ <a href="admin/external-content/deleteimports" class="del-imports">Clear imports (' . $importCount . ')</a> ]');
+			$clearImportButton = FormAction::create('clearimports', 'Clear imports (' . $importCount . ')')
+				->setAttribute('data-icon', 'arrow-circle-double')
+				->setUseButtonTag(true);
+			$clearImports = new LiteralField('ImportActions', "<div class='Actions clear-imports'>{$clearImportButton->forTemplate()}</div>");
 			$fields->addFieldToTab('Root.Import', $clearImports);
 		}
 

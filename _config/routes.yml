@@ -4,4 +4,4 @@ After: '#external-content-routes'
 ---
 Director:
   rules:
-    'deleteimports': 'StaticSiteExternalContentAdminExtension'
+    'clearimports': 'StaticSiteExternalContentAdminExtension'
