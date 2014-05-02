@@ -16,7 +16,9 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	);
 	
 	/**
+	 * Load module-wide CSS
 	 * 
+	 * @return void
 	 */
 	public function init() {
 		Requirements::css('staticsiteconnector/css/StaticSiteConnector.css');
