@@ -1,9 +1,6 @@
 <?php
 /**
- * Define the overarching content-source:
- * - Schemas
- * - Pages
- * - Files
+ * Define the overarching content-sources, schemas etc.
  * 
  * @package staticsiteconnector
  * @author Sam Minee <sam@silverstripe.com>
@@ -247,6 +244,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * @param boolean $limit
 	 * @param boolean $verbose
 	 * @return \StaticSiteCrawler
+	 * @throws LogicException
 	 */
 	public function crawl($limit=false, $verbose=false) {
 		if(!$this->BaseUrl) {
@@ -312,7 +310,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 * Returns a StaticSiteContentItem for the given URL
 	 * Relative URLs are used as the unique identifiers by this importer
 	 *
-	 * @param $id The URL, relative to BaseURL, starting with "/".
+	 * @param string $id The URL, relative to BaseURL, starting with "/".
 	 * @return \StaticSiteContentItem
 	 */
 	public function getObject($id) {
@@ -475,7 +473,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * @return string
 	 */
 	public function getTitle() {
-		return $this->DataType.' ('.$this->AppliesTo.')';
+		return $this->DataType.' (' .$this->AppliesTo . ')';
 	}
 
 	/**
@@ -519,7 +517,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 
 	/**
 	 * 
-	 * @return false
+	 * @return void
 	 */
 	public function requireDefaultRecords() {
 		foreach(StaticSiteContentSource::get() as $source) {
@@ -544,7 +542,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	/**
 	 * Return the import rules in a format suitable for configuring StaticSiteContentExtractor.
 	 *
-	 * @return array A map of field name => array(CSS selector, CSS selector, ...)
+	 * @return array $output. A map of field name => array(CSS selector, CSS selector, ...)
 	 */
 	public function getImportRules() {
 		$output = array();
@@ -628,7 +626,7 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * 
 	 * Prevent ugly CMS console errors if user-defined regex's are not 100% PCRE compatible.
 	 * 
-	 * @return boolean
+	 * @return mixed string | boolean
 	 */
 	public function validateUrlPattern() {
 		// Basic check uses negative lookbehind and checks if glob chars exist which are _not_ preceeded by a '.' char

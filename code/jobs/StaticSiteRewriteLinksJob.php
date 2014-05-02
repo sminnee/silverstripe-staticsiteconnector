@@ -1,7 +1,11 @@
 <?php
 /**
- * A Queued jobs wrapper for StaticSiteRewriteLinksTask
- *
+ * 
+ * A Queued jobs wrapper for StaticSiteRewriteLinksTask.
+ * 
+ * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
+ * @author Science Ninjas <scienceninjas@silverstripe.com>
  */
 if(!class_exists('AbstractQueuedJob')) {
 	return;
@@ -17,7 +21,10 @@ class StaticSiteRewriteLinksJob extends AbstractQueuedJob implements QueuedJob {
 	protected $contentSourceID;
 
 	/**
-	 * sets the content source id
+	 * 
+	 * Sets the content source id
+	 * 
+	 * @param number $contentSourceID
 	 */
 	public function __construct($contentSourceID = null) {
 		if ($contentSourceID) {
@@ -36,6 +43,8 @@ class StaticSiteRewriteLinksJob extends AbstractQueuedJob implements QueuedJob {
 
 	/**
 	 * Starts the rewrite links task
+	 * 
+	 * @return void
 	 */
 	public function process() {
 		$task = singleton('StaticSiteRewriteLinksTask');

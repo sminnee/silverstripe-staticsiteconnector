@@ -2,9 +2,10 @@
 /**
  * A CMS report for URLs that failed to be re-written.
  *
- * @author Russell Michell <russell@silverstripe.com>
+ * @author Russell Michell <russ@silverstripe.com>
  * @package staticsiteconnector
- * @see {@link BadImportLog}
+ * @see {@link FailedURLRewriteObject}
+ * @see {@link FailedURLRewriteSummary}
  * @see {@link StaticSiteRewriteLinksTask}
  */
 class FailedURLRewriteReport extends SS_Report {
@@ -92,7 +93,7 @@ TXT;
 	}
 
 	/**
-	 * Get the columns to show with header titles
+	 * Get the columns to show with header titles.
 	 *
 	 * @return array
 	 */
@@ -138,7 +139,7 @@ TXT;
 	 * Get the raw data.
 	 * 
 	 * @param number $importID
-	 * @return DataList
+	 * @return SS_List
 	 */
 	protected function getBadImportData($importID) {
 		$default = new ArrayList();		

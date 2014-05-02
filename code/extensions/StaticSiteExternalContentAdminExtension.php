@@ -26,7 +26,7 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 
 	/**
 	 * 
-	 * @param type $request
+	 * @param SS_HTTPRequest $request
 	 * @throws Exception
 	 * @return SS_HTTPResponse
 	 */
@@ -66,6 +66,7 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	 * Delete all StaticSiteImportDataObject's and related logic.
 	 * 
 	 * @param SS_HTTPRequest $request
+	 * @return SS_HTTPResponse
 	 */
 	public function clearimports($request) {
 		$imports = DataObject::get('StaticSiteImportDataObject');

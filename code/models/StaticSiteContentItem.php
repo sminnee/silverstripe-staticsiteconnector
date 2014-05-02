@@ -82,7 +82,6 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 * and directs the module to use the correct StaticSiteXXXTransformer class.
 	 *
 	 * @return mixed string|boolean
-	 * @todo Create a static array somewhere (_config??) comprising all legit mime-types, or fetch directly from IANA..
 	 */
 	public function getType() {
 		$mimeTypeProcessor = singleton('StaticSiteMimeProcessor');
@@ -113,7 +112,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	/**
-	 * @return \FieldList
+	 * @return \FieldList $fields
 	 */
 	public function getCMSFields() {
 		$fields = parent::getCMSFields();

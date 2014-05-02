@@ -1,6 +1,6 @@
 <?php
 /**
- * Caches some metadata for each import. Allows imports to have some DataObject-like functionality.
+ * Caches some metadata for each import. Allows imports to have a DataObject-like functionality.
  * 
  * @author Russell Michell <russ@silverstripe.com>
  * @package staticsiteconnector
@@ -27,7 +27,7 @@ class StaticSiteImportDataObject extends DataObject {
 	/**
 	 * Get the most recently started/run import.
 	 * 
-	 * @param $member Member
+	 * @param Member $member
 	 * @return null | DataList
 	 */
 	public static function current($member = null) {
@@ -67,6 +67,7 @@ class StaticSiteImportDataObject extends DataObject {
 	 * Make sure related FailedURLRewriteObject's are also removed
 	 * 
 	 * @todo Would belongs_to() do the job?
+	 * @return void
 	 */
 	public function onAfterDelete() {
 		parent::onAfterDelete();
