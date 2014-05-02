@@ -113,7 +113,16 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 			return false;
 		}
 
-		$this->write($file, $item, $source, $contentFields['tmp_path']);
+		/*
+		 * write() calls File::onAfterWrite() which calls File::updateFileSystem() which throws
+		 * an exception if the same image is attempted to be written.
+		 */
+		try {
+			$this->write($file, $item, $source, $contentFields['tmp_path']);
+		}
+		catch(Exception $e) {
+			$this->utils->log($e->getMessage(), $item->AbsoluteURL, $item->ProcessedMIME);
+		}
 		$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($file, $item->stageChildren());
