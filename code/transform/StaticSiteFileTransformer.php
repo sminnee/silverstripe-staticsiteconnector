@@ -4,6 +4,8 @@
  *
  * This creates SilverStripe's database representation of the fetched-file and a 
  * copy of the file itself on the local filesystem.
+ * 
+ * @todo Modify getParentDir() to cater for the image & document hierarchy from the legacy/scraped site.
  *
  * @package staticsiteconnector
  * @author Science Ninjas <scienceninjas@silverstripe.com>
@@ -16,6 +18,11 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	 * @var number
 	 */
 	public static $parent_id = 0;
+	
+	/**
+	 * The name to use for the main folder under assets where files & images will be cached.
+	 */
+	public static $default_parent_dir = 'Import';
 	
 	/**
 	 * The name to use for the folder beneath assets/Import to cache imported images.
@@ -124,8 +131,14 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
 		
 		// Move the file to new location in assets
-		rename($tmpPath, $filePath);
-		
+		$assetPath = ASSETS_PATH . '/' . $this->getParentDir() . '/' . $this->getLastDir($item->ProcessedMIME);
+		if(!is_writable($assetPath)) {
+			$this->utils->log(" - Can't move $tmpPath to $filePath. Permission denied.", $item->AbsoluteURL, $item->ProcessedMIME);
+		}
+		else {
+			rename($tmpPath, $filePath);
+		}
+
 		// Remove garbage tmp files if/when left lying around
 		if(file_exists($tmpPath)) {
 			unlink($tmpPath);
@@ -145,11 +158,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
 		$postVars = Controller::curr()->request->postVars();
-		$parentDir = 'Import';
-		if(!empty($postVars['FileMigrationTarget'])) {
-			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
-			$parentDir = $parentDirData->Title;
-		}
+		$parentDir = $this->getParentDir();
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
 		$path = $parentDir . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
 		$parentFolder = Folder::find_or_make($path);
@@ -217,5 +226,33 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		$this->utils->log(" - NOTICE: \"File-properties built successfully for: ", $url, $mime);
 		
 		return $file;
+	}
+	
+	/**
+	 * Determine the correct parent dir under assets, where images and documents should be cached.
+	 * 
+	 * @return string $parentDir
+	 */
+	public function getParentDir() {
+		$parentDir = self::$default_parent_dir;
+		if(!empty($postVars['FileMigrationTarget'])) {
+			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
+			$parentDir = $parentDirData->Title;
+		}
+		return $parentDir;
+	}
+	
+	/**
+	 * Get the name of the subdir directly beneath the parent, where the current file will 
+	 * be cached.
+	 * 
+	 * @param string $mime
+	 * @return string
+	 */
+	public function getLastDir($mime) {
+		if($this->mimeProcessor->IsOfImage($mime)) {
+			return self::$file_import_dir_image;
+		}
+		return self::$file_import_dir_file;
 	}
 }
