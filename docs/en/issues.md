@@ -18,6 +18,8 @@ Some are already registered as issues on Github, others are more in the "would l
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
 * TASK: A lot of duplication in both StaticSiteXXXXTransformer classes. Refactor into a common StaticSiteObjectTransformer class, to be extended for Page & File-specific logic.
 * TASK: Make the "Clear imports" logic, specific to the selected import e.g. add ExternalContentID field to StaticSiteImportDataObject
+* TASK: If "Automatically run link-rewrite task" is checked, add more detail to "Import completed" message.
+* TASK: Make files save using the same directory hierarchy as the legacy/scraped site.
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
 * ENHANCEMENT: Add schema export feature for use between SilverStripe installs e.g. CWP
