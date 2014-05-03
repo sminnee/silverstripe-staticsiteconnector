@@ -16,7 +16,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
-* TASK: A lot of duplication in both StaticSiteXXXXTransformer classes. Refactor into a common StaticSiteObjectTransformer class, to be extended for Page & File-specific logic.
 * TASK: Make the "Clear imports" logic, specific to the selected import e.g. add ExternalContentID field to StaticSiteImportDataObject
 * TASK: If "Automatically run link-rewrite task" is checked, add more detail to "Import completed" message.
 * TASK: Make files save using the same directory hierarchy as the legacy/scraped site. See StaticSiteFileTransformer::getParentDir()
