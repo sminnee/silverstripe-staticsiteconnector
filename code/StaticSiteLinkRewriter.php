@@ -9,7 +9,9 @@
  * @package staticsiteconnector
  * @see {@link StaticSiteRewriteLinksTask}
  */
-require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
+
+// We need PHPQuery
+require_once(BASE_PATH . 'vendor/phpquery/phpquery/phpQuery/phpQuery.php');
 
 class StaticSiteLinkRewriter {
 

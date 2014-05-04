@@ -1,6 +1,7 @@
 <?php
 
-require_once(dirname(__FILE__) . "/../thirdparty/phpQuery/phpQuery/phpQuery.php");
+// We need PHPQuery
+require_once(BASE_PATH . 'vendor/phpquery/phpquery/phpQuery/phpQuery.php');
 
 /**
  * This tool uses a combination of cURL and phpQuery to extract content from a URL.
@@ -188,7 +189,7 @@ class StaticSiteContentExtractor extends Object {
 			} 
 			// Get the value of an attribute
 			elseif($attribute && trim($element->getAttribute($attribute))) {
-				$result .= ($element->getAttribute($attribute)).PHP_EOL;
+				$result .= ($element->getAttribute($attribute)) . PHP_EOL;
 			}
 		}
 
@@ -216,7 +217,7 @@ class StaticSiteContentExtractor extends Object {
 			if($element) {
 				$remove = $element->htmlOuter();
 				$content = str_replace($remove, '', $content);
-				$this->utils->log(' - Excluded content from "'.$parentSelector.' '.$excludeSelector.'"');
+				$this->utils->log(' - Excluded content from "' . $parentSelector .' ' . $excludeSelector.'"');
 			}
 		}
 		return $content;
