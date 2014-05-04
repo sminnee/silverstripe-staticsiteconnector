@@ -7,13 +7,13 @@
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  * @see {@link StaticSiteFileTransformer}
  */
-class StaticSitePageTransformer implements ExternalContentTransformer {
+class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
 	 *
 	 * @var number
 	 */
-	protected static $parent_id = 1; // Default to home
+	public static $parent_id = 1; // Default to home
 	
 	/**
 	 * 
@@ -22,28 +22,9 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 	public static $import_root = 'import-home';
 
 	/**
-	 * Holds the StaticSiteUtils object on construct
-	 * 
-	 * @var StaticSiteUtils
-	 */
-	protected $utils;	
-
-	/**
-	 * 
-	 * @return void
-	 */
-	public function __construct() {
-		$this->utils = singleton('StaticSiteUtils');
-	}
-
-	/**
 	 * Generic function called by \ExternalContentImporter
 	 * 
-	 * @param ExternalContentItem $item
-	 * @param SiteTree $parentObject
-	 * @param string $strategy
-	 * @return boolean | StaticSiteTransformResult
-	 * @throws Exception
+	 * @inheritdoc
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
@@ -62,7 +43,7 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		usleep(100*1000);		
 
 		// Extract content from the page
-		$contentFields = $this->getContentFieldsAndSelectors($item);
+		$contentFields = $this->getContentFieldsAndSelectors($item, 'SiteTree');
 
 		// Default value for Title
 		if(empty($contentFields['Title'])) {
@@ -91,16 +72,16 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 			return false;
 		}
 
-		$pageType = $schema->DataType;
+		$dataType = $schema->DataType;
 
-		if(!$pageType) {
+		if(!$dataType) {
 			$this->utils->log(" - DataType for migration schema is empty for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			throw new Exception('DataType for migration schema is empty!');
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$page = $this->processStrategy($pageType, $strategy, $item, $source->BaseUrl, $parentObject)) {
+		if(!$page = $this->duplicationStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
 			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
@@ -124,75 +105,5 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($page, $item->stageChildren());
-	}
-
-	/**
-	 * Get content from the remote host
-	 *
-	 * @param  StaticSiteeContentItem $item The item to extract
-	 * @return null | array Map of field name=>array('selector' => selector, 'content' => field content)
-	 */
-	public function getContentFieldsAndSelectors($item) {
-		// Get the import rules from the content source
-		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL,$item->ProcessedMIME);
-		if(!$importSchema) {
-			return null;
-			throw new LogicException("Couldn't find an import schema for URL: {$item->AbsoluteURL} and Mime: {$item->ProcessedMIME}");
-		}
-		$importRules = $importSchema->getImportRules();
-
- 		// Extract from the remote page based on those rules
-		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL,$item->ProcessedMIME);			
-
-		return $contentExtractor->extractMapAndSelectors($importRules, $item);
-	}
-	
-	/**
-	 * Process incoming content according to CMS user-inputted duplication strategy.
-	 * 
-	 * @param string $pageType
-	 * @param string $strategy
-	 * @param StaticSiteContentItem $item
-	 * @param string $baseUrl
-	 * @param SiteTree $parentObject
-	 * @return boolean | $page SiteTree
-	 * @todo Add tests
-	 */
-	protected function processStrategy($pageType, $strategy, $item, $baseUrl, $parentObject) {
-		// Is the page already imported?
-		$baseUrl = rtrim($baseUrl, '/');
-		$existing = $pageType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
-		if($existing) {
-			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-				// "Overwrite" == Update
-				$page = $existing;
-				$page->ParentID = $existing->ParentID;
-			}
-			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
-				$page = $existing->duplicate(false);
-				$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
-			}
-			else {
-				// Deals-to "skip" and no selection
-				return false;
-			}
-		}
-		else {
-			$page = new $pageType();
-			$page->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
-		}
-		return $page;
-	}
-	
-	/**
-	 * Get current import ID. If none can be found, start one and return that.
-	 * 
-	 * @return number
-	 */
-	public function getCurrentImportID() {
-		if(!$import = StaticSiteImportDataObject::current()) {
-			return 1;
-		}
-		return $import->ID;	
 	}
 }

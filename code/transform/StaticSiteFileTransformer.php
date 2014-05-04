@@ -4,25 +4,25 @@
  *
  * This creates SilverStripe's database representation of the fetched-file and a 
  * copy of the file itself on the local filesystem.
+ * 
+ * @todo Modify getParentDir() to cater for the image & document hierarchy from the legacy/scraped site.
  *
  * @package staticsiteconnector
  * @author Science Ninjas <scienceninjas@silverstripe.com>
  * @see {@link StaticSitePageTransformer}
  */
-class StaticSiteFileTransformer implements ExternalContentTransformer {
-
-	/**
-	 * Holds the StaticSiteUtils object on construct
-	 * 
-	 * @var \StaticSiteUtils
-	 */
-	protected $utils;
+class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
 	 *
 	 * @var number
 	 */
-	protected static $parent_id = 0;
+	public static $parent_id = 0;
+	
+	/**
+	 * The name to use for the main folder under assets where files & images will be cached.
+	 */
+	public static $default_parent_dir = 'Import';
 	
 	/**
 	 * The name to use for the folder beneath assets/Import to cache imported images.
@@ -37,29 +37,9 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public static $file_import_dir_file = 'Documents';	
 
 	/**
-	 * @var StaticSiteMimeProcessor
-	 *
-	 * $mimeTypeProcessor
-	 */
-	public $mimeProcessor;
-
-	/**
-	 * 
-	 * @return void
-	 */
-	public function __construct() {
-		$this->utils = singleton('StaticSiteUtils');
-		$this->mimeProcessor = singleton('StaticSiteMimeProcessor');
-	}
-
-	/**
 	 * Generic function called by \ExternalContentImporter
 	 * 
-	 * @param type $item
-	 * @param type $parentObject
-	 * @param string $strategy
-	 * @return boolean | \StaticSiteTransformResult
-	 * @throws Exception
+	 * @inheritdoc
 	 */
 	public function transform($item, $parentObject, $strategy) {
 
@@ -79,7 +59,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 
 		// Extract remote location of File
 		// Also sets $this->tmpName for use in this->writeToFs()
-		$contentFields = $this->getContentFieldsAndSelectors($item);
+		$contentFields = $this->getContentFieldsAndSelectors($item, 'File');
 
 		// Default value for Title
 		if(empty($contentFields['Filename'])) {
@@ -103,7 +83,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$file = $this->processStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
+		if(!$file = $this->duplicationStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
 			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
@@ -151,34 +131,18 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
 		
 		// Move the file to new location in assets
-		rename($tmpPath, $filePath);
-		
+		$assetPath = ASSETS_PATH . '/' . $this->getParentDir() . '/' . $this->getLastDir($item->ProcessedMIME);
+		if(!is_writable($assetPath)) {
+			$this->utils->log(" - Can't move $tmpPath to $filePath. Permission denied.", $item->AbsoluteURL, $item->ProcessedMIME);
+		}
+		else {
+			rename($tmpPath, $filePath);
+		}
+
 		// Remove garbage tmp files if/when left lying around
 		if(file_exists($tmpPath)) {
 			unlink($tmpPath);
 		}		
-	}
-
-	/**
-	 * Get content from remote file if $item->AbsoluteURL represents a File-ish object
-	 *
-	 * @param StaticSiteContentItem $item The item to extract
-	 * @return array Map of field name=>array('selector' => selector, 'content' => field content)
-	 */
-	public function getContentFieldsAndSelectors($item) {
-		// Get the import rules from the content source
-		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
-		if(!$importSchema) {
-			$this->utils->log("Couldn't find an import schema for ", $item->AbsoluteURL, $item->ProcessedMIME, 'WARNING');
-			return null;
-		}
-		$importRules = $importSchema->getImportRules();
-
- 		// Extract from the remote file based on those rules
-		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL, $item->ProcessedMIME);
-		$extraction = $contentExtractor->extractMapAndSelectors($importRules, $item);
-		$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
-		return $extraction;
 	}
 
 	/**
@@ -194,11 +158,7 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
 		$postVars = Controller::curr()->request->postVars();
-		$parentDir = 'Import';
-		if(!empty($postVars['FileMigrationTarget'])) {
-			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
-			$parentDir = $parentDirData->Title;
-		}
+		$parentDir = $this->getParentDir();
 		$isImage = $this->mimeProcessor->IsOfImage($mime);
 		$path = $parentDir . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
 		$parentFolder = Folder::find_or_make($path);
@@ -267,70 +227,32 @@ class StaticSiteFileTransformer implements ExternalContentTransformer {
 		
 		return $file;
 	}
-
+	
 	/**
-	 * Build an array of file extensions. Utilised in buildFileProperties() to check 
-	 * incoming file-extensions are valid against those found on {@link File}.
+	 * Determine the correct parent dir under assets, where images and documents should be cached.
 	 * 
-	 * @return array $exts
+	 * @return string $parentDir
 	 */
-	protected function getSSExtensions() {
-		$extensions = singleton('File')->config()->app_categories;
-		$exts = array();
-		foreach($extensions as $category => $extArray) {
-			foreach($extArray as $ext) {
-				$exts[] = $ext;
-			}
+	public function getParentDir() {
+		$parentDir = self::$default_parent_dir;
+		if(!empty($postVars['FileMigrationTarget'])) {
+			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
+			$parentDir = $parentDirData->Title;
 		}
-		return $exts;
+		return $parentDir;
 	}
 	
 	/**
-	 * Process incoming content according to CMS user-inputted duplication strategy.
+	 * Get the name of the subdir directly beneath the parent, where the current file will 
+	 * be cached.
 	 * 
-	 * @param string $pageType
-	 * @param string $strategy
-	 * @param StaticSiteContentItem $item
-	 * @param string $baseUrl
-	 * @param SiteTree $parentObject
-	 * @return boolean | $page SiteTree
-	 * @todo Add tests
+	 * @param string $mime
+	 * @return string
 	 */
-	protected function processStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
-		// Is the file already imported?
-		$baseUrl = rtrim($baseUrl, '/');
-		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl.$item->getExternalId())->first();
-		if($existing) {		
-			if($strategy === ExternalContentTransformer::DS_OVERWRITE) {
-				// "Overwrite" == Update
-				$file = $existing;
-				$file->ParentID = $existing->ParentID;
-			}
-			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
-				$file = $existing->duplicate(false);
-				$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
-			}
-			else {
-				// Deals-to "skip" and no selection
-				return false;
-			}
+	public function getLastDir($mime) {
+		if($this->mimeProcessor->IsOfImage($mime)) {
+			return self::$file_import_dir_image;
 		}
-		else {
-			$file = new $dataType(array());
-			$file->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
-		}
-		return $file;
-	}
-	
-	/**
-	 * Get current import ID. If none can be found, start one and return that.
-	 * 
-	 * @return number
-	 */
-	public function getCurrentImportID() {
-		if(!$import = StaticSiteImportDataObject::current()) {
-			return 1;
-		}
-		return $import->ID;	
+		return self::$file_import_dir_file;
 	}
 }
