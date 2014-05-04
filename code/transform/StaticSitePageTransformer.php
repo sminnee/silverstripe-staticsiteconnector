@@ -87,7 +87,7 @@ class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$page = $this->duplicationStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
+		if(!$page = $this->duplicationStrategy($dataType, $item, $source->BaseUrl, $strategy, $parentObject)) {
 			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}

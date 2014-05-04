@@ -3,8 +3,7 @@
  * 
  * @author Russell Michell <russell@silverstripe.com>
  * @package staticsiteconnector
- * @todo fixup buildFileProperties() and comment assertions in testBuildFileProperties()
- * @todo Duplicating files during test-runs doesn't work so testTransformForURLIsInCacheIsFileStrategyDuplicate() fails if uncommented
+ * @todo add tests that excercise duplicationStrategy() with a non-null $parentId param
  */
 class StaticSiteFileTransformerTest extends SapphireTest {
 
@@ -163,5 +162,18 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
-	}	
+	}
+	
+	/**
+	 * Test we get an instance of StaticSiteContentExtractor to use in custom StaticSiteDataTypeTransformer
+	 * subclasses.
+	 */
+	public function testGetContentFieldsAndSelectorsNonSSType() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage4');
+		$item = new StaticSiteContentItem($source, '/graphics/her-image.png');
+		$item->source = $source;
+		
+		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
+		$this->assertNotInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'File'));
+	}
 }

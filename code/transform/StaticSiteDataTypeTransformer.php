@@ -8,10 +8,6 @@
  * Hint: You'll need to use the returned object from getContentFieldsAndSelectors() if the dataType
  * you wish to work with is not 'File' or 'SiteTree'.
  * 
- * @todo
- *	- duplicationStrategy() make $parentObject optional as not all imports need have a parent
- *	- getContentFieldsAndSelectors() Add unit tests for when a non-SS DataType is passed as 2nd param
- * 
  * @package staticsiteconnector
  * @author Sam Minee <sam@silverstripe.com>
  * @author Science Ninjas <scienceninjas@silverstripe.com>
@@ -36,6 +32,8 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	
 	/**
 	 *
+	 * The parent ID of an imported object
+	 * 
 	 * @var number
 	 */
 	public $parentId = 0;	
@@ -94,9 +92,10 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	 * @param StaticSiteContentItem $item
 	 * @param string $baseUrl
 	 * @param DataObject $parentObject
-	 * @return boolean | $object
+	 * @return boolean | DataObject
 	 */
-	protected function duplicationStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
+	protected function duplicationStrategy($dataType, $item, $baseUrl, 
+			$strategy = ExternalContentTransformer::SKIP, DataObject $parentObject = null) {
 		/*
 		 * If import config is imported into the DB from another SS setup or imported using some future 
 		 * import/export feature, ensure we fail cleanly if the schema requires a class that doesn't exist
@@ -162,7 +161,7 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	
 	/**
 	 * 
-	 * Sets the parent ID for an imported object
+	 * Sets the parent ID for an imported object.
 	 * 
 	 * @param number $id
 	 * @return void
@@ -172,6 +171,8 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	}
 	
 	/**
+	 * 
+	 * Gets the parent ID for an imported object.
 	 * 
 	 * @return number $id
 	 */

@@ -80,7 +80,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		}
 		
 		// Process incoming according to user-selected duplication strategy
-		if(!$file = $this->duplicationStrategy($dataType, $strategy, $item, $source->BaseUrl, $parentObject)) {
+		if(!$file = $this->duplicationStrategy($dataType, $item, $source->BaseUrl, $strategy, $parentObject)) {
 			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}

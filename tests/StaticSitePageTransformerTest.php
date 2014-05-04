@@ -3,6 +3,7 @@
  * 
  * @author Russell Michell <russell@silverstripe.com>
  * @package staticsiteconnector
+ * @todo add tests that excercise duplicationStrategy() with a non-null $parentId param
  */
 class StaticSitePageTransformerTest extends SapphireTest {
 
@@ -118,5 +119,18 @@ class StaticSitePageTransformerTest extends SapphireTest {
 		// Pass becuase we do want to perform something on the URL
 		$this->assertInstanceOf('StaticSiteTransformResult', $this->transformer->transform($item, null, 'Skip'));
 		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
+	}	
+	
+	/**
+	 * Test we get an instance of StaticSiteContentExtractor to use in custom StaticSiteDataTypeTransformer
+	 * subclasses.
+	 */
+	public function testGetContentFieldsAndSelectorsNonSSType() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsHTML7');
+		$item = new StaticSiteContentItem($source, '/test-about-the-team');
+		$item->source = $source;
+		
+		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
+		$this->assertNotInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'SiteTree'));
 	}	
 }
