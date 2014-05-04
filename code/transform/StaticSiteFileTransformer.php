@@ -1,15 +1,18 @@
 <?php
 /**
- * URL transformer specific to SilverStripe's `File` object for use within import functionality.
- *
- * This creates SilverStripe's database representation of the fetched-file and a 
- * copy of the file itself on the local filesystem.
+ * URL transformer specific to SilverStripe's `File` class for use with the module's
+ * import content feature. It will re-create all available data of the scraped file into SilverStripe's
+ * database and re-create a copy of the file itself on the filesystem.
  * 
- * @todo Modify getParentDir() to cater for the image & document hierarchy from the legacy/scraped site.
+ * If enabled in the CMS UI, links to imported images and documents in imported page-content will be automatically
+ * re-written.
+ * 
+ * @todo write unit-test for unwritable assets dir.
  *
  * @package staticsiteconnector
+ * @author Sam Minee <sam@silverstripe.com>
  * @author Science Ninjas <scienceninjas@silverstripe.com>
- * @see {@link StaticSitePageTransformer}
+ * @see {@link StaticSiteDataTypeTransformer}
  */
 class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	
@@ -47,7 +50,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - '.$item->checkStatus['msg']." for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - ' . $item->checkStatus['msg']. " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
@@ -122,6 +125,12 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		$file->StaticSiteContentSourceID = $source->ID;
 		$file->StaticSiteURL = $item->AbsoluteURL;
 		$file->StaticSiteImportID = $this->getCurrentImportID();
+		
+		$assetPath = ASSETS_PATH . '/' . $this->getParentDir() . '/' . $this->getLastDir($item->ProcessedMIME);
+		if(!is_writable($assetPath)) {
+			$this->utils->log(" - Assets path isn't writable by the webserver. Permission denied.", $item->AbsoluteURL, $item->ProcessedMIME);
+			return false;
+		}
 
 		if(!$file->write()) {
 			$this->utils->log(" - Not imported: ", $item->AbsoluteURL, $item->ProcessedMIME);
@@ -131,13 +140,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
 		
 		// Move the file to new location in assets
-		$assetPath = ASSETS_PATH . '/' . $this->getParentDir() . '/' . $this->getLastDir($item->ProcessedMIME);
-		if(!is_writable($assetPath)) {
-			$this->utils->log(" - Can't move $tmpPath to $filePath. Permission denied.", $item->AbsoluteURL, $item->ProcessedMIME);
-		}
-		else {
-			rename($tmpPath, $filePath);
-		}
+		rename($tmpPath, $filePath);
 
 		// Remove garbage tmp files if/when left lying around
 		if(file_exists($tmpPath)) {

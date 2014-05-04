@@ -6,8 +6,7 @@ Some are already registered as issues on Github, others are more in the "would l
 ## StaticSiteConnector Module Issues (in order of severity)
 
 * BUG: Import sometimes fails with console-error ("Method 'publish' doesn't exist on Image") seems to occur occasionally if a folder of assets already exists, and a new import is run.
- * The above errors seem to only occur after an import failed with an error and is then manually resumed.
-* BUG: If assets import directory isn't writable, a File DB record is still created even with a non-imported file binary object.
+ * The above error seems to only occur after an import failed with an error and is then manually resumed.
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: Travis is failing for env: DB=PGSQL CORE_RELEASE=3.1
