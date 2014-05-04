@@ -13,16 +13,19 @@
 class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
-	 *
-	 * @var number
-	 */
-	public static $parent_id = 1; // Default to home
-	
-	/**
 	 * 
 	 * @var string
 	 */
 	public static $import_root = 'import-home';
+	
+	/**
+	 * 
+	 * @return void
+	 */
+	public function __construct() {
+		parent::__construct();
+		$this->setParentId(1);
+	}
 
 	/**
 	 * Generic function called by \ExternalContentImporter

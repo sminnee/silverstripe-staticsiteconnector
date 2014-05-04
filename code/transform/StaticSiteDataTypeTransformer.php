@@ -33,6 +33,12 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	 * $mimeTypeProcessor
 	 */
 	public $mimeProcessor;	
+	
+	/**
+	 *
+	 * @var number
+	 */
+	public $parentId = 0;	
 
 	/**
 	 * 
@@ -111,7 +117,7 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 			}
 			else if($strategy === ExternalContentTransformer::DS_DUPLICATE) {
 				$object = $existing->duplicate(false);
-				$object->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
+				$object->ParentID = ($parentObject ? $parentObject->ID : $this->getParentId());
 			}
 			else {
 				// Deals-to "skip" and no selection
@@ -120,7 +126,7 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 		}
 		else {
 			$object = new $dataType(array());
-			$object->ParentID = ($parentObject ? $parentObject->ID : self::$parent_id);
+			$object->ParentID = ($parentObject ? $parentObject->ID : $this->getParentId());
 		}
 		return $object;
 	}
@@ -153,4 +159,23 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 		}
 		return $exts;
 	}	
+	
+	/**
+	 * 
+	 * Sets the parent ID for an imported object
+	 * 
+	 * @param number $id
+	 * @return void
+	 */
+	public function setParentId($id) {
+		$this->parentId = $id;
+	}
+	
+	/**
+	 * 
+	 * @return number $id
+	 */
+	public function getParentId() {
+		return $this->parentId;
+	}
 }

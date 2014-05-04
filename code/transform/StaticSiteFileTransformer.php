@@ -17,12 +17,6 @@
 class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
-	 *
-	 * @var number
-	 */
-	public static $parent_id = 0;
-	
-	/**
 	 * The name to use for the main folder under assets where files & images will be cached.
 	 */
 	public static $default_parent_dir = 'Import';
