@@ -1,7 +1,7 @@
 <?php
 
 // We need PHPQuery
-require_once(BASE_PATH . 'vendor/phpquery/phpquery/phpQuery/phpQuery.php');
+require_once(BASE_PATH . '/vendor/phpquery/phpquery/phpQuery/phpQuery.php');
 
 /**
  * This tool uses a combination of cURL and phpQuery to extract content from a URL.

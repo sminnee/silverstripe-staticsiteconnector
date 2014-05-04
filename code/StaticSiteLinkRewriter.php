@@ -11,7 +11,7 @@
  */
 
 // We need PHPQuery
-require_once(BASE_PATH . 'vendor/phpquery/phpquery/phpQuery/phpQuery.php');
+require_once(BASE_PATH . '/vendor/phpquery/phpquery/phpQuery/phpQuery.php');
 
 class StaticSiteLinkRewriter {
 
