@@ -44,17 +44,6 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	}
 
 	/**
-	 * Generic function called by \ExternalContentImporter
-	 * 
-	 * @param ExternalContentItem $item
-	 * @param DataObject $parentObject
-	 * @param string $strategy
-	 * @return boolean | StaticSiteTransformResult
-	 * @throws Exception
-	 */
-	abstract public function transform($item, $parentObject, $strategy);
-
-	/**
 	 * Get content from remote datasource (e.g. a File, Image or page-text).
 	 * If $dataType is anything but 'File' or 'SiteTree' a StaticSiteContentExtractor object
 	 * is returned so sublclasses of StaticSiteDataTypeTransformer can implement custom logic
@@ -102,6 +91,15 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	 * @return boolean | $object
 	 */
 	protected function duplicationStrategy($dataType, $strategy, $item, $baseUrl, $parentObject) {
+		/*
+		 * If import config is imported into the DB from another SS setup or imported using some future 
+		 * import/export feature, ensure we fail cleanly if the schema requires a class that doesn't exist
+		 * in the current setup.
+		 */
+		if(!ClassInfo::exists($dataType)) {
+			return;
+		}
+		
 		// Has the object already been imported?
 		$baseUrl = rtrim($baseUrl, '/');
 		$existing = $dataType::get()->filter('StaticSiteURL', $baseUrl . $item->getExternalId())->first();
