@@ -31,15 +31,16 @@ class StaticSiteImportDataObject extends DataObject {
 	 * @return null | DataList
 	 */
 	public static function current($member = null) {
-		if(!$member) {
-			$member = Member::currentUser();
-		}
-		
-		return StaticSiteImportDataObject::get()
-				->filter('UserID', $member->ID)
+		$import = StaticSiteImportDataObject::get()
 				->sort('Created')
 				->last();
-	}	
+		
+		if($import && $member) {
+			return $import->filter('UserID', $member->ID);
+		}
+		
+		return $import;
+	}
 	
 	/**
 	 * To be called at the start of an import.

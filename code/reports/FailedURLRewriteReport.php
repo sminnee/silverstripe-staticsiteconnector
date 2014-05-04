@@ -30,6 +30,7 @@ TXT;
 	/**
 	 * 
 	 * @return \ArrayList
+	 * @todo refactor this and use another, generic method to deal with repeated (similar) conditionals.
 	 */
 	public function SourceRecords() {
 		$reqVars = Controller::curr()->request->requestVars();
@@ -210,6 +211,7 @@ TXT;
 	 */
 	public function getReportField() {
 		$gridField = parent::getReportField();
+		$gridField->setModelClass('FailedURLRewriteObject');
 		$config = $gridField->getConfig();		
 		$config->addComponent(new GridFieldDeleteAction());
 		return $gridField;

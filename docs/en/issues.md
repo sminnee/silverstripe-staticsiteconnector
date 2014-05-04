@@ -10,11 +10,11 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: Travis is failing for env: DB=PGSQL CORE_RELEASE=3.1
-* BUG: StaticSiteImportDataObject::current will only return the correct object for the user that created it. This is too restrictive.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
+ * Need to get bad-link counts into FailedUrlRewriteObject::$summary_fields() somehow
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
 * TASK: Make the "Clear imports" logic, specific to the selected import e.g. add ExternalContentID field to StaticSiteImportDataObject
 * TASK: If "Automatically run link-rewrite task" is checked, add more detail to "Import completed" message.

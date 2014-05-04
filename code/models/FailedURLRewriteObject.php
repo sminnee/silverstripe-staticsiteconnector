@@ -29,6 +29,14 @@ class FailedURLRewriteObject extends DataObject {
 	);
 	
 	/**
+	 * @var array
+	 */
+	private static $summary_fields = array(
+		'ContainedIn.Title' => 'Imported page',
+		'Import.Created' => 'Import date'
+	);
+	
+	/**
 	 * Fetch the related SiteTree object's Title property.
 	 * 
 	 * @return string
