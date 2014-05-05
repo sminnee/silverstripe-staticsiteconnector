@@ -26,7 +26,7 @@ TXT;
 	public function title() {
 		return "Imported links rewrite report";
 	}
-
+	
 	/**
 	 * 
 	 * @return \ArrayList
@@ -35,7 +35,7 @@ TXT;
 	public function SourceRecords() {
 		$reqVars = Controller::curr()->request->requestVars();
 		$importID = !empty($reqVars['filters']) ? $reqVars['filters']['ImportID'] : 1;
-		$list = $this->getBadImportData($importID);
+		$list = singleton('FailedURLRewriteObject')->getBadImportData($importID);
 		$_list = new ArrayList();
 		$countNotImported = $countJunk = $countThirdParty = $countBadScheme = array();
 		foreach($list as $badLink) {
@@ -134,22 +134,6 @@ TXT;
 				'casting' => 'SS_Datetime->Nice24'
 			)					
 		);
-	}
-
-	/**
-	 * Get the raw data.
-	 * 
-	 * @param number $importID
-	 * @return SS_List
-	 */
-	protected function getBadImportData($importID) {
-		$default = new ArrayList();		
-		if($badLinks = DataObject::get('FailedURLRewriteObject')
-				->filter('ImportID', $importID)
-				->sort('Created')) {
-			return $badLinks;
-		}
-		return $default;
 	}
 	
 	/**

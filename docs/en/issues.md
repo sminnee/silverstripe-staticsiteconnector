@@ -13,7 +13,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Replace relevant StaticSiteMimeTypeProcessor logic with logic found in Zend_Validate_File_ExcludeMimeType.
 * TASK: Translation: Ensure all messages are rendered through _t()
-* TASK: Ensure CSV export button works properly in FailedLinksRewriteReport
  * Need to get bad-link counts into FailedUrlRewriteObject::$summary_fields() somehow
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
 * TASK: Make the "Clear imports" button specific to the selected import e.g. add ExternalContentID field to StaticSiteImportDataObject
