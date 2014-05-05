@@ -58,6 +58,7 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
 	 * @return null | StaticSiteContentExtractor | array Map of SS field name=>array('selector' => selector, 'content' => field content)
 	 */
 	public function getContentFieldsAndSelectors($item, $dataType) {
+		$dataType = strtolower($dataType);
 		// Get the import rules from the content source
 		$importSchema = $item->getSource()->getSchemaForURL($item->AbsoluteURL, $item->ProcessedMIME);
 		if(!$importSchema) {
@@ -69,11 +70,11 @@ abstract class StaticSiteDataTypeTransformer implements ExternalContentTransform
  		// Extract from the remote content based on those rules
 		$contentExtractor = new StaticSiteContentExtractor($item->AbsoluteURL, $item->ProcessedMIME);
 		
-		if($dataType == 'File') {
+		if($dataType == 'file') {
 			$extraction = $contentExtractor->extractMapAndSelectors($importRules, $item);
 			$extraction['tmp_path'] = $contentExtractor->getTmpFileName();
 		}
-		else if($dataType == 'SiteTree') {
+		else if($dataType == 'sitetree') {
 			$extraction = $contentExtractor->extractMapAndSelectors($importRules, $item);			
 		}
 		else {

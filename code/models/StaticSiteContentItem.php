@@ -97,7 +97,7 @@ class StaticSiteContentItem extends ExternalContentItem {
 	}
 
 	/**
-	 * Returns the correct content-object transformation class
+	 * Returns the correct content-object transformation class.
 	 *
 	 * @return \ExternalContentTransformer
 	 */
@@ -126,7 +126,8 @@ class StaticSiteContentItem extends ExternalContentItem {
 
 		$fields->addFieldToTab("Root.Preview", $urlField);
 
-		$content = $t->getContentFieldsAndSelectors($this);
+		$dataType = $this->getType();
+		$content = $t->getContentFieldsAndSelectors($this, $dataType);
 		if(count($content) === 0) {
 			return $fields;
 		}
