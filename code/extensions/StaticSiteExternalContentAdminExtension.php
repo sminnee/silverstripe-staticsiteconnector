@@ -69,17 +69,23 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	 * @return SS_HTTPResponse
 	 */
 	public function clearimports($request) {
-		$imports = DataObject::get('StaticSiteImportDataObject');
-		$imports->each(function($item) {
-			$item->delete();
-		});
-		
-		$messageType = 'good';
-		$message = _t('StaticSiteConnector.ImportsDeleted', 'Import-data cleared.');
+		if(!$selectedImports = $request['ShowImports']) {
+			$messageType = 'bad';
+			$message = _t('StaticSiteConnector.ImportsDeleted', 'No imports were selected to clear.');
+		}
+		else {
+			$imports = DataObject::get('StaticSiteImportDataObject')->byIDs($selectedImports);		
+			$imports->each(function($item) {
+				$item->delete();
+			});		
+
+			$messageType = 'good';
+			$message = _t('StaticSiteConnector.ImportsDeleted', 'Selected imports were cleared successfully.');
+		}
 		
 		Session::set("FormInfo.Form_EditForm.formError.message", $message);
 		Session::set("FormInfo.Form_EditForm.formError.type", $messageType);
 
-		return $this->owner->getResponseNegotiator()->respond($this->owner->getRequest());	
+		return $this->owner->getResponseNegotiator()->respond($this->owner->getRequest());
 	}
 }

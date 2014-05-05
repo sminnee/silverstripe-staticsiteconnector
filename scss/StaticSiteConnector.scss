@@ -5,10 +5,13 @@
 	.readonly-click-toggle span:hover {
 		background-color: #CCC;
 	}
-	.Actions {
-		&.clear-imports {
-			padding-bottom: 6px;
-			border-bottom: 1px solid #D0D3D5;
+	.clear-imports {
+		padding: 10px;
+		p, .Actions {
+			padding-left: 12px;
+		}
+		p {
+			margin: 0;
 		}
 	}
 }

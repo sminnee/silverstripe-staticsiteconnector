@@ -184,12 +184,23 @@ class StaticSiteContentSource extends ExternalContentSource {
 			->setTitle('Excluded URLs');
 		
 		$hasImports = DataObject::get('StaticSiteImportDataObject');
+		$_source = array();
+		foreach($hasImports as $import) {
+			$date = DBField::create_field('SS_Datetime', $import->Created)->Nice24();
+			$_source[$import->ID] = $date . ' (Import #' . $import->ID . ')';
+		}
+		
 		if($importCount = $hasImports->count()) {
-			$clearImportButton = FormAction::create('clearimports', 'Clear imports (' . $importCount . ')')
+			$clearImportButton = FormAction::create('clearimports', 'Clear selected imports')
 				->setAttribute('data-icon', 'arrow-circle-double')
 				->setUseButtonTag(true);
-			$clearImports = new LiteralField('ImportActions', "<div class='Actions clear-imports'>{$clearImportButton->forTemplate()}</div>");
-			$fields->addFieldToTab('Root.Import', $clearImports);
+			
+			$clearImportField = ToggleCompositeField::create('ClearImports', 'Clear import meta-data', array(
+				LiteralField::create('ImportCount', '<p><strong>Total imports: </strong><span>' . $importCount . '</span></p>'),
+				ListboxField::create('ShowImports', 'Select import(s) to clear:', $_source, '', null, true),
+				LiteralField::create('ImportActions', "<div class='Actions'>{$clearImportButton->forTemplate()}</div>")
+			))->addExtraClass('clear-imports');
+			$fields->addFieldToTab('Root.Import', $clearImportField);
 		}
 
 		return $fields;
