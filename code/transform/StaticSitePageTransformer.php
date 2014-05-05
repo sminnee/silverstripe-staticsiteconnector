@@ -19,6 +19,13 @@ class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 	public static $import_root = 'import-home';
 	
 	/**
+	 * Default value to pass to usleep() to reduce load on the remote server
+	 * 
+	 * @var number 
+	 */
+	private static $sleep_multiplier = 100;
+	
+	/**
 	 * 
 	 * @return void
 	 */
@@ -38,15 +45,15 @@ class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 
 		$item->runChecks('sitetree');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - '.$item->checkStatus['msg']." for: ",$item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - ' . $item->checkStatus['msg'] . " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$source = $item->getSource();
 
-		// Sleep for 100ms to reduce load on the remote server
-		usleep(100*1000);		
+		// Sleep for Xms to reduce load on the remote server
+		usleep((int)self::$sleep_multiplier*1000);
 
 		// Extract content from the page
 		$contentFields = $this->getContentFieldsAndSelectors($item, 'SiteTree');

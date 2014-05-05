@@ -31,7 +31,14 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	 * The name to use for the folder beneath assets/Import to cache imported documents.
 	 * @var static
 	 */
-	public static $file_import_dir_file = 'Documents';	
+	public static $file_import_dir_file = 'Documents';
+	
+	/**
+	 * Default value to pass to usleep() to reduce load on the remote server
+	 * 
+	 * @var number 
+	 */
+	private static $sleep_multiplier = 10;	
 
 	/**
 	 * Generic function called by \ExternalContentImporter
@@ -44,15 +51,15 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 
 		$item->runChecks('file');
 		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - ' . $item->checkStatus['msg']. " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(' - ' . $item->checkStatus['msg'] . " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$source = $item->getSource();
-
-		// Sleep for 10ms to reduce load on the remote server
-		usleep(10*1000);
+		
+		// Sleep for Xms to reduce load on the remote server
+		usleep((int)self::$sleep_multiplier*1000);
 
 		// Extract remote location of File
 		// Also sets $this->tmpName for use in this->writeToFs()

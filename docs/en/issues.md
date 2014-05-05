@@ -22,7 +22,6 @@ Some are already registered as issues on Github, others are more in the "would l
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
 * ENHANCEMENT: Add schema export feature for use between SilverStripe installs e.g. CWP
-* ENHANCEMENT: Add CMS UI to allow fine-grained control of the sleep time between server hits. See usleep() in StaticSite#Transformer#transform()
 * ENHANCEMENT: Create a multi-select dropdown menu that comprises data from framework/_config/mimetypes.yml
 * ENHANCEMENT: Use php-diff lib via composer as the arbiter of change in the StaticSiteUrlRewriteTask::run() method
 
