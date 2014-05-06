@@ -17,23 +17,6 @@
 class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
-	 * The name to use for the main folder under assets where files & images will be cached.
-	 */
-	public static $default_parent_dir = 'Import';
-	
-	/**
-	 * The name to use for the folder beneath assets/Import to cache imported images.
-	 * @var static
-	 */
-	public static $file_import_dir_image = 'Images';
-	
-	/**
-	 * The name to use for the folder beneath assets/Import to cache imported documents.
-	 * @var static
-	 */
-	public static $file_import_dir_file = 'Documents';
-	
-	/**
 	 * Default value to pass to usleep() to reduce load on the remote server
 	 * 
 	 * @var number 
@@ -62,7 +45,6 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		usleep((int)self::$sleep_multiplier*1000);
 
 		// Extract remote location of File
-		// Also sets $this->tmpName for use in this->writeToFs()
 		$contentFields = $this->getContentFieldsAndSelectors($item, 'File');
 
 		// Default value for Title
@@ -127,21 +109,24 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		$file->StaticSiteURL = $item->AbsoluteURL;
 		$file->StaticSiteImportID = $this->getCurrentImportID();
 		
-		$assetPath = ASSETS_PATH . '/' . $this->getParentDir() . '/' . $this->getLastDir($item->ProcessedMIME);
-		if(!is_writable($assetPath)) {
+		$assetsPath = $this->getDirHierarchy($item->AbsoluteURL, true);
+		if(!is_writable($assetsPath)) {
 			$this->utils->log(" - Assets path isn't writable by the webserver. Permission denied.", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		if(!$file->write()) {
-			$this->utils->log(" - Not imported: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log(" - Not imported (no write): ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
 		$filePath = BASE_PATH . DIRECTORY_SEPARATOR . $file->Filename;
 		
 		// Move the file to new location in assets
-		rename($tmpPath, $filePath);
+		if(!rename($tmpPath, $filePath)) {
+			$this->utils->log(" - Not imported (rename() failed): ", $item->AbsoluteURL, $item->ProcessedMIME);
+			return false;			
+		}
 
 		// Remove garbage tmp files if/when left lying around
 		if(file_exists($tmpPath)) {
@@ -161,13 +146,11 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	 */
 	public function buildFileProperties($file, $url, $mime) {
 		// Build the container directory to hold imported files
-		$postVars = Controller::curr()->request->postVars();
-		$parentDir = $this->getParentDir();
-		$isImage = $this->mimeProcessor->IsOfImage($mime);
-		$path = $parentDir . DIRECTORY_SEPARATOR . ($isImage ? self::$file_import_dir_image : self::$file_import_dir_file);
+		$path = $this->getDirHierarchy($url);
 		$parentFolder = Folder::find_or_make($path);
-		if(!file_exists(ASSETS_PATH . DIRECTORY_SEPARATOR . $path)) {
-			$this->utils->log(" - WARNING: File-import directory wasn't created.", $url, $mime);
+		$assetsPath = $this->getDirHierarchy($url, true);
+		if(!file_exists($assetsPath)) {
+			$this->utils->log(" - WARNING: File-import directory hierarchy wasn't created properly: $assetsPath", $url, $mime);
 			return false;
 		}
 
@@ -233,30 +216,36 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	}
 	
 	/**
-	 * Determine the correct parent dir under assets, where images and documents should be cached.
 	 * 
-	 * @return string $parentDir
+	 * Determine the correct parent directory hierarchy from the imported file's remote-path,
+	 * to be located under the main SilverStripe 'assets' directory.
+	 * 
+	 * @param string $absolutePath The absolute path of this file on the remote server.
+	 * @param boolean $full Return absolute path from server's filesystem root
+	 * @return string The path to append to 'assets' and use as local cache dir.
 	 */
-	public function getParentDir() {
-		$parentDir = self::$default_parent_dir;
+	public function getDirHierarchy($absoluteUrl, $full = false) {
+		/*
+		 * Determine the top-level directory under 'assets' under-which this item's
+		 * dir-hierarchy will be created.
+		 */
+		$parentDir = '';
 		if(!empty($postVars['FileMigrationTarget'])) {
 			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
 			$parentDir = $parentDirData->Title;
 		}
-		return $parentDir;
-	}
-	
-	/**
-	 * Get the name of the subdir directly beneath the parent, where the current file will 
-	 * be cached.
-	 * 
-	 * @param string $mime
-	 * @return string
-	 */
-	public function getLastDir($mime) {
-		if($this->mimeProcessor->IsOfImage($mime)) {
-			return self::$file_import_dir_image;
+		
+		$replaceUnused = preg_replace("#https?://(www.)?[^/]+#", '', $absoluteUrl);
+		$fragments = explode('/', $replaceUnused);
+		$filename = pathinfo($absoluteUrl, PATHINFO_FILENAME);
+		$path = array();
+		foreach($fragments as $fragment) {
+			$dontUse = (!strlen($fragment) || preg_match("#(http|$filename|www\.)+#", $fragment));
+			if($dontUse) continue;
+			array_push($path, $fragment);
 		}
-		return self::$file_import_dir_file;
+		
+		$joinedPath = Controller::join_links($parentDir, implode('/', $path));
+		return ($full ? ASSETS_PATH . ($joinedPath ? DIRECTORY_SEPARATOR . $joinedPath : '') : $joinedPath);
 	}
 }

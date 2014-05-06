@@ -35,16 +35,16 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	public function testBuildFileProperties() {
 				
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'image/png');
-		$this->assertEquals('assets/Import/Images/test.png', $processFile->Filename);
+		$this->assertEquals('assets/images/test.png', $processFile->Filename);
 		
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'image/png');
-		$this->assertEquals('assets/Import/Images/test.png', $processFile->Filename);
+		$this->assertEquals('assets/images/test.png', $processFile->Filename);
 		
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png', 'image/png');
-		$this->assertEquals('assets/Import/Images/test.png', $processFile->Filename);		
+		$this->assertEquals('assets/images/test.png', $processFile->Filename);		
 		
-		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.zzz', 'application/pdf');
-		$this->assertEquals('assets/Import/Documents/test.pdf', $processFile->Filename);
+		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/docs/test.zzz', 'application/pdf');
+		$this->assertEquals('assets/docs/test.pdf', $processFile->Filename);
 		
 		// 'unknown' is what's used as the mime-type for parent URLs that are defined by string manioulation, not actual file-analysis
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test', 'unknown');
@@ -61,10 +61,10 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertFalse($processFile);
 		
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.png.gif', 'image/gif');
-		$this->assertEquals('assets/Import/Images/test-png.gif', $processFile->Filename);	 
+		$this->assertEquals('assets/images/test-png.gif', $processFile->Filename);	 
 		
 		$processFile = $this->transformer->buildFileProperties(new File(), 'http://localhost/images/test.gif.png', 'image/png');
-		$this->assertEquals('assets/Import/Images/test-gif.png', $processFile->Filename);		
+		$this->assertEquals('assets/images/test-gif.png', $processFile->Filename);		
 	}
 	
 	/**
@@ -118,8 +118,8 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
 		// Because we're trying to duplicate (copy), SilverStripe should rename the file with a '-2' suffix
-		$this->assertEquals('assets/Import/Images/my-image.png', $fileStrategyDup1->file->Filename);
-		$this->assertEquals('assets/Import/Images/my-image.png', $fileStrategyDup2->file->Filename);
+		$this->assertEquals('assets/graphics/my-image.png', $fileStrategyDup1->file->Filename);
+		$this->assertEquals('assets/graphics/my-image.png', $fileStrategyDup2->file->Filename);
 		/*
 		 * Files don't duplicate in the same way as pages are. Duplicate images _are_ created, but their
 		 * existence is tested for slightly differently.
@@ -143,8 +143,8 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyOvr2 = $this->transformer->transform($item, null, 'Overwrite'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
-		$this->assertEquals('assets/Import/Images/her-image.png', $fileStrategyOvr1->file->Filename);
-		$this->assertEquals('assets/Import/Images/her-image.png', $fileStrategyOvr2->file->Filename);
+		$this->assertEquals('assets/graphics/her-image.png', $fileStrategyOvr1->file->Filename);
+		$this->assertEquals('assets/graphics/her-image.png', $fileStrategyOvr2->file->Filename);
 		// Ids should be the same becuase overwrite really means update
 		$this->assertEquals($fileStrategyOvr1->file->ID, $fileStrategyOvr2->file->ID);
 	}	
@@ -175,5 +175,23 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		
 		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
 		$this->assertNotInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'File'));
+	}
+	
+	/**
+	 * Test the correct outputs for getDirHierarchy()
+	 */
+	public function testGetDirHierarchy() {
+		$transformer = singleton('StaticSiteFileTransformer');
+		$this->assertEquals('images/subdir-1', $transformer->getDirHierarchy('http://test.com/images/subdir-1/test.png', false));
+		$this->assertEquals('images/subdir-1', $transformer->getDirHierarchy('http://www.test.com/images/subdir-1/test.png', false));
+		$this->assertEquals('images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images/subdir-1/test.png', false));
+		$this->assertEquals('images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images//subdir-1/test.png', false));
+		$this->assertEquals('', $transformer->getDirHierarchy('https://www.test.com/test.png', false));
+
+		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('http://test.com/images/subdir-1/test.png', true));
+		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('http://www.test.com/images/subdir-1/test.png', true));
+		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images/subdir-1/test.png', true));
+		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images//subdir-1/test.png', true));
+		$this->assertEquals(getcwd() . '/assets', $transformer->getDirHierarchy('https://www.test.com/test.png', true));		
 	}
 }

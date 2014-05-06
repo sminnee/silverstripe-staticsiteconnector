@@ -1,5 +1,4 @@
 .cms .readonly-click-toggle span { cursor: pointer; }
 .cms .readonly-click-toggle span:hover { background-color: #CCC; }
-.cms .clear-imports { padding: 10px; }
 .cms .clear-imports p, .cms .clear-imports .Actions { padding-left: 12px; }
 .cms .clear-imports p { margin: 0; }
