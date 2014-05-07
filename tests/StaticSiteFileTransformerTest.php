@@ -116,10 +116,11 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup1 = $this->transformer->transform($item, null, 'Duplicate'));
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup2 = $this->transformer->transform($item, null, 'Duplicate'));
 		
-		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
+		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed.
 		// Because we're trying to duplicate (copy), SilverStripe should rename the file with a '-2' suffix
 		$this->assertEquals('assets/graphics/my-image.png', $fileStrategyDup1->file->Filename);
 		$this->assertEquals('assets/graphics/my-image.png', $fileStrategyDup2->file->Filename);
+	
 		/*
 		 * Files don't duplicate in the same way as pages are. Duplicate images _are_ created, but their
 		 * existence is tested for slightly differently.
@@ -193,5 +194,23 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images/subdir-1/test.png', true));
 		$this->assertEquals(getcwd() . '/assets/images/subdir-1', $transformer->getDirHierarchy('https://www.test.com/images//subdir-1/test.png', true));
 		$this->assertEquals(getcwd() . '/assets', $transformer->getDirHierarchy('https://www.test.com/test.png', true));		
+	}
+	
+	/**
+	 * Tests our custom file-versioning works correctly
+	 * @todo fix assertions in testTransformForURLIsInCacheIsFileStrategyDuplicate()
+	 */
+	public function testVersionFile() {
+		$transformer = singleton('StaticSiteFileTransformer');
+		
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage2');
+		$item = new StaticSiteContentItem($source, '/graphics/my-image.png');
+		$item->source = $source;
+		
+		// Save an initial version of an image
+		$this->transformer->transform($item, null, 'Skip');
+		// Version it
+		$versioned = $transformer->versionFile('graphics/my-image.png');
+		$this->assertEquals('graphics/my-image2.png', $versioned);
 	}
 }

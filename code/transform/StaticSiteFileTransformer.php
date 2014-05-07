@@ -80,7 +80,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		}
 
 		/*
-		 * write() calls File::onAfterWrite() which calls File::updateFileSystem() which throws
+		 * File::onAfterWrite() calls File::updateFileSystem() which throws
 		 * an exception if the same image is attempted to be written.
 		 */
 		try {
@@ -247,5 +247,39 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		
 		$joinedPath = Controller::join_links($parentDir, implode('/', $path));
 		return ($full ? ASSETS_PATH . ($joinedPath ? DIRECTORY_SEPARATOR . $joinedPath : '') : $joinedPath);
+	}
+	
+	/**
+	 * Borrows logic from Upload::load() to ensure duplicated files get renamed 
+	 * correctly which therefore allows multiple versions of the same physical image 
+	 * on the filesystem.
+	 * 
+	 * @param string $relativeFilePath The path to the file relative to the 'assets' dir.
+	 * @return string $relativeFilePath
+	 */
+	public function versionFile($relativeFilePath) {
+		$base = ASSETS_PATH;
+		while(file_exists("$base/$relativeFilePath")) {
+			$i = isset($i) ? ($i+1) : 2;
+			$oldFilePath = $relativeFilePath;
+			
+			// make sure archives retain valid extensions
+			if(substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.gz')) == '.tar.gz' ||
+				substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.bz2')) == '.tar.bz2') {
+					$relativeFilePath = preg_replace('/[0-9]*(\.tar\.[^.]+$)/', $i . '\\1', $relativeFilePath);
+			} else if (strpos($relativeFilePath, '.') !== false) {
+				$relativeFilePath = preg_replace('/[0-9]*(\.[^.]+$)/', $i . '\\1', $relativeFilePath);
+			} else if (strpos($relativeFilePath, '_') !== false) {
+				$relativeFilePath = preg_replace('/_([^_]+$)/', '_'.$i, $relativeFilePath);
+			} else {
+				$relativeFilePath .= '_'.$i;
+			}
+			
+			if($oldFilePath == $relativeFilePath && $i > 2) {
+				user_error("Couldn't fix $relativeFilePath with $i tries.", E_USER_ERROR);
+			}
+		}
+		
+		return $relativeFilePath;
 	}
 }
