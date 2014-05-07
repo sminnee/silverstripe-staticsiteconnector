@@ -72,7 +72,6 @@ class StaticSiteContentSource extends ExternalContentSource {
 	 */
 	public function __construct($record = null, $isSingleton = false, $model = null) {
 		parent::__construct($record, $isSingleton, $model);
-		// We need this in calling logic
 		$this->staticSiteCacheDir = "static-site-{$this->ID}";
 		$this->utils = singleton('StaticSiteUtils');
 	}
@@ -198,6 +197,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 			$clearImportField = ToggleCompositeField::create('ClearImports', 'Clear import meta-data', array(
 				LiteralField::create('ImportCount', '<p><strong>Total imports: </strong><span>' . $importCount . '</span></p>'),
 				ListboxField::create('ShowImports', 'Select import(s) to clear:', $_source, '', null, true),
+				CheckboxField::create('ClearAllImports', 'Clear all imports', 0),
 				LiteralField::create('ImportActions', "<div class='Actions'>{$clearImportButton->forTemplate()}</div>")
 			))->addExtraClass('clear-imports');
 			$fields->addFieldToTab('Root.Import', $clearImportField);

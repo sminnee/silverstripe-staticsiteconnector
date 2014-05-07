@@ -10,6 +10,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: link-rewriting fails when there are multiple images with the same value for <DataType>.StaticSiteUrl
+* BUG: When selecting the "duplicate" duplication strategy, multiple DB-entries for files are created, but not multiple images on the f/s
 * BUG: Project won't build properly from composer (While it's not on Packagist)
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()

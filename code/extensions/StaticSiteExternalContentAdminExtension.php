@@ -69,18 +69,24 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 	 * @return SS_HTTPResponse
 	 */
 	public function clearimports($request) {
-		if(!$selectedImports = $request['ShowImports']) {
-			$messageType = 'bad';
-			$message = _t('StaticSiteConnector.ImportsDeleted', 'No imports were selected to clear.');
+		if(!empty($request['ClearAllImports'])) {
+			$imports = DataObject::get('StaticSiteImportDataObject');
+		}
+		else if($selectedImports = $request['ShowImports']) {
+			$imports = DataObject::get('StaticSiteImportDataObject')->byIDs($selectedImports);
 		}
 		else {
-			$imports = DataObject::get('StaticSiteImportDataObject')->byIDs($selectedImports);		
+			$imports = null;
+			$messageType = 'bad';
+			$message = _t('StaticSiteConnector.ImportsDeleted', 'No imports were selected to clear.');			
+		}
+		
+		if($imports) {
 			$imports->each(function($item) {
 				$item->delete();
-			});		
-
+			});
 			$messageType = 'good';
-			$message = _t('StaticSiteConnector.ImportsDeleted', 'Selected imports were cleared successfully.');
+			$message = _t('StaticSiteConnector.ImportsDeleted', 'Selected imports were cleared successfully.');			
 		}
 		
 		Session::set("FormInfo.Form_EditForm.formError.message", $message);
