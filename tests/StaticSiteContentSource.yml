@@ -117,6 +117,9 @@ File:
   testFile4:
     Title: 'Test image 4'
     StaticSiteURL: 'http://localhost/graphics/her-image.png'    
+  testFile5:
+    Title: 'Test image 5'
+    StaticSiteURL: 'http://localhost/graphics/some-image.png'
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -184,4 +187,9 @@ StaticSiteContentSource:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
-    Files: =>File.testFile4    
+    Files: =>File.testFile4 
+  MyContentSourceIsImage5:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
+    Files: =>File.testFile5    

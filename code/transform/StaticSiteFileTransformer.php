@@ -3,8 +3,7 @@
  * URL transformer specific to SilverStripe's `File` class for use with the module's
  * import content feature. It will re-create all available data of the scraped file into SilverStripe's
  * database and re-create a copy of the file itself on the filesystem.
- * 
- * If enabled in the CMS UI, links to imported images and documents in imported page-content will be automatically
+ * If enabled in the CMS UI, links to imported images and documents in imported page-content will also be automatically
  * re-written.
  * 
  * @todo write unit-test for unwritable assets dir.
@@ -59,7 +58,6 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 			return false;
 		}
 
-		// @todo need to create the filter on schema on a mime-by-mime basis
 		$dataType = $schema->DataType;
 
 		if(!$dataType) {
@@ -74,6 +72,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 			return false;
 		}
 		
+		// Prepare $file with all the correct properties, ready for writing
 		if(!$file = $this->buildFileProperties($file, $item->AbsoluteURL, $item->ProcessedMIME)) {
 			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
@@ -82,6 +81,8 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		/*
 		 * File::onAfterWrite() calls File::updateFileSystem() which throws
 		 * an exception if the same image is attempted to be written.
+		 * N.b this was probably happening because we weren't versioning files through {@link Upload::load()}
+		 * and the same filename was being used. This should be fixed now (@see: self::versionFile()).
 		 */
 		try {
 			$this->write($file, $item, $source, $contentFields['tmp_path']);
@@ -89,6 +90,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		catch(Exception $e) {
 			$this->utils->log($e->getMessage(), $item->AbsoluteURL, $item->ProcessedMIME);
 		}
+		
 		$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
 		return new StaticSiteTransformResult($file, $item->stageChildren());
@@ -195,17 +197,19 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 			$useExtension = $oldExt;
 		}
 
-		$fileName = $path . DIRECTORY_SEPARATOR . $origFilename;
+		$filePath = $path . DIRECTORY_SEPARATOR . $origFilename;
 		
 		/*
 		 * Some files fail to save becuase of multiple dots in the filename. 
-		 * FileNameFilter only removes leading dots, so pre-convert these.
+		 * FileNameFilter only removes leading dots, so lose _all_ notes and re-append the correct suffix
 		 * @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
 		 */
-		$definitiveName = str_replace(".", "-", $origFilename) . '.' . $useExtension;
-		$definitiveFilename = str_replace(".", "-", $fileName). '.' . $useExtension;
+		$convertDotsFileName = str_replace(".", '-', $filePath) . ".$useExtension";
+		
+		$definitiveFilename = $this->versionFile($convertDotsFileName);
+		$definitiveName = basename($definitiveFilename);
 
-		// Complete construction of $file.
+		// Complete the construction of $file.
 		$file->setName($definitiveName);
 		$file->setFilename($definitiveFilename);
 		$file->setParentID($parentFolder->ID);
@@ -251,32 +255,35 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	
 	/**
 	 * Borrows logic from Upload::load() to ensure duplicated files get renamed 
-	 * correctly which therefore allows multiple versions of the same physical image 
+	 * correctly. This therefore allows multiple versions of the same physical image 
 	 * on the filesystem.
 	 * 
 	 * @param string $relativeFilePath The path to the file relative to the 'assets' dir.
 	 * @return string $relativeFilePath
 	 */
 	public function versionFile($relativeFilePath) {
-		$base = ASSETS_PATH;
+		$base = ASSETS_PATH;	
 		while(file_exists("$base/$relativeFilePath")) {
 			$i = isset($i) ? ($i+1) : 2;
 			$oldFilePath = $relativeFilePath;
 			
 			// make sure archives retain valid extensions
-			if(substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.gz')) == '.tar.gz' ||
-				substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.bz2')) == '.tar.bz2') {
-					$relativeFilePath = preg_replace('/[0-9]*(\.tar\.[^.]+$)/', $i . '\\1', $relativeFilePath);
-			} else if (strpos($relativeFilePath, '.') !== false) {
-				$relativeFilePath = preg_replace('/[0-9]*(\.[^.]+$)/', $i . '\\1', $relativeFilePath);
-			} else if (strpos($relativeFilePath, '_') !== false) {
-				$relativeFilePath = preg_replace('/_([^_]+$)/', '_'.$i, $relativeFilePath);
+			$isTarGz = substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.gz')) == '.tar.gz';
+			$isTarBz2 = substr($relativeFilePath, strlen($relativeFilePath) - strlen('.tar.bz2')) == '.tar.bz2';
+				
+			if($isTarGz || $isTarBz2) {
+				$relativeFilePath = preg_replace('#[0-9]*(\.tar\.[^.]+$)#', $i . "$1", $relativeFilePath);
+			} else if(strpos($relativeFilePath, '.') !== false) {
+				$relativeFilePath = preg_replace('#[0-9]*(\.[^.]+$)#', $i . "$1", $relativeFilePath);
+			} else if(strpos($relativeFilePath, '_') !== false) {
+				$relativeFilePath = preg_replace('#_([^_]+$)#', '_' . $i, $relativeFilePath);
 			} else {
-				$relativeFilePath .= '_'.$i;
+				$relativeFilePath .= '_' . $i;
 			}
 			
+			// We've tried and failed, so we'll just end-up returning the original, that way we get _something_
 			if($oldFilePath == $relativeFilePath && $i > 2) {
-				user_error("Couldn't fix $relativeFilePath with $i tries.", E_USER_ERROR);
+				$this->utils->log(" - Couldn't fix $relativeFilePath with $i attempts in " . __FUNCTION__ . ' for:', $url, $mime);
 			}
 		}
 		

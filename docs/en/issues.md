@@ -11,11 +11,14 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: link-rewriting fails when there are multiple images with the same value for <DataType>.StaticSiteUrl
 * BUG: When selecting the "duplicate" duplication strategy, multiple DB-entries for files are created, but not multiple images on the f/s
+ * Implemented some file-name versioning, and the new version is created and renamed, but the original disappears.
+ * StaticSiteFileTransformerTest is failing
 * BUG: Project won't build properly from composer (While it's not on Packagist)
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
 * TASK: If "Automatically run link-rewrite task" is checked, add more detail to "Import completed" message.
+* TASK: Add new filter expression as per `FileNameFilter` to module _config instead of using str_replace() in StaticSiteFIleTransformer::buildFileProperties()
 * ENHANCEMENT: Add "Link rewrite task was run automatically. "[View failed URL rewrite report"]" confirmation text to "successful import" message
 * ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)

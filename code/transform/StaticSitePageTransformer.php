@@ -2,7 +2,6 @@
 /**
  * URL transformer specific to SilverStripe's `SiteTree` class for use with the module's
  * import content feature.
- * 
  * If enabled in the CMS UI, links to imported pages will be automatically re-written.
  *
  * @package staticsiteconnector
