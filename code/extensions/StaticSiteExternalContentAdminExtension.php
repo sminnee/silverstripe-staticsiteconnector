@@ -76,9 +76,7 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 			$imports = DataObject::get('StaticSiteImportDataObject')->byIDs($selectedImports);
 		}
 		else {
-			$imports = null;
-			$messageType = 'bad';
-			$message = _t('StaticSiteConnector.ImportsDeleted', 'No imports were selected to clear.');			
+			$imports = null;			
 		}
 		
 		if($imports) {
@@ -87,6 +85,10 @@ class StaticSiteExternalContentAdminExtension extends Extension {
 			});
 			$messageType = 'good';
 			$message = _t('StaticSiteConnector.ImportsDeleted', 'Selected imports were cleared successfully.');			
+		}
+		else {
+			$messageType = 'bad';
+			$message = _t('StaticSiteConnector.ImportsDeleted', 'No imports were selected to clear.');			
 		}
 		
 		Session::set("FormInfo.Form_EditForm.formError.message", $message);

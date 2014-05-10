@@ -104,6 +104,9 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 	 * @param StaticSiteContentItem $item
 	 * @param StaticSiteContentSource $source
 	 * @param string $tmpPath
+	 * @property number StaticSiteContentSourceID For imports to know which content source to reference
+	 * @property string StaticSiteURL For the link-rewrite task
+	 * @property numberStaticSiteImportID The 'pseudo' import ID. Used for FailedRewriteLinkReport
 	 * @return boolean | void
 	 */
 	public function write(File $file, $item, $source, $tmpPath) {
@@ -234,6 +237,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		 * dir-hierarchy will be created.
 		 */
 		$parentDir = '';
+		$postVars = Controller::curr()->request->postVars();
 		if(!empty($postVars['FileMigrationTarget'])) {
 			$parentDirData = DataObject::get_by_id('File', $postVars['FileMigrationTarget']);
 			$parentDir = $parentDirData->Title;
