@@ -6,3 +6,6 @@ StaticSiteRewriteLinksTask:
   log_file: '/var/tmp/failed-rewrite.log'
 StaticSiteContentExtractor:
   log_file: '/var/tmp/crawl-and-import.log'
+# Prevent File::updateFileSystem() messing with the connector's own versioning
+File:
+  update_filesystem: false

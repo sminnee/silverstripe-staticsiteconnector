@@ -133,6 +133,21 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 * 
 	 * @todo employ some proper mocking
 	 */
+	public function testTransformForURLIsInCacheIsFileStrategySkip() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage3');
+		$item = new StaticSiteContentItem($source, '/assets/test-3.png');
+		$item->source = $source;
+		
+		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
+		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
+	}	
+	
+	/**
+	 * Test what happens when we define what we want to do when encountering duplicates, and:
+	 * - The URL represents a Mime-Type which does match our transformer
+	 * 
+	 * @todo employ some proper mocking
+	 */
 	public function testTransformForURLIsInCacheIsFileStrategyOverwrite() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage4');
 		$item = new StaticSiteContentItem($source, '/graphics/her-image.png');
@@ -147,35 +162,20 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertEquals('assets/graphics/her-image2.png', $fileStrategyOvr2->file->Filename);
 		// Ids should be the same becuase overwrite really means update
 		$this->assertEquals($fileStrategyOvr1->file->ID, $fileStrategyOvr2->file->ID);
-	}	
-	
-	/**
-	 * Test what happens when we define what we want to do when encountering duplicates, and:
-	 * - The URL represents a Mime-Type which does match our transformer
-	 * 
-	 * @todo employ some proper mocking
-	 */
-	public function testTransformForURLIsInCacheIsFileStrategySkip() {
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage3');
-		$item = new StaticSiteContentItem($source, '/assets/test-3.png');
-		$item->source = $source;
-		
-		// Fail becuase we're simply using the "skip" strategy. Nothing else needs to be done
-		$this->assertFalse($this->transformer->transform($item, null, 'Skip'));
 	}
 	
 	/**
 	 * Test we get an instance of StaticSiteContentExtractor to use in custom StaticSiteDataTypeTransformer
 	 * subclasses.
 	 */
-//	public function testGetContentFieldsAndSelectorsNonSSType() {
-//		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage4');
-//		$item = new StaticSiteContentItem($source, '/graphics/her-image.png');
-//		$item->source = $source;
-//		
-//		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
-//		$this->assertNotInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'File'));
-//	}
+	public function testGetContentFieldsAndSelectorsNonSSType() {
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
+		$item = new StaticSiteContentItem($source, '/graphics/some-image.png');
+		$item->source = $source;
+		
+		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
+		$this->assertNotInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'File'));
+	}
 	
 	/**
 	 * Test the correct outputs for getDirHierarchy()
@@ -198,19 +198,20 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	/**
 	 * Tests our custom file-versioning works correctly
 	 * @todo fix assertions in testTransformForURLIsInCacheIsFileStrategyDuplicate()
+	 * @todo refactor test to not have to use $this->transformer->transform()
 	 */
-	public function testVersionFile() {
-		$transformer = singleton('StaticSiteFileTransformer');
-		
-		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
-		$item = new StaticSiteContentItem($source, '/graphics/some-image.png');
-		$item->source = $source;
-		
-		// Save an initial version of an image
-		$this->transformer->transform($item, null, 'Skip');
-		$this->transformer->transform($item, null, 'Duplicate');
-		// Version it
-		$versioned = $transformer->versionFile('graphics/some-image.png');
-		$this->assertEquals('graphics/some-image2.png', $versioned);		
-	}	
+//	public function testVersionFile() {
+//		$transformer = singleton('StaticSiteFileTransformer');
+//		
+//		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
+//		$item = new StaticSiteContentItem($source, '/graphics/some-image.png');
+//		$item->source = $source;
+//		
+//		// Save an initial version of an image
+//		$this->transformer->transform($item, null, 'Skip');
+//		$this->transformer->transform($item, null, 'Duplicate');
+//		// Version it
+//		$versioned = $transformer->versionFile('graphics/some-image.png');
+//		$this->assertEquals('graphics/some-image2.png', $versioned);		
+//	}	
 }

@@ -187,7 +187,7 @@ StaticSiteContentSource:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
-    Files: =>File.testFile4 
+    Files: =>File.testFile4
   MyContentSourceIsImage5:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
