@@ -12,8 +12,10 @@
 * ENHANCEMENT: Append message: "Link rewrite task was run automatically. [View failed URL rewrite report]" to "successful import" message.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
 * ENHANCEMENT: Add schema export feature for use between SilverStripe installs e.g. CWP
-* ENHANCEMENT: Create a multi-select dropdown menu that comprises data from framework/_config/mimetypes.yml
-* ENHANCEMENT: Use php-diff lib via composer as the arbiter of change in the StaticSiteUrlRewriteTask::run() method
+* ENHANCEMENT: Use a ListBoxField on StaticSiteContentSource to display mime-types with data taken from framework/_config/mimetypes.yml
+ * This makes it less onerous on the user to know about Mime-Types
+ * Menu should change to reflect selection made in the "DataType" field
+ * Logic should check for non-presence of the above YML file, and default to TextareaField and manual-input
 
 ## External Content Module Issues:
 
