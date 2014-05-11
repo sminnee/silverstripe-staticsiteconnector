@@ -9,8 +9,7 @@
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
 * TASK: Add new filter expression as per `FileNameFilter` to module _config instead of using str_replace() in StaticSiteFIleTransformer::buildFileProperties()
-* ENHANCEMENT: Add "Link rewrite task was run automatically. "[View failed URL rewrite report"]" confirmation text to "successful import" message
-* ENHANCEMENT: Add a "Description" field to each schema. Allows users to outline/describe what content from the external site's page-content, each rule refers to.
+* ENHANCEMENT: Append message: "Link rewrite task was run automatically. [View failed URL rewrite report]" to "successful import" message.
 * ENHANCEMENT: In addition to the "Number of URLs" total under the "Crawl" tab, modify to show a list of totals for each mime-type or SS type (e.g. SiteTree)
 * ENHANCEMENT: Add schema export feature for use between SilverStripe installs e.g. CWP
 * ENHANCEMENT: Create a multi-select dropdown menu that comprises data from framework/_config/mimetypes.yml

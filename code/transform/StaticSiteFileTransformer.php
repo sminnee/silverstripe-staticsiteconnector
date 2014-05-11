@@ -204,7 +204,7 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 		
 		/*
 		 * Some files fail to save becuase of multiple dots in the filename. 
-		 * FileNameFilter only removes leading dots, so lose _all_ notes and re-append the correct suffix
+		 * FileNameFilter only removes leading dots, so lose _all_ dots and re-append the correct suffix
 		 * @todo add another filter expression as per \FileNameFilter to module _config instead of using str_replace() here.
 		 */
 		$convertDotsFileName = str_replace(".", '-', $filePath) . ".$useExtension";

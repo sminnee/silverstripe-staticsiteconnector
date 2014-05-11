@@ -431,10 +431,11 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 	 * @var array
 	 */
 	private static $db = array(
-		"DataType" => "Varchar", // classname
+		"DataType" => "Varchar",
 		"Order" => "Int",
-		"AppliesTo" => "Varchar(255)", // regex
-		"MimeTypes" => "Text"
+		"AppliesTo" => "Varchar(255)",
+		"MimeTypes" => "Text",
+		"Notes" => "Text"	// Purely informational. Not used in imports.
 	);
 	
 	/**
@@ -506,6 +507,9 @@ class StaticSiteContentSource_ImportSchema extends DataObject {
 		$mimes->setRows(3);
 		$mimes->setDescription('Be sure to pick a Mime-type that the DataType supports. e.g. text/html (<strong>SiteTree</strong>), image/png or image/jpeg (<strong>Image</strong>) or application/pdf (<strong>File</strong>), separated by a newline.');
 		$fields->addFieldToTab('Root.Main', $mimes);
+		$notes = new TextareaField('Notes', 'Notes');
+		$notes->setDescription('Use this field to add any notes about this schema. (Purely informational. Data is not used in imports)');
+		$fields->addFieldToTab('Root.Main', $notes);
 
 		$importRules = $fields->dataFieldByName('ImportRules');
 		$fields->removeFieldFromTab('Root', 'ImportRules');
