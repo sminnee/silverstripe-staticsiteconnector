@@ -5,6 +5,9 @@
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" (or optimise existing and problematic CMS JS)
 * BUG: Project won't build properly from composer (While it's not on Packagist)
+* Selecting a folder to import imaes into that isn't writeable, causes an error and imports to stop.
+ * See: StaticSiteFileTransformer::buildFileProperties() in `$parentFolder = Folder::find_or_make($path)`
+ * Real reason is mkdir() in Filesystem::makeFolder()
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Selecting "external content" in the CMS for the first time, shows nothing in the main pane. Show a default connector (e.g. the first) by default.
