@@ -30,6 +30,28 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	}
 	
 	/**
+	 * Run once for the whole suite of StaticSiteFileTransformerTest tests
+	 */
+	public function tearDownOnce() {
+		// Clear all images that have been saved during this test-run
+		$this->delTree(ASSETS_PATH . '/test-graphics');
+		parent::tearDownOnce();
+	}
+	
+	/**
+	 * 
+	 * @param type $dir
+	 * @return type
+	 */
+	public function delTree($dir) {
+		$files = array_diff(scandir($dir), array('.', '..'));
+		foreach ($files as $file) {
+			(is_dir("$dir/$file")) ? delTree("$dir/$file") : unlink("$dir/$file");
+		}
+		return rmdir($dir);
+	}
+	
+	/**
 	 * 
 	 */
 	public function testBuildFileProperties() {
@@ -109,7 +131,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 */
 	public function testTransformForURLIsInCacheIsFileStrategyDuplicate() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage2');
-		$item = new StaticSiteContentItem($source, '/graphics/my-image.png');
+		$item = new StaticSiteContentItem($source, '/test-graphics/my-image.png');
 		$item->source = $source;
 		
 		// Pass becuase we do want to perform something on the URL
@@ -117,8 +139,8 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyDup2 = $this->transformer->transform($item, null, 'Duplicate'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed.
-		$this->assertEquals('assets/graphics/my-image.png', $fileStrategyDup1->file->Filename);
-		$this->assertEquals('assets/graphics/my-image2.png', $fileStrategyDup2->file->Filename);
+		$this->assertEquals('assets/test-graphics/my-image.png', $fileStrategyDup1->file->Filename);
+		$this->assertEquals('assets/test-graphics/my-image2.png', $fileStrategyDup2->file->Filename);
 	
 		/*
 		 * Files don't duplicate in the same way as pages are. Duplicate images _are_ created, but their
@@ -150,7 +172,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 */
 	public function testTransformForURLIsInCacheIsFileStrategyOverwrite() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage4');
-		$item = new StaticSiteContentItem($source, '/graphics/her-image.png');
+		$item = new StaticSiteContentItem($source, '/test-graphics/her-image.png');
 		$item->source = $source;
 		
 		// Pass becuase we do want to perform something on the URL
@@ -158,8 +180,8 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 		$this->assertInstanceOf('StaticSiteTransformResult', $fileStrategyOvr2 = $this->transformer->transform($item, null, 'Overwrite'));
 		
 		// Pass becuase regardless of duplication strategy, we should be getting our filenames post-processed
-		$this->assertEquals('assets/graphics/her-image.png', $fileStrategyOvr1->file->Filename);
-		$this->assertEquals('assets/graphics/her-image2.png', $fileStrategyOvr2->file->Filename);
+		$this->assertEquals('assets/test-graphics/her-image.png', $fileStrategyOvr1->file->Filename);
+		$this->assertEquals('assets/test-graphics/her-image2.png', $fileStrategyOvr2->file->Filename);
 		// Ids should be the same becuase overwrite really means update
 		$this->assertEquals($fileStrategyOvr1->file->ID, $fileStrategyOvr2->file->ID);
 	}
@@ -170,7 +192,7 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	 */
 	public function testGetContentFieldsAndSelectorsNonSSType() {
 		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
-		$item = new StaticSiteContentItem($source, '/graphics/some-image.png');
+		$item = new StaticSiteContentItem($source, '/test-graphics/some-image.png');
 		$item->source = $source;
 		
 		$this->assertInstanceOf('StaticSiteContentExtractor', $this->transformer->getContentFieldsAndSelectors($item, 'Custom'));
@@ -204,14 +226,14 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 //		$transformer = singleton('StaticSiteFileTransformer');
 //		
 //		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
-//		$item = new StaticSiteContentItem($source, '/graphics/some-image.png');
+//		$item = new StaticSiteContentItem($source, '/test-graphics/some-image.png');
 //		$item->source = $source;
 //		
 //		// Save an initial version of an image
 //		$this->transformer->transform($item, null, 'Skip');
 //		$this->transformer->transform($item, null, 'Duplicate');
 //		// Version it
-//		$versioned = $transformer->versionFile('graphics/some-image.png');
-//		$this->assertEquals('graphics/some-image2.png', $versioned);		
+//		$versioned = $transformer->versionFile('test-graphics/some-image.png');
+//		$this->assertEquals('test-graphics/some-image2.png', $versioned);		
 //	}	
 }

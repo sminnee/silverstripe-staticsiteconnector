@@ -55,7 +55,7 @@ StaticSiteContentSource_ImportSchema:
   SchemaFile1:
     DataType: File
     Order: 1
-    AppliesTo: '/graphics/.*'
+    AppliesTo: '/test-graphics/.*'
     MimeTypes: 'application/pdf'
   SchemaFile2:
     DataType: File
@@ -65,23 +65,28 @@ StaticSiteContentSource_ImportSchema:
   SchemaImage1:
     DataType: Image
     Order: 1
-    AppliesTo: '/graphics/.*'
+    AppliesTo: '/test-graphics/.*'
     MimeTypes: 'image/png'
   SchemaImage2:
     DataType: Image
     Order: 2
-    AppliesTo: '/graphics/.*'
+    AppliesTo: '/test-graphics/.*'
     MimeTypes: 'image/png'
   SchemaImage3:
     DataType: Image
     Order: 2
-    AppliesTo: '/graphics/.*'
+    AppliesTo: '/test-graphics/.*'
     MimeTypes: 'image/png'
   SchemaImage4:
     DataType: Image
     Order: 2
     AppliesTo: '/images/.*'
     MimeTypes: 'image/gif'
+  SchemaImage5:
+    DataType: Image
+    Order: 2
+    AppliesTo: '/test-graphics/.*'
+    MimeTypes: 'image/png'    
 
 Page:
   testPage1:
@@ -116,10 +121,10 @@ File:
     StaticSiteURL: '/test-3.png'
   testFile4:
     Title: 'Test image 4'
-    StaticSiteURL: 'http://localhost/graphics/her-image.png'    
+    StaticSiteURL: 'http://localhost/test-graphics/her-image.png'    
   testFile5:
     Title: 'Test image 5'
-    StaticSiteURL: 'http://localhost/graphics/some-image.png'
+    StaticSiteURL: 'http://localhost/test-graphics/some-image.png'
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -191,5 +196,5 @@ StaticSiteContentSource:
   MyContentSourceIsImage5:
     BaseUrl: http://localhost
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
-    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage1  
-    Files: =>File.testFile5    
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage5
+    Files: =>File.testFile5

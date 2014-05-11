@@ -11,8 +11,7 @@ Some are already registered as issues on Github, others are more in the "would l
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
 * BUG: link-rewriting fails when there are multiple images with the same value for <DataType>.StaticSiteUrl
  * Solution: Get a DataList of all the images that have a matching StaticSiteUrl, and sort them by Created date ASC and use Last()
-* StaticSiteFileTransformerTest is failing with one test
- * Add logic to tearDown() on StaticSiteFileTransformerTest that deletes all test images
+* Add logic to tearDown() on StaticSiteFileTransformerTest that deletes all test images
 * BUG: Project won't build properly from composer (While it's not on Packagist)
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()
