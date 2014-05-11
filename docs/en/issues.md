@@ -1,16 +1,9 @@
 # ToDo
 
-This is non-priority (i.e. random) and inexhaustive list of tasks that we'd like to see completed to really polish this module.
-Some are already registered as issues on Github, others are more in the "would like to have" basket, others may not make it at all:
-
 ## StaticSiteConnector Module Issues (in order of severity/importance)
 
-* BUG: Import sometimes fails with console-error ("Method 'publish' doesn't exist on Image") seems to occur occasionally if a folder of assets already exists, and a new import is run.
- * The above error seems to only occur after an import failed with an error and is then manually resumed.
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
-* BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" in the crawl tab (or optimise existing and problematic CMS JS)
-* BUG: link-rewriting fails when there are multiple images with the same value for <DataType>.StaticSiteUrl
- * Solution: Get a DataList of all the images that have a matching StaticSiteUrl, and sort them by Created date ASC and use Last()
+* BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" (or optimise existing and problematic CMS JS)
 * BUG: Project won't build properly from composer (While it's not on Packagist)
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()

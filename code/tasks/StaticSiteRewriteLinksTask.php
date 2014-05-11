@@ -5,14 +5,18 @@
  * 
  * The task takes two arguments:
  * 
- * - An Import ID:
+ * - ImportID:
  * Allows the rewriter to know which content to rewrite, when duplicate imports exist.
  * 
- * - A Source ID
+ * - SourceID
  * Allows the rewriter to fetch the correct content relative to the given source of scraped URLs.
  * 
- * All rewrite failures are written the {@link FailedURLRewriteObject} DataObject to power the
- * CMS {@link FailedURLRewriteReport}.
+ * - SilentRun
+ * Allows the rewriter to run silently, without displaying anything to stdout. This is the
+ * default for when the task is run from the front-end.
+ * 
+ * All rewrite failures are written to an individual {@link FailedURLRewriteObject} DataObject to power the
+ * CMS {@link FailedURLRewriteReport}. See also {@link FailedURLRewriteSummary}.
  * 
  * @author Sam Minnee <sam@silverstripe.com>
  * @author Russell Michell <russ@silverstripe.com>
@@ -587,23 +591,5 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			'ContainedInID' => $obj->currentPageID,
 			'BadLinkType' => $obj->badLinkType($link)
 		));	
-	}
-	
-	/**
-	 * Quick way to ensure array values are unique in a multi-dimensional array.
-	 * 
-	 * @param array $array
-	 * @return array
-	 */
-	protected function uniq($array) {
-		$serialized = array();
-		$unserialized = array();
-		foreach($array as $item) {
-			$serialized[] = serialize($item);
-		}
-		foreach(array_unique($serialized) as $item) {
-			$unserialized[] = unserialize($item);
-		}		
-		return $unserialized;
 	}
 }
