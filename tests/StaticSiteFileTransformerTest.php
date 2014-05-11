@@ -219,21 +219,19 @@ class StaticSiteFileTransformerTest extends SapphireTest {
 	
 	/**
 	 * Tests our custom file-versioning works correctly
-	 * @todo fix assertions in testTransformForURLIsInCacheIsFileStrategyDuplicate()
-	 * @todo refactor test to not have to use $this->transformer->transform()
 	 */
-//	public function testVersionFile() {
-//		$transformer = singleton('StaticSiteFileTransformer');
-//		
-//		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage5');
-//		$item = new StaticSiteContentItem($source, '/test-graphics/some-image.png');
-//		$item->source = $source;
-//		
-//		// Save an initial version of an image
-//		$this->transformer->transform($item, null, 'Skip');
-//		$this->transformer->transform($item, null, 'Duplicate');
-//		// Version it
-//		$versioned = $transformer->versionFile('test-graphics/some-image.png');
-//		$this->assertEquals('test-graphics/some-image2.png', $versioned);		
-//	}	
+	public function testVersionFile() {
+		$transformer = singleton('StaticSiteFileTransformer');
+		
+		$source = $this->objFromFixture('StaticSiteContentSource', 'MyContentSourceIsImage6');
+		$item = new StaticSiteContentItem($source, '/test-graphics/foo-image.jpg');
+		$item->source = $source;
+		
+		// Save an initial version of an image
+		$this->transformer->transform($item, null, 'Skip');
+		// Version it
+		$versioned = $transformer->versionFile('test-graphics/foo-image.jpg');
+		// Test it
+		$this->assertEquals('test-graphics/foo-image2.jpg', $versioned);
+	}	
 }

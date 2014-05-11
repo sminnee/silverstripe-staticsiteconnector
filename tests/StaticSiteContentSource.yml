@@ -86,7 +86,12 @@ StaticSiteContentSource_ImportSchema:
     DataType: Image
     Order: 2
     AppliesTo: '/test-graphics/.*'
-    MimeTypes: 'image/png'    
+    MimeTypes: 'image/png'
+  SchemaImage6:
+    DataType: Image
+    Order: 1
+    AppliesTo: '/test-graphics/.*'
+    MimeTypes: 'image/jpeg'      
 
 Page:
   testPage1:
@@ -124,7 +129,10 @@ File:
     StaticSiteURL: 'http://localhost/test-graphics/her-image.png'    
   testFile5:
     Title: 'Test image 5'
-    StaticSiteURL: 'http://localhost/test-graphics/some-image.png'
+    StaticSiteURL: 'http://localhost/test-graphics/some-image.png' 
+  testFile6:
+    Title: 'Test image 6'
+    StaticSiteURL: 'http://localhost/test-graphics/foo-image.jpg'
 
 StaticSiteContentSource:
   MyContentSourceIsHTML1:
@@ -198,3 +206,8 @@ StaticSiteContentSource:
     UrlProcessor: StaticSiteURLProcessor_DropExtensions
     Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage5
     Files: =>File.testFile5
+  MyContentSourceIsImage6:
+    BaseUrl: http://localhost
+    UrlProcessor: StaticSiteURLProcessor_DropExtensions
+    Schemas: =>StaticSiteContentSource_ImportSchema.SchemaImage6
+    Files: =>File.testFile6    
