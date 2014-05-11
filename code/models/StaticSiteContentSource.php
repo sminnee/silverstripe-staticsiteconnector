@@ -195,6 +195,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 				->setUseButtonTag(true);
 			
 			$clearImportField = ToggleCompositeField::create('ClearImports', 'Clear import meta-data', array(
+				LiteralField::create('ImportCountText', '<p>Each time an import is run, some meta information is stored such as an import identifier and failed-link records.<br/><br/></p>'),
 				LiteralField::create('ImportCount', '<p><strong>Total imports: </strong><span>' . $importCount . '</span></p>'),
 				ListboxField::create('ShowImports', 'Select import(s) to clear:', $_source, '', null, true),
 				CheckboxField::create('ClearAllImports', 'Clear all imports', 0),
