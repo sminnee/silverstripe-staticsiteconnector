@@ -16,5 +16,15 @@ class FailedURLRewriteSummary extends DataObject {
 		'Text' => 'Text',
 		'ImportID' => 'Int'
 	);
+	
+	/**
+	 * 
+	 * Format summary text so all totals are emboldened.
+	 * 
+	 * @return string
+	 */
+	public function getText() {
+		return preg_replace("#([\d]*)#", "<strong>$1</strong>", $this->getField('Text'));
+	}
 
 }
