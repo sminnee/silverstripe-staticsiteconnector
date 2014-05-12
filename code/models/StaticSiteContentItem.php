@@ -9,16 +9,6 @@
 class StaticSiteContentItem extends ExternalContentItem {
 
 	/**
-	 * Stores information about an item whenever it is invoked
-	 * 
-	 * @var array
-	 */
-	public $checkStatus = array(
-		'ok'	=>	true,
-		'msg'	=>	null
-	);
-
-	/**
  	 * Default Content type, either 'sitetree', 'file' or false to disable the default
 	 * 
  	 * @var mixed (string | boolean)
@@ -147,21 +137,12 @@ class StaticSiteContentItem extends ExternalContentItem {
 	 * Performs some checks on $item. If it is of the wrong type, returns false
 	 *
 	 * @param string $type e.g. 'sitetree'
-	 * @return void
+	 * @return boolean
 	 */
-	public function runChecks($type) {
-		/*
-		 * Workaround for external-content module:
-		 * ExternalContentAdmin#migrate() assumes we're _either_ dealing-to a 
-		 * SiteTree object _or_ a File object
-		 * 
-		 * @todo Bug report?
-		 */
+	public function checkIsType($type) {
 		if(!$type || $this->getType() != strtolower($type)) {
-			$this->checkStatus = array(
-				'ok'	=> false,
-				'msg'	=> 'Item not of type '.$type
-			);
+			return false;
 		}
+		return true;
 	}
 }

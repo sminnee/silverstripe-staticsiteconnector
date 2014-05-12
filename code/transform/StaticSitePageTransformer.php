@@ -42,9 +42,8 @@ class StaticSitePageTransformer extends StaticSiteDataTypeTransformer {
 
 		$this->utils->log("START page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
-		$item->runChecks('sitetree');
-		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - ' . $item->checkStatus['msg'] . " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+		if(!$item->checkIsType('sitetree')) {
+			$this->utils->log(" - Item not of type \'sitetree\'. for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}

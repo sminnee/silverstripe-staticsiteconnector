@@ -31,10 +31,9 @@ class StaticSiteFileTransformer extends StaticSiteDataTypeTransformer {
 
 		$this->utils->log("START file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 
-		$item->runChecks('file');
-		if($item->checkStatus['ok'] !== true) {
-			$this->utils->log(' - ' . $item->checkStatus['msg'] . " for: ", $item->AbsoluteURL, $item->ProcessedMIME);
-			$this->utils->log("END file-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+		if(!$item->checkIsType('file')) {
+			$this->utils->log(" - Item not of type \'file\'. for: ", $item->AbsoluteURL, $item->ProcessedMIME);
+			$this->utils->log("END page-transform for: ", $item->AbsoluteURL, $item->ProcessedMIME);
 			return false;
 		}
 
