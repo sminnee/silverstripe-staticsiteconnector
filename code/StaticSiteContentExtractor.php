@@ -217,7 +217,7 @@ class StaticSiteContentExtractor extends Object {
 			if($element) {
 				$remove = $element->htmlOuter();
 				$content = str_replace($remove, '', $content);
-				$this->utils->log(' - Excluded content from "' . $parentSelector .' ' . $excludeSelector.'"');
+				$this->utils->log(' - Excluded content from "' . $parentSelector . ' ' . $excludeSelector . '"');
 			}
 		}
 		return $content;

@@ -32,7 +32,7 @@ A list of URLs are fetched and extracted from the site via [PHPCrawl](http://cua
 and cached in a text file under the assets directory.
 
 Each cached URL corresponds to a page or asset (css, image, pdf etc) that the module
-will attempt to import into native SilverStripe objects e.g. `SiteTree` or `File`.
+will attempt to import into native SilverStripe objects e.g. `SiteTree` and `File`.
 
 Page content is imported page-by-page using cUrl, and the desired DOM elements
 extracted via configurable CSS selectors via [phpQuery](http://code.google.com/p/phpquery/)

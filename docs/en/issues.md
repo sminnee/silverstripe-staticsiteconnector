@@ -12,6 +12,8 @@
 * Selecting a folder to import scraped-assets into that isn't writeable, causes an error and for imports to stop.
  * See: StaticSiteFileTransformer::buildFileProperties() in `$parentFolder = Folder::find_or_make($path)`
  * Real reason is mkdir() in Filesystem::makeFolder()
+* TASK: The CMS needs to know what to display in its SiteTree, what happens if there are no `Title` or `MenuTitle` PHPQuery CSS schema mappings?
+ * May need to add validation to ensure at a minimum `Content` and `Title` are used.
 * TASK: Is StaticSiteCrawlURLsTask needed anymore?
 * TASK: Translation: Ensure all messages are rendered through _t()
 * TASK: Add new filter expression as per `FileNameFilter` to module _config instead of using str_replace() in StaticSiteFIleTransformer::buildFileProperties()

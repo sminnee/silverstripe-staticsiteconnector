@@ -18,26 +18,25 @@ time, depending on the number of pages and assets in the site being crawled.
 
 ## Protips
 
-If you reopen the Connector admin in a different browser (so that it has a different
+ 1. If you reopen the Connector admin in a different browser (so that it has a different
 session cookie), you can see the current status of the crawling process.
- 
-If you're using Firebug or Chrome, ensure you have the debugger open _before_ you
-set the crawl off. Occassionally the crawl will die for unknown reasons, and this
+
+ 2. If you're using Firebug or Chrome, ensure you have the debugger open _before_ you
+set the crawl off. Occasionally the crawl will die for unknown reasons, and this
 will help in debugging.
- 
-If the host you're running the module on, is behind a proxy, adapt the following
+
+ 3. If the host you're running the module on is behind a proxy, adapt the following
 in `mysite/_config/config.yml`:
 
-	StaticSiteContentExtractor:
-	  curl_opts_proxy:
-	    hostname: 'my-gateway.co.nz'
-	    port: 1234
-
-Add the following to `mysite/_config/config.yml` to enable the debug log for link-crawling
+        StaticSiteContentExtractor:
+            curl_opts_proxy:
+                hostname: 'my-gateway.co.nz'
+	            port: 1234
+ 4. Add the following to `mysite/_config/config.yml` to enable the debug log for link-crawling
 and importing:
 
-	StaticSiteContentExtractor:
-	  log_file: /var/tmp/crawl-and-import.log
+        StaticSiteContentExtractor:
+            log_file: /var/tmp/crawl-and-import.log
 
 ## Next Steps
 
@@ -106,7 +105,7 @@ in the function `schemaCanParseURL()`.
 ##### Protip
 
 * For help with regular expressions, use an online service like [Rubular.com](http://rubular.com)
-or [PHPLiveRegex.com](http://phpliveregex.com).
+or [PHPLiveRegex.com](http://phpliveregex.com), both of which allow "live" regular expression editing.
 
 #### Schema Priority
 
