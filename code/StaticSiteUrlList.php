@@ -749,7 +749,7 @@ class StaticSiteCrawler extends PHPCrawler {
 	 *
 	 * @param \PHPCrawlerDocumentInfo $info
 	 * @return mixed null | void
-	 * @todo Can we make use of PHPCrawlerDocumentInfo#error_occured instead of manually checkng server codes??
+	 * @todo Can we make use of PHPCrawlerDocumentInfo#error_occured instead of manually checking server codes??
 	 * @todo The comments below state that badly formatted URLs never make it to our caching logic. Wrong.
 	 *	- Pass the preg_replace() call for "fixing" $mossBracketRegex into StaticSiteUrlProcessor#postProcessUrl()
 	 */
@@ -767,7 +767,7 @@ class StaticSiteCrawler extends PHPCrawler {
 
 		/*
 		 * We're checking for a bad status code AND for "recoverability", becuase we might be able to recover the URL
-		 * when re-requesting it using Curl in the import stage, as long as we cache it correctly here
+		 * when re-requesting it during the import stage, as long as we cache it correctly here.
 		 */		
 		if($badStatusCode && !$isRecoverableUrl) {
 			$message = $info->url . " Skipped. We got a {$info->http_status_code} and URL was irrecoverable" . PHP_EOL;

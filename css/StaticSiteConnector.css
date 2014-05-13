@@ -2,3 +2,4 @@
 .cms .readonly-click-toggle span:hover { background-color: #CCC; }
 .cms .clear-imports p, .cms .clear-imports .Actions { padding-left: 12px; }
 .cms .clear-imports p { margin: 0; }
+.cms table.ss-gridfield-table { margin-bottom: 10px; }

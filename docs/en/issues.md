@@ -5,6 +5,10 @@
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" (or optimise existing and problematic CMS JS)
 * BUG: Project won't build properly from composer (While it's not on Packagist)
+* BUG: For CWP sites, import and crawl logs may get quite large. Solutions:
+ * Disable file-based logging on CWP sites
+ * Truncate logs when "clear all import meta-data" is checked in the CMS' UI
+ * Automatically truncate logs when a new import or crawl is started
 * Selecting a folder to import scraped-assets into that isn't writeable, causes an error and for imports to stop.
  * See: StaticSiteFileTransformer::buildFileProperties() in `$parentFolder = Folder::find_or_make($path)`
  * Real reason is mkdir() in Filesystem::makeFolder()
