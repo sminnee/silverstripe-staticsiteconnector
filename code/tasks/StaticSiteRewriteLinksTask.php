@@ -386,7 +386,7 @@ class StaticSiteRewriteLinksTask extends BuildTask {
 			'Total failed link rewrites'	=> array('count' => count($rawData), 'desc' => ''),
 			'ThirdParty'		=> array('count' => $countThirdParty, 'desc' => '(Links to external websites)'),
 			'BadScheme'			=> array('count' => $countBadScheme, 'desc' => '(Links with bad/unimportable scheme)'),
-			'NotImported'		=> array('count' => $countNotImported, 'desc' => '(Links to pages that were not imported)'),
+			'NotImported'		=> array('count' => $countNotImported, 'desc' => '(Links to pages or assets that were not imported)'),
 			'Junk'				=> array('count' => $countJunk, 'desc' => '(Junk links)'),
 			'Unknown'			=> array('count' => $countUnknown, 'desc' => '(Not categorisable)')
 		);
