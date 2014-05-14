@@ -5,6 +5,8 @@
 * BUG: Can only crawl VHosts. Websites located on a subdirectory e.g. http://localhost/mysite are only partially crawled.
 * BUG: Lists of crawled URLs from large crawls (1000+ pages), slow down the CMS considerably. Suggest show only partial tree under each "Connector" (or optimise existing and problematic CMS JS)
 * BUG: Project won't build properly from composer (While it's not on Packagist)
+* BUG: For MOSS sites: Some Urls are cached but not imported.
+* BUG: For MOSS sites: Some Urls are being cached with brackets, even though the MOSS processor rips them out
 * BUG: For CWP sites, import and crawl logs may get quite large. Solutions:
  * Disable file-based logging on CWP sites
  * Truncate logs when "clear all import meta-data" is checked in the CMS' UI
