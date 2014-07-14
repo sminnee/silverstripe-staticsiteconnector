@@ -24,22 +24,7 @@
 		"silverstripe/framework": ">=3.0.0",
 		"silverstripe/external-content":"dev-master",
 		"cuab/phpcrawl": "*",
-		"phpquery/phpquery": "dev-master"
-	},
-	"repositories": [{
-		"type": "package",
-		"package": {
-			"name": "phpquery/phpquery",
-			"version": "dev-master",
-			"source": {
-				"url": "git://github.com/tunght13488/phpquery.git",
-				"type": "git",
-				"reference": "master"
-			},
-			"autoload": {
-				"files": ["phpQuery/phpQuery.php"]
-			}
-		}
-	}]
+		"electrolinux/phpquery": "dev-master"
+	}
 }
 
