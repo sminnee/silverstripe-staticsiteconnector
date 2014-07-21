@@ -3,6 +3,11 @@
 class StaticSitePageTransformer implements ExternalContentTransformer {
 
 	public function transform($item, $parentObject, $duplicateStrategy) {
+		if(Director::is_cli()) {
+			Debug::message("Parent: #$parentObject->ID, $parentObject->Title");
+			Debug::message($item->AbsoluteURL);
+		}
+
 		// Sleep for 100ms to reduce load on the remote server
 		usleep(100*1000);
 
@@ -54,6 +59,11 @@ class StaticSitePageTransformer implements ExternalContentTransformer {
 		}
 
 		$page->write();
+
+		if(Director::is_cli()) {
+			Debug::message("#$page->Title");
+			Debug::message("#$page->ID child of #$page->ID");
+		}
 
 		return new TransformResult($page, $item->stageChildren());
 	}
