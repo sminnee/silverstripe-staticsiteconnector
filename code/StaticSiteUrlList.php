@@ -60,9 +60,7 @@ class StaticSiteUrlList {
 	protected $extraCrawlURLs = null;
 
 	/**
-	 * A list of regular expression patterns to exclude from scraping
-	 *
-	 * @var array
+	 * @var array A list of regular expression patterns to exclude from scraping
 	 */
 	protected $excludePatterns = array();
 	
@@ -72,6 +70,11 @@ class StaticSiteUrlList {
 	 * @var StaticSiteContentSource
 	 */
 	protected $source;
+
+	/**
+	 * @var array A list of regular expression patterns to include in scraping
+	 */
+	protected $includePatterns = array();	
 
 	/**
 	 * Create a new URL List
@@ -153,7 +156,26 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Set whether the crawl should be triggered on demand.
+	 * Set an array of regular expression patterns that should be included
+	 * into the url list
+	 *
+	 * @param array $includePatterns
+	 */
+	public function setIncludePatterns(array $includePatterns) {
+		$this->includePatterns = $includePatterns;
+	}
+
+	/**
+	 * Get an array of regular expression patterns that should be added to
+	 * the url list
+	 *
+	 * @return array
+	 */
+	public function getIncludePatterns() {
+		return $this->includePatterns;
+	}
+
+	/**
 	 * 
 	 * @param boolean $autoCrawl
 	 * @return void
@@ -219,6 +241,13 @@ class StaticSiteUrlList {
 			array_push($_inferred, $urlData['url']);
 		}
 		return count(array_unique($_regular)) + count($_inferred);
+	}
+
+	/**
+	 * @return String
+	 */
+	public function getBaseURL() {
+		return $this->baseURL;
 	}
 
 	/**
@@ -797,7 +826,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		// NOTE: This is using an undocumented API
 		if($extraURLs = $this->urlList->getExtraCrawlURLs()) {
 			foreach($extraURLs as $extraURL) {
-    			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($extraURL));
+    			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($this->urlList->getBaseURL() . $extraURL));
     		}
     	}
 
@@ -807,6 +836,17 @@ class StaticSiteCrawler extends PHPCrawler {
 				$validRegExp = $this->addURLFilterRule('|' . str_replace('|', '\|', $pattern) . '|');
 				if(!$validRegExp) {
 					throw new InvalidArgumentException('Exclude url pattern "' . $pattern . '" is not a valid regular expression.');
+				}
+			}
+		}
+
+		// Optionally whitelist specific URL patterns
+		if($includePatterns = $this->urlList->getIncludePatterns()) {
+			foreach($includePatterns as $pattern) {
+				$validRegExp = $this->addURLFollowRule('|'.str_replace('|', '\|', $pattern).'|');
+
+				if(!$validRegExp) {
+					throw new InvalidArgumentException('Include url pattern "'.$pattern.'" is not a valid regular expression.');
 				}
 			}
 		}

@@ -17,6 +17,7 @@ class StaticSiteContentSource extends ExternalContentSource {
 		'UrlProcessor' => 'Varchar(255)',
 		'ExtraCrawlUrls' => 'Text',
 		'UrlExcludePatterns' => 'Text',
+		'UrlIncludePatterns' => 'Text',
 		'ParseCSS' => 'Boolean',
 		'AutoRunTask' => 'Boolean'
 	);
@@ -181,6 +182,13 @@ class StaticSiteContentSource extends ExternalContentSource {
 		$fields->dataFieldByName("UrlExcludePatterns")
 			->setDescription("URLs that should be excluded. (Supports regular expressions e.g. '/about/.*'). One per URL")
 			->setTitle('Excluded URLs');
+		$fields->dataFieldByName("UrlIncludePatterns")
+			->setDescription(
+				"URLs that should be specifically included (support regular expression). " 
+				. "eg: '/about/.*'. One per URL. <br>"
+				. "Please ensure the URLs are reachable from 'Additional URLs', since indirect links won't be followed."
+			)
+			->setTitle('Included URLs');
 		
 		$hasImports = DataObject::get('StaticSiteImportDataObject');
 		$_source = array();
@@ -245,6 +253,10 @@ class StaticSiteContentSource extends ExternalContentSource {
 			if($this->UrlExcludePatterns) {
 				$urlExcludePatterns = preg_split('/\s+/', trim($this->UrlExcludePatterns));
 				$this->urlList->setExcludePatterns($urlExcludePatterns);
+			}
+			if($this->UrlIncludePatterns) {
+				$urlIncludePatterns = preg_split('/\s+/', trim($this->UrlIncludePatterns));
+				$this->urlList->setIncludePatterns($urlIncludePatterns);
 			}
  		}
 		return $this->urlList;
