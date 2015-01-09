@@ -336,7 +336,7 @@ class StaticSiteUrlList {
 			$this->urls['regular'][$url] = $processedURLData;
 
 			// Trigger parent URL back-filling on new processed URL
-			$this->parentProcessedURL($processedURLData);
+			$this->addInferredParentURLs($processedURLData);
 		}
 
 		$this->saveURLs();
@@ -432,7 +432,9 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
-		$this->addURL($relURL, $content_type);
+		if(!$relURL) $relURL = '/';
+
+		return $this->addURL($relURL, $content_type);
 	}
 
 	/**
@@ -456,7 +458,7 @@ class StaticSiteUrlList {
 		$this->urls['regular'][$url] = $this->generateProcessedURL($urlData);
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($this->urls['regular'][$url]);
+		$this->addInferredParentURLs($this->urls['regular'][$url]);
 	}
 
 	/**
@@ -477,7 +479,7 @@ class StaticSiteUrlList {
 		$this->urls['inferred'][$inferredURLData['url']] = $inferredURLData;
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($inferredURLData);
+		$this->addInferredParentURLs($inferredURLData);
 	}
 
 	/**
@@ -589,7 +591,28 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Find the processed URL in the URL list
+	 * Add all parent URL parts as inferred URLs.
+	 * @param Array $urlData
+	 */
+	function addInferredParentURLs($urlData) {
+		$url = $urlData['url'];
+		if($url == "/") return;
+
+		$parts = explode('/', $url);
+		do {
+			$parentUrl = implode('/', $parts);
+			if($parentUrl && !$this->hasProcessedURL($parentUrl)) {
+				$this->addInferredURL(array('url' => $parentUrl, 'mime' => 'text/html'));
+			}
+			array_pop($parts);
+		} while($parts);
+	}
+
+	/**
+	 * Return the regular URL, given the processed one.
+	 *
+	 * Note that the URL processing isn't reversible, so this function works looks by iterating through all URLs.
+	 * If the URL doesn't exist in the list, this function returns null.
 	 * 
 	 * @param  mixed string | array $urlData
 	 * @return array $urlData
