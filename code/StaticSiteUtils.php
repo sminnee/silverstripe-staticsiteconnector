@@ -18,13 +18,18 @@ class StaticSiteUtils {
 	 * @return null | void
 	 */
 	public function log($message, $filename = null, $mime = null, $class = 'StaticSiteContentExtractor') {
-		$logFile = Config::inst()->get($class, 'log_file');
-		if(!$logFile) {
+		if(SapphireTest::is_running_test()) {
 			return;
 		}
 
-		if(is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
-			$message = $message . ($filename ? ' ' . $filename : '') . ($mime ? ' (' . $mime . ')' : '');
+		$logFile = Config::inst()->get($class, 'log_file');
+		if(!$logFile && !Director::is_cli()) {
+			return;
+		}
+
+		$message = $message . ($filename ? ' ' . $filename : '') . ($mime ? ' (' . $mime . ')' : '');
+		echo $message . "\n";
+		if($logFile && is_writable($logFile) || !file_exists($logFile) && is_writable(dirname($logFile))) {
 			error_log($message. PHP_EOL, 3, $logFile);
 		}
 	}
