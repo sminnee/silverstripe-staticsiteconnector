@@ -24,11 +24,14 @@ class StaticSiteUrlList {
 	protected $extraCrawlURLs = null;
 
 	/**
-	 * A list of regular expression patterns to exclude from scraping
-	 *
-	 * @var array
+	 * @var array A list of regular expression patterns to exclude from scraping
 	 */
 	protected $excludePatterns = array();
+
+	/**
+	 * @var array A list of regular expression patterns to include in scraping
+	 */
+	protected $includePatterns = array();	
 
 	/**
 	 * Create a new URL List
@@ -97,6 +100,26 @@ class StaticSiteUrlList {
 	}
 
 	/**
+	 * Set an array of regular expression patterns that should be included
+	 * into the url list
+	 *
+	 * @param array $includePatterns
+	 */
+	public function setIncludePatterns(array $includePatterns) {
+		$this->includePatterns = $includePatterns;
+	}
+
+	/**
+	 * Get an array of regular expression patterns that should be added to
+	 * the url list
+	 *
+	 * @return array
+	 */
+	public function getIncludePatterns() {
+		return $this->includePatterns;
+	}
+
+	/**
 	 * 
 	 * Set whether the crawl should be triggered on demand.
 	 * @param [type] $autoCrawl [description]
@@ -143,6 +166,13 @@ class StaticSiteUrlList {
 		if($urls = $this->getProcessedURLs()) {
 			return array_keys($urls);
 		}
+	}
+
+	/**
+	 * @return String
+	 */
+	public function getBaseURL() {
+		return $this->baseURL;
 	}
 
 	/**
@@ -200,7 +230,7 @@ class StaticSiteUrlList {
 			$this->urls['regular'][$url] = $processedURL;
 
 			// Trigger parent URL back-filling on new processed URL
-			$this->parentProcessedURL($processedURL);
+			$this->addInferredParentURLs($processedURL);
 		}
 
 		$this->saveURLs();
@@ -273,6 +303,8 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
+		if(!$relURL) $relURL = '/';
+
 		return $this->addURL($relURL);
 	}
 
@@ -283,7 +315,7 @@ class StaticSiteUrlList {
 		$this->urls['regular'][$url] = $this->generateProcessedURL($url);
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($this->urls['regular'][$url]);
+		$this->addInferredParentURLs($this->urls['regular'][$url]);
 	}
 
 
@@ -302,7 +334,7 @@ class StaticSiteUrlList {
 		$this->urls['inferred'][$inferredURL] = $inferredURL;
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($inferredURL);
+		$this->addInferredParentURLs($inferredURL);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -374,10 +406,24 @@ class StaticSiteUrlList {
 		// Get parent URL
 		$parentProcessedURL = substr($processedURL,0,$breakpoint);
 
-		// If an intermediary URL doesn't exist, create it
-		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addInferredURL($parentProcessedURL);
-
 		return $parentProcessedURL;
+	}
+
+	/**
+	 * Add all parent URL parts as inferred URLs.
+	 * @param String $processedURL A relative URL
+	 */
+	function addInferredParentURLs($processedURL) {
+		if($processedURL == "/") return;
+
+		$parts = explode('/', $processedURL);
+		do {
+			$url = implode('/', $parts);
+			if($url && !$this->hasProcessedURL($url)) {
+				$this->addInferredURL($url);
+			}
+			array_pop($parts);
+		} while($parts);
 	}
 
 	/**
@@ -520,7 +566,7 @@ class StaticSiteCrawler extends PHPCrawler {
 		// NOTE: This is using an undocumented API
 		if($extraURLs = $this->urlList->getExtraCrawlURLs()) {
 			foreach($extraURLs as $extraURL) {
-    			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($extraURL));
+    			$this->LinkCache->addUrl(new PHPCrawlerURLDescriptor($this->urlList->getBaseURL() . $extraURL));
     		}
     	}
 
@@ -531,6 +577,17 @@ class StaticSiteCrawler extends PHPCrawler {
 
 				if(!$validRegExp) {
 					throw new InvalidArgumentException('Exclude url pattern "'.$pattern.'" is not a valid regular expression.');
+				}
+			}
+		}
+
+		// Optionally whitelist specific URL patterns
+		if($includePatterns = $this->urlList->getIncludePatterns()) {
+			foreach($includePatterns as $pattern) {
+				$validRegExp = $this->addURLFollowRule('|'.str_replace('|', '\|', $pattern).'|');
+
+				if(!$validRegExp) {
+					throw new InvalidArgumentException('Include url pattern "'.$pattern.'" is not a valid regular expression.');
 				}
 			}
 		}
