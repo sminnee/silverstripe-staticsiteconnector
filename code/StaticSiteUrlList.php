@@ -670,7 +670,11 @@ class StaticSiteUrlList {
 	}
 
 	/**
-	 * Return the URLs that are a child of the given URL
+	 * Return the URLs that are a child of the given URL.
+	 * Matches both URLs identified by the crawler, and inferred URLs based on path segments.
+	 * 
+	 * Matches against the transformed URL (@see StaticSiteUrlProcessor) to determine
+	 * if a page should be considered a child of this item, but returns the original URLs.
 	 * 
 	 * @param string $url
 	 * @return array
@@ -692,19 +696,19 @@ class StaticSiteUrlList {
 		}
 
 		$children = array();
-		foreach($this->urls['regular'] as $urlKey => $potentialProcessedChild) {
-			$potentialProcessedChild = $urlKey;
-			if(preg_match($regEx, $potentialProcessedChild)) {
-				if(!isset($children[$potentialProcessedChild])) {
-					$children[$potentialProcessedChild] = $potentialProcessedChild;
+		foreach($this->urls['regular'] as $origUrl => $urlData) {
+			$url = $urlData['url'];
+			if(preg_match($regEx, $url)) {
+				if(!isset($children[$url])) {
+					$children[$url] = $origUrl;
 				}
 			}
 		}
-		foreach($this->urls['inferred'] as $urlKey => $potentialProcessedChild) {
-			$potentialProcessedChild = $urlKey;
-			if(preg_match($regEx, $potentialProcessedChild)) {
-				if(!isset($children[$potentialProcessedChild])) {
-					$children[$potentialProcessedChild] = $potentialProcessedChild;
+		foreach($this->urls['inferred'] as $origUrl => $urlData) {
+			$url = $urlData['url'];
+			if(preg_match($regEx, $url)) {
+				if(!isset($children[$url])) {
+					$children[$url] = $origUrl;
 				}
 			}
 		}
