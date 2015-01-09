@@ -230,7 +230,7 @@ class StaticSiteUrlList {
 			$this->urls['regular'][$url] = $processedURL;
 
 			// Trigger parent URL back-filling on new processed URL
-			$this->parentProcessedURL($processedURL);
+			$this->addInferredParentURLs($processedURL);
 		}
 
 		$this->saveURLs();
@@ -303,6 +303,8 @@ class StaticSiteUrlList {
 			throw new InvalidArgumentException("URL $url is not from the site $this->baseURL");
 		}
 
+		if(!$relURL) $relURL = '/';
+
 		return $this->addURL($relURL);
 	}
 
@@ -313,7 +315,7 @@ class StaticSiteUrlList {
 		$this->urls['regular'][$url] = $this->generateProcessedURL($url);
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($this->urls['regular'][$url]);
+		$this->addInferredParentURLs($this->urls['regular'][$url]);
 	}
 
 
@@ -332,7 +334,7 @@ class StaticSiteUrlList {
 		$this->urls['inferred'][$inferredURL] = $inferredURL;
 
 		// Trigger parent URL back-filling
-		$this->parentProcessedURL($inferredURL);
+		$this->addInferredParentURLs($inferredURL);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -404,10 +406,24 @@ class StaticSiteUrlList {
 		// Get parent URL
 		$parentProcessedURL = substr($processedURL,0,$breakpoint);
 
-		// If an intermediary URL doesn't exist, create it
-		if(!$this->hasProcessedURL($parentProcessedURL)) $this->addInferredURL($parentProcessedURL);
-
 		return $parentProcessedURL;
+	}
+
+	/**
+	 * Add all parent URL parts as inferred URLs.
+	 * @param String $processedURL A relative URL
+	 */
+	function addInferredParentURLs($processedURL) {
+		if($processedURL == "/") return;
+
+		$parts = explode('/', $processedURL);
+		do {
+			$url = implode('/', $parts);
+			if($url && !$this->hasProcessedURL($url)) {
+				$this->addInferredURL($url);
+			}
+			array_pop($parts);
+		} while($parts);
 	}
 
 	/**
