@@ -1,16 +1,18 @@
 <?php
 
-class StaticSiteDataExtension extends DataExtension {
-	static $has_one = array(
-		"StaticSiteContentSource" => "StaticSiteContentSource",
-	);
-	static $db = array(
-		"StaticSiteURL" => "Varchar(255)",
-	);
+class StaticSiteDataExtension extends DataExtension
+{
+    public static $has_one = array(
+        "StaticSiteContentSource" => "StaticSiteContentSource",
+    );
+    public static $db = array(
+        "StaticSiteURL" => "Varchar(255)",
+    );
 
-	function updateCMSFields(FieldList $fields) {
-		if($this->owner->StaticSiteContentSourceID && $this->owner->StaticSiteURL) {
-			$fields->addFieldToTab('Root.Main', new ReadonlyField('StaticSiteURL', 'Imported URL'), 'MenuTitle');
-		}
-	}
+    public function updateCMSFields(FieldList $fields)
+    {
+        if ($this->owner->StaticSiteContentSourceID && $this->owner->StaticSiteURL) {
+            $fields->addFieldToTab('Root.Main', new ReadonlyField('StaticSiteURL', 'Imported URL'), 'MenuTitle');
+        }
+    }
 }
